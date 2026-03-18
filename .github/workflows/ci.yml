@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck shared
+        run: npm run typecheck --workspace=packages/shared
+
+      - name: Typecheck web
+        run: npm run typecheck --workspace=apps/web
+
+      - name: Typecheck api
+        run: npm run typecheck --workspace=apps/api
+
+      - name: Test
+        run: npm run test -- --passWithNoTests
+
+      - name: Build shared
+        run: npm run build --workspace=packages/shared
+
+      - name: Build web
+        run: npm run build --workspace=apps/web
+
+      - name: Build api
+        run: npm run build --workspace=apps/api

@@ -1,0 +1,2 @@
+// @clarixbi/shared — placeholder
+export {};
