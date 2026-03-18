@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { LoggerModule } from 'nestjs-pino';
 import { dataSourceOptions } from './config/database.config';
+import { getLoggerConfig } from './common/logger';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -19,15 +20,13 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { ClickHouseModule } from './modules/clickhouse/clickhouse.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),
-    LoggerModule.forRoot({
-      pinoHttp: {
-        transport: process.env['NODE_ENV'] !== 'production' ? { target: 'pino-pretty' } : undefined,
-      },
-    }),
+    LoggerModule.forRoot(getLoggerConfig()),
+    ClickHouseModule,
     HealthModule,
     AuthModule,
     UsersModule,

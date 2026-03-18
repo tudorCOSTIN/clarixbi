@@ -17,6 +17,7 @@
     "lint:fix": "eslint --fix \"apps/*/src/**/*.{ts,tsx}\" \"packages/*/src/**/*.ts\"",
     "typecheck": "npm run typecheck --workspace=packages/shared && npm run typecheck --workspace=apps/web && npm run typecheck --workspace=apps/api",
     "test": "npm run test --workspaces --if-present",
+    "test:coverage": "npm run test:coverage --workspace=apps/api",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
     "prepare": "husky"
   },
