@@ -8,7 +8,12 @@
     "start": "node dist/main",
     "start:prod": "node dist/main",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "typeorm": "npx ts-node --project tsconfig.json --transpile-only -r tsconfig-paths/register ../../node_modules/typeorm/cli-ts-node-commonjs.js -d src/config/database.config.ts",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
+    "seed": "npx ts-node --project tsconfig.json --transpile-only -r tsconfig-paths/register src/seeds/seed-plans.ts"
   },
   "dependencies": {
     "@clarixbi/shared": "*",
@@ -38,6 +43,7 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.5.0",
+    "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.4.0"
   },

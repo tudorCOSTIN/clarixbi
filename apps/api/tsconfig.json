@@ -8,10 +8,17 @@
     "rootDir": "./src",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
     "declaration": false,
     "declarationMap": false,
     "sourceMap": true,
     "incremental": true
+  },
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    }
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
