@@ -12,5 +12,77 @@
     "magicLinkError": "Nu am putut trimite link-ul magic. Incearca din nou.",
     "tryAgain": "Incearca din nou",
     "termsNotice": "Prin conectare, accepti Termenii si Conditiile ClarixBI."
+  },
+  "connect": {
+    "title": "Conecteaza sursa de date",
+    "subtitle": "Alege sursa din care vrei sa importi datele tale de business",
+    "back": "Inapoi la selectie",
+    "comingSoon": "In curand",
+    "connectionFailed": "Conexiunea a esuat. Verifica credentialele.",
+    "connectors": {
+      "smartbill": {
+        "name": "SmartBill",
+        "description": "Importa facturi, clienti si plati din SmartBill"
+      },
+      "woocommerce": {
+        "name": "WooCommerce",
+        "description": "Conecteaza magazinul tau online WooCommerce"
+      },
+      "csv": {
+        "name": "Import CSV",
+        "description": "Incarca fisiere CSV cu datele tale"
+      },
+      "demo": {
+        "name": "Date Demo",
+        "description": "Exploreaza ClarixBI cu date demonstrative"
+      }
+    },
+    "smartbillForm": {
+      "title": "Conectare SmartBill",
+      "description": "Introdu email-ul si token-ul API din contul tau SmartBill",
+      "email": "Email SmartBill",
+      "emailPlaceholder": "email@companie.ro",
+      "token": "Token API",
+      "tokenPlaceholder": "Token-ul din setarile SmartBill",
+      "testConnection": "Testeaza conexiunea",
+      "connectAndSync": "Conecteaza si sincronizeaza",
+      "connectionSuccess": "Conexiune reusita! SmartBill este accesibil.",
+      "connectionError": "Credentiale invalide. Verifica email-ul si token-ul."
+    }
+  },
+  "sync": {
+    "syncing": {
+      "title": "Se sincronizeaza datele...",
+      "importing": "Se importa datele din SmartBill",
+      "rowsImported": "{count} inregistrari importate..."
+    },
+    "complete": {
+      "title": "Sincronizare completa!",
+      "done": "Import finalizat",
+      "totalRows": "{count} inregistrari importate cu succes",
+      "viewDashboard": "Vezi sursele de date"
+    },
+    "error": {
+      "title": "Eroare la sincronizare",
+      "failed": "Sincronizarea a esuat",
+      "message": "A aparut o eroare in timpul sincronizarii",
+      "retry": "Reincearca"
+    }
+  },
+  "dataSources": {
+    "title": "Surse de date",
+    "addSource": "Adauga sursa",
+    "addFirstSource": "Adauga prima sursa de date",
+    "empty": "Nu ai nicio sursa de date conectata",
+    "lastSync": "Ultima sincronizare",
+    "totalRows": "Total inregistrari",
+    "syncNow": "Sincronizeaza acum",
+    "syncInProgress": "Se sincronizeaza...",
+    "status": {
+      "active": "Activ",
+      "syncing": "Se sincronizeaza",
+      "error": "Eroare",
+      "disconnected": "Deconectat"
+    }
   }
 }

@@ -12,5 +12,77 @@
     "magicLinkError": "Could not send magic link. Please try again.",
     "tryAgain": "Try again",
     "termsNotice": "By signing in, you agree to ClarixBI Terms and Conditions."
+  },
+  "connect": {
+    "title": "Connect your data source",
+    "subtitle": "Choose the source from which you want to import your business data",
+    "back": "Back to selection",
+    "comingSoon": "Coming soon",
+    "connectionFailed": "Connection failed. Check your credentials.",
+    "connectors": {
+      "smartbill": {
+        "name": "SmartBill",
+        "description": "Import invoices, clients and payments from SmartBill"
+      },
+      "woocommerce": {
+        "name": "WooCommerce",
+        "description": "Connect your WooCommerce online store"
+      },
+      "csv": {
+        "name": "CSV Import",
+        "description": "Upload CSV files with your data"
+      },
+      "demo": {
+        "name": "Demo Data",
+        "description": "Explore ClarixBI with demo data"
+      }
+    },
+    "smartbillForm": {
+      "title": "SmartBill Connection",
+      "description": "Enter your email and API token from your SmartBill account",
+      "email": "SmartBill Email",
+      "emailPlaceholder": "email@company.ro",
+      "token": "API Token",
+      "tokenPlaceholder": "Token from SmartBill settings",
+      "testConnection": "Test connection",
+      "connectAndSync": "Connect and sync",
+      "connectionSuccess": "Connection successful! SmartBill is accessible.",
+      "connectionError": "Invalid credentials. Check your email and token."
+    }
+  },
+  "sync": {
+    "syncing": {
+      "title": "Syncing data...",
+      "importing": "Importing data from SmartBill",
+      "rowsImported": "{count} records imported..."
+    },
+    "complete": {
+      "title": "Sync complete!",
+      "done": "Import finished",
+      "totalRows": "{count} records imported successfully",
+      "viewDashboard": "View data sources"
+    },
+    "error": {
+      "title": "Sync error",
+      "failed": "Sync failed",
+      "message": "An error occurred during sync",
+      "retry": "Retry"
+    }
+  },
+  "dataSources": {
+    "title": "Data Sources",
+    "addSource": "Add source",
+    "addFirstSource": "Add your first data source",
+    "empty": "No data sources connected",
+    "lastSync": "Last sync",
+    "totalRows": "Total records",
+    "syncNow": "Sync now",
+    "syncInProgress": "Syncing...",
+    "status": {
+      "active": "Active",
+      "syncing": "Syncing",
+      "error": "Error",
+      "disconnected": "Disconnected"
+    }
   }
 }
