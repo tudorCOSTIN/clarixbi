@@ -102,6 +102,19 @@
       "retry": "Retry"
     }
   },
+  "ai": {
+    "newConversation": "New conversation",
+    "loading": "Loading...",
+    "noConversations": "No conversations yet",
+    "untitled": "Untitled conversation",
+    "welcomeTitle": "AI Assistant",
+    "welcomeSubtitle": "Ask anything about your data. I'll generate SQL queries, execute them, and visualize the results for you.",
+    "startConversation": "Start a conversation",
+    "emptyChat": "Send a message to start the conversation",
+    "analyzing": "Analyzing your data...",
+    "inputPlaceholder": "Ask anything about your data...",
+    "errorGeneric": "An error occurred. Please try again."
+  },
   "dataSources": {
     "title": "Data Sources",
     "addSource": "Add source",

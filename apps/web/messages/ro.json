@@ -102,6 +102,19 @@
       "retry": "Reincearca"
     }
   },
+  "ai": {
+    "newConversation": "Conversatie noua",
+    "loading": "Se incarca...",
+    "noConversations": "Nicio conversatie inca",
+    "untitled": "Conversatie fara titlu",
+    "welcomeTitle": "Asistent AI",
+    "welcomeSubtitle": "Intreaba orice despre datele tale. Voi genera interogari SQL, le voi executa si voi vizualiza rezultatele pentru tine.",
+    "startConversation": "Incepe o conversatie",
+    "emptyChat": "Trimite un mesaj pentru a incepe conversatia",
+    "analyzing": "Analizez datele tale...",
+    "inputPlaceholder": "Intreaba orice despre datele tale...",
+    "errorGeneric": "A aparut o eroare. Te rugam sa incerci din nou."
+  },
   "dataSources": {
     "title": "Surse de date",
     "addSource": "Adauga sursa",
