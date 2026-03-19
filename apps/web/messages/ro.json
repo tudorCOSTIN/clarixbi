@@ -19,6 +19,8 @@
     "back": "Inapoi la selectie",
     "comingSoon": "In curand",
     "connectionFailed": "Conexiunea a esuat. Verifica credentialele.",
+    "connectionSuccess": "Conexiune reusita!",
+    "connectionError": "Credentiale invalide. Verifica datele introduse.",
     "connectors": {
       "smartbill": {
         "name": "SmartBill",
@@ -29,8 +31,8 @@
         "description": "Conecteaza magazinul tau online WooCommerce"
       },
       "csv": {
-        "name": "Import CSV",
-        "description": "Incarca fisiere CSV cu datele tale"
+        "name": "Import CSV / Excel",
+        "description": "Incarca fisiere CSV sau Excel cu datele tale"
       },
       "demo": {
         "name": "Date Demo",
@@ -48,12 +50,43 @@
       "connectAndSync": "Conecteaza si sincronizeaza",
       "connectionSuccess": "Conexiune reusita! SmartBill este accesibil.",
       "connectionError": "Credentiale invalide. Verifica email-ul si token-ul."
+    },
+    "woocommerceForm": {
+      "title": "Conectare WooCommerce",
+      "description": "Introdu URL-ul magazinului si cheile API din WooCommerce > Setari > REST API",
+      "storeUrl": "URL Magazin",
+      "consumerKey": "Consumer Key",
+      "consumerSecret": "Consumer Secret",
+      "testConnection": "Testeaza conexiunea",
+      "connectAndSync": "Conecteaza si sincronizeaza",
+      "connectionSuccess": "Conexiune reusita! WooCommerce este accesibil.",
+      "connectionError": "Nu am putut conecta. Verifica URL-ul si cheile API."
+    },
+    "csvForm": {
+      "title": "Import CSV / Excel",
+      "description": "Incarca un fisier CSV sau Excel pentru a importa datele",
+      "dropzone": "Trage fisierul aici sau click pentru a selecta",
+      "formats": ".csv, .xlsx, .xls (max 50MB)",
+      "upload": "Incarca",
+      "invalidFormat": "Format invalid. Acceptam: .csv, .xlsx, .xls",
+      "fileTooLarge": "Fisierul depaseste limita de 50MB",
+      "previewNote": "Primele 20 de randuri. Poti modifica tipul coloanelor inainte de import.",
+      "confirmAndImport": "Confirma si importa"
+    },
+    "demoForm": {
+      "title": "Incearca cu date demonstrative",
+      "description": "Exploreaza ClarixBI cu date fictive de facturi, comenzi si vanzari",
+      "includes": "Setul demo include:",
+      "dataset1": "~500 facturi SmartBill (firme romanesti, sume 50-50.000 RON)",
+      "dataset2": "~500 comenzi WooCommerce (produse tech, 29-2.999 RON/EUR)",
+      "dataset3": "~500 randuri date de vanzari (regiuni, categorii, produse)",
+      "loadButton": "Incarca date demo"
     }
   },
   "sync": {
     "syncing": {
       "title": "Se sincronizeaza datele...",
-      "importing": "Se importa datele din SmartBill",
+      "importing": "Se importa datele",
       "rowsImported": "{count} inregistrari importate..."
     },
     "complete": {

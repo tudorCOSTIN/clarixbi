@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSourcesService } from './data-sources.service';
 import { DataSourceEntity, DataSourceType, DataSourceStatus } from './entities/data-source.entity';
+import { ClickHouseService } from '../clickhouse/clickhouse.service';
 
 // Mock encryption
 jest.mock('../../common/utils/encryption', () => ({
@@ -16,9 +17,22 @@ jest.mock('./connectors/smartbill.connector', () => ({
   })),
 }));
 
+// Mock WooCommerceConnector
+jest.mock('./connectors/woocommerce.connector', () => ({
+  WooCommerceConnector: jest.fn().mockImplementation(() => ({
+    testConnection: jest.fn().mockResolvedValue(true),
+  })),
+}));
+
 // Mock queue
 jest.mock('../sync/queues.config', () => ({
   syncSmartbillQueue: {
+    add: jest.fn().mockResolvedValue({}),
+  },
+  syncWoocommerceQueue: {
+    add: jest.fn().mockResolvedValue({}),
+  },
+  syncCsvQueue: {
     add: jest.fn().mockResolvedValue({}),
   },
 }));
@@ -51,6 +65,13 @@ describe('DataSourcesService', () => {
         {
           provide: getRepositoryToken(DataSourceEntity),
           useValue: mockRepo,
+        },
+        {
+          provide: ClickHouseService,
+          useValue: {
+            query: jest.fn().mockResolvedValue([]),
+            insert: jest.fn().mockResolvedValue(undefined),
+          },
         },
       ],
     }).compile();

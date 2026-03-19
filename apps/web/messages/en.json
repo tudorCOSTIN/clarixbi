@@ -19,6 +19,8 @@
     "back": "Back to selection",
     "comingSoon": "Coming soon",
     "connectionFailed": "Connection failed. Check your credentials.",
+    "connectionSuccess": "Connection successful!",
+    "connectionError": "Invalid credentials. Check the entered data.",
     "connectors": {
       "smartbill": {
         "name": "SmartBill",
@@ -29,8 +31,8 @@
         "description": "Connect your WooCommerce online store"
       },
       "csv": {
-        "name": "CSV Import",
-        "description": "Upload CSV files with your data"
+        "name": "CSV / Excel Import",
+        "description": "Upload CSV or Excel files with your data"
       },
       "demo": {
         "name": "Demo Data",
@@ -48,12 +50,43 @@
       "connectAndSync": "Connect and sync",
       "connectionSuccess": "Connection successful! SmartBill is accessible.",
       "connectionError": "Invalid credentials. Check your email and token."
+    },
+    "woocommerceForm": {
+      "title": "WooCommerce Connection",
+      "description": "Enter your store URL and API keys from WooCommerce > Settings > REST API",
+      "storeUrl": "Store URL",
+      "consumerKey": "Consumer Key",
+      "consumerSecret": "Consumer Secret",
+      "testConnection": "Test connection",
+      "connectAndSync": "Connect and sync",
+      "connectionSuccess": "Connection successful! WooCommerce is accessible.",
+      "connectionError": "Could not connect. Check the URL and API keys."
+    },
+    "csvForm": {
+      "title": "CSV / Excel Import",
+      "description": "Upload a CSV or Excel file to import your data",
+      "dropzone": "Drag your file here or click to select",
+      "formats": ".csv, .xlsx, .xls (max 50MB)",
+      "upload": "Upload",
+      "invalidFormat": "Invalid format. Accepted: .csv, .xlsx, .xls",
+      "fileTooLarge": "File exceeds the 50MB limit",
+      "previewNote": "First 20 rows shown. You can change column types before importing.",
+      "confirmAndImport": "Confirm and import"
+    },
+    "demoForm": {
+      "title": "Try with demo data",
+      "description": "Explore ClarixBI with fictional invoice, order and sales data",
+      "includes": "The demo set includes:",
+      "dataset1": "~500 SmartBill invoices (Romanian companies, 50-50,000 RON)",
+      "dataset2": "~500 WooCommerce orders (tech products, 29-2,999 RON/EUR)",
+      "dataset3": "~500 rows of sales data (regions, categories, products)",
+      "loadButton": "Load demo data"
     }
   },
   "sync": {
     "syncing": {
       "title": "Syncing data...",
-      "importing": "Importing data from SmartBill",
+      "importing": "Importing data",
       "rowsImported": "{count} records imported..."
     },
     "complete": {

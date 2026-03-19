@@ -1,9 +1,25 @@
-import { Controller, Get, Post, Body, Param, Query, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Query,
+  ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DataSourcesService } from './data-sources.service';
 import { CreateDataSourceDto } from './dto/create-data-source.dto';
 import { SyncJob } from '../sync/entities/sync-job.entity';
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls'];
 
 @Controller('organizations/:orgId/data-sources')
 export class DataSourcesController {
@@ -16,6 +32,38 @@ export class DataSourcesController {
   @Post()
   async create(@Param('orgId', ParseUUIDPipe) orgId: string, @Body() dto: CreateDataSourceDto) {
     const ds = await this.dataSourcesService.addDataSource(orgId, dto);
+    return { data: ds };
+  }
+
+  @Post('upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: MAX_FILE_SIZE },
+      fileFilter: (_req, file, cb) => {
+        const ext = '.' + (file.originalname.split('.').pop() || '').toLowerCase();
+        if (ALLOWED_EXTENSIONS.includes(ext)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Format invalid. Acceptam: .csv, .xlsx, .xls'), false);
+        }
+      },
+    }),
+  )
+  async upload(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('name') name?: string,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Fisierul lipseste');
+    }
+
+    const ds = await this.dataSourcesService.addCsvDataSource(
+      orgId,
+      name || file.originalname,
+      file.buffer,
+      file.originalname,
+    );
     return { data: ds };
   }
 
@@ -32,6 +80,26 @@ export class DataSourcesController {
   ) {
     const ds = await this.dataSourcesService.findOne(orgId, id);
     return { data: ds };
+  }
+
+  @Get(':id/preview')
+  async preview(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const result = await this.dataSourcesService.getPreview(orgId, id);
+    return { data: result };
+  }
+
+  @Patch(':id/schema')
+  async updateSchema(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body('schema') schema: { name: string; type: string; sampleValues: string[] }[],
+  ) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await this.dataSourcesService.updateSchema(orgId, id, schema as any);
+    return { data: { message: 'Schema updated' } };
   }
 
   @Post(':id/test')

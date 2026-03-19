@@ -6,7 +6,7 @@ import {
   DataSourceStatus,
   DataSourceType,
 } from '../data-sources/entities/data-source.entity';
-import { syncSmartbillQueue } from './queues.config';
+import { syncSmartbillQueue, syncWoocommerceQueue } from './queues.config';
 
 @Injectable()
 export class SyncScheduler implements OnModuleInit, OnModuleDestroy {
@@ -19,7 +19,6 @@ export class SyncScheduler implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   onModuleInit() {
-    // Check every 60 seconds for data sources that need syncing
     this.intervalId = setInterval(() => this.checkForSyncs(), 60_000);
     this.logger.log('Sync scheduler started (checking every 60s)');
   }
@@ -58,7 +57,14 @@ export class SyncScheduler implements OnModuleInit, OnModuleDestroy {
               orgId: ds.org_id,
               jobType: 'incremental',
             });
+          } else if (ds.type === DataSourceType.WOOCOMMERCE) {
+            await syncWoocommerceQueue.add('sync', {
+              dataSourceId: ds.id,
+              orgId: ds.org_id,
+              jobType: 'incremental',
+            });
           }
+          // CSV data sources don't need incremental sync
         }
       }
     } catch (error) {

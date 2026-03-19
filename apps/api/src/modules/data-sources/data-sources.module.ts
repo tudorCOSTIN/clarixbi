@@ -4,9 +4,10 @@ import { DataSourceEntity } from './entities/data-source.entity';
 import { DataSourcesController } from './data-sources.controller';
 import { DataSourcesService } from './data-sources.service';
 import { SyncJob } from '../sync/entities/sync-job.entity';
+import { ClickHouseModule } from '../clickhouse/clickhouse.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DataSourceEntity, SyncJob])],
+  imports: [TypeOrmModule.forFeature([DataSourceEntity, SyncJob]), ClickHouseModule],
   controllers: [DataSourcesController],
   providers: [DataSourcesService],
   exports: [DataSourcesService],

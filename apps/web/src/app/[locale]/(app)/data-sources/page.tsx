@@ -13,10 +13,11 @@ import {
   FileSpreadsheet,
   ShoppingCart,
   Upload,
-  Database,
+  Play,
   Plus,
   RefreshCw,
   Loader2,
+  Database,
 } from 'lucide-react';
 
 interface DataSource {
@@ -29,11 +30,40 @@ interface DataSource {
   created_at: string;
 }
 
-const typeIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  smartbill: FileSpreadsheet,
-  woocommerce: ShoppingCart,
-  csv: Upload,
-  demo: Database,
+const typeConfig: Record<
+  string,
+  {
+    icon: React.ComponentType<{ className?: string }>;
+    iconBg: string;
+    iconColor: string;
+  }
+> = {
+  smartbill: {
+    icon: FileSpreadsheet,
+    iconBg: 'bg-blue-50',
+    iconColor: 'text-blue-600',
+  },
+  woocommerce: {
+    icon: ShoppingCart,
+    iconBg: 'bg-purple-50',
+    iconColor: 'text-purple-600',
+  },
+  csv: {
+    icon: Upload,
+    iconBg: 'bg-gray-100',
+    iconColor: 'text-gray-600',
+  },
+  demo: {
+    icon: Play,
+    iconBg: 'bg-green-50',
+    iconColor: 'text-green-600',
+  },
+};
+
+const defaultTypeConfig = {
+  icon: Database,
+  iconBg: 'bg-gray-100',
+  iconColor: 'text-gray-600',
 };
 
 const statusColors: Record<string, string> = {
@@ -178,14 +208,17 @@ export default function DataSourcesPage() {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {dataSources.map((ds) => {
-            const Icon = typeIcons[ds.type] || Database;
+            const config = typeConfig[ds.type] || defaultTypeConfig;
+            const Icon = config.icon;
             const isSyncing = ds.status === 'syncing' || syncingIds.has(ds.id);
 
             return (
               <Card key={ds.id} className="transition-shadow hover:shadow-md">
                 <CardHeader className="flex flex-row items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50">
-                    <Icon className="h-5 w-5 text-primary-blue" />
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-lg ${config.iconBg}`}
+                  >
+                    <Icon className={`h-5 w-5 ${config.iconColor}`} />
                   </div>
                   <div className="flex-1">
                     <CardTitle className="text-base">{ds.name}</CardTitle>
