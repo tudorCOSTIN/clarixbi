@@ -1,16 +1,28 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { cacheRedis } from '../../config/redis.config';
 
 @ApiTags('Health')
 @Controller('health')
 export class HealthController {
   @Get()
   @ApiOperation({ summary: 'Health check' })
-  check() {
+  async check() {
+    let redisStatus = 'disconnected';
+    try {
+      const pong = await cacheRedis.ping();
+      redisStatus = pong === 'PONG' ? 'connected' : 'error';
+    } catch {
+      redisStatus = 'error';
+    }
+
     return {
       data: {
         status: 'ok',
         timestamp: new Date().toISOString(),
+        services: {
+          redis: redisStatus,
+        },
       },
     };
   }

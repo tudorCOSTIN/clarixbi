@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
+import { PostHogProvider } from '@/providers/posthog-provider';
 import '../globals.css';
 
 const inter = Inter({
@@ -38,7 +39,9 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
   return (
     <html lang={locale} className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans antialiased">
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <PostHogProvider>
+          <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        </PostHogProvider>
       </body>
     </html>
   );
