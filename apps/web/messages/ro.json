@@ -1,5 +1,16 @@
 {
   "common": {
-    "comingSoon": "ClarixBI — În curând"
+    "comingSoon": "ClarixBI — In curand"
+  },
+  "auth": {
+    "signInTitle": "Conecteaza-te la ClarixBI",
+    "continueWithGoogle": "Continua cu Google",
+    "or": "sau",
+    "sendMagicLink": "Trimite link magic",
+    "sending": "Se trimite...",
+    "magicLinkSent": "Link-ul magic a fost trimis! Verifica-ti email-ul.",
+    "magicLinkError": "Nu am putut trimite link-ul magic. Incearca din nou.",
+    "tryAgain": "Incearca din nou",
+    "termsNotice": "Prin conectare, accepti Termenii si Conditiile ClarixBI."
   }
 }

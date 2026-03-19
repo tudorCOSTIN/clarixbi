@@ -5,6 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { SentryGlobalFilter } from '@sentry/nestjs/setup';
 import helmet from 'helmet';
+import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 
@@ -18,6 +19,7 @@ async function bootstrap() {
   }
 
   app.use(helmet());
+  app.use(cookieParser());
 
   app.enableCors({
     origin: 'http://localhost:3000',

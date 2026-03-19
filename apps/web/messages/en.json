@@ -1,5 +1,16 @@
 {
   "common": {
     "comingSoon": "ClarixBI — Coming Soon"
+  },
+  "auth": {
+    "signInTitle": "Sign in to ClarixBI",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "sendMagicLink": "Send magic link",
+    "sending": "Sending...",
+    "magicLinkSent": "Magic link sent! Check your email.",
+    "magicLinkError": "Could not send magic link. Please try again.",
+    "tryAgain": "Try again",
+    "termsNotice": "By signing in, you agree to ClarixBI Terms and Conditions."
   }
 }
