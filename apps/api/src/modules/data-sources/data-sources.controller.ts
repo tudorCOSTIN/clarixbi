@@ -120,6 +120,15 @@ export class DataSourcesController {
     return { data: { message: 'Sync started' } };
   }
 
+  @Get(':id/columns')
+  async getColumns(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    const columns = await this.dataSourcesService.getColumns(orgId, id);
+    return { data: columns };
+  }
+
   @Get(':id/logs')
   async getSyncLogs(
     @Param('orgId', ParseUUIDPipe) orgId: string,

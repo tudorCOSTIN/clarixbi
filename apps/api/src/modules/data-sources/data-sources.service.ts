@@ -193,6 +193,35 @@ export class DataSourcesService {
     this.logger.log(`Triggered sync for data source ${id}`);
   }
 
+  async getColumns(orgId: string, id: string): Promise<{ name: string; type: string }[]> {
+    const ds = await this.findOne(orgId, id);
+
+    // For CSV sources, get columns from stored config schema
+    const config = ds.config as Record<string, unknown>;
+    const detectedSchema = config['detectedSchema'] as { name: string; type: string }[] | undefined;
+    if (detectedSchema) {
+      return detectedSchema.map((col) => ({ name: col.name, type: col.type }));
+    }
+
+    // For other sources, try to get from ClickHouse table
+    const tableMap: Record<string, string> = {
+      smartbill: 'smartbill_invoices',
+      woocommerce: 'woocommerce_orders',
+      csv: 'csv_data',
+    };
+    const tableName = tableMap[ds.type] || 'csv_data';
+
+    try {
+      const columns = await this.clickhouse.query<{ name: string; type: string }>(
+        `SELECT name, type FROM system.columns WHERE database = currentDatabase() AND table = {table:String}`,
+        { table: tableName },
+      );
+      return columns.filter((c) => !['org_id', 'data_source_id'].includes(c.name));
+    } catch {
+      return [];
+    }
+  }
+
   getDecryptedCredentials(ds: DataSourceEntity): Record<string, string> {
     if (!ds.credentials_encrypted) {
       throw new BadRequestException('No credentials stored');

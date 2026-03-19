@@ -1,0 +1,131 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+import { ArrowLeft, Pencil, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { WidgetCard } from '@/components/dashboard/WidgetCard';
+import { FilterBar } from '@/components/dashboard/FilterBar';
+import { apiClient } from '@/lib/api-client';
+
+const ResponsiveGrid = WidthProvider(Responsive);
+
+interface Widget {
+  id: string;
+  type: string;
+  title: string;
+  config: Record<string, unknown>;
+  position: Record<string, unknown>;
+  data_source_id: string | null;
+}
+
+interface DashboardData {
+  id: string;
+  name: string;
+  description: string | null;
+  widgets: Widget[];
+}
+
+export default function DashboardViewPage() {
+  const params = useParams();
+  const router = useRouter();
+  const dashboardId = params.id as string;
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    apiClient<{ data: DashboardData }>(`/organizations/current/dashboards/${dashboardId}`)
+      .then((res) => setDashboard(res.data))
+      .catch(() => router.push('/dashboards'));
+  }, [dashboardId, router]);
+
+  if (!dashboard) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-primary-blue" />
+      </div>
+    );
+  }
+
+  const lgLayout: Layout[] = dashboard.widgets.map((w) => ({
+    i: w.id,
+    x: (w.position?.x as number) || 0,
+    y: (w.position?.y as number) || 0,
+    w: (w.position?.w as number) || 4,
+    h: (w.position?.h as number) || 3,
+  }));
+  const layouts: { [key: string]: Layout[] } = {
+    lg: lgLayout,
+    md: lgLayout,
+    sm: lgLayout,
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/dashboards')}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back
+          </Button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">{dashboard.name}</h1>
+            {dashboard.description && (
+              <p className="text-sm text-gray-500">{dashboard.description}</p>
+            )}
+          </div>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => router.push(`/dashboards/${dashboardId}/edit`)}
+        >
+          <Pencil className="h-4 w-4 mr-1" /> Edit
+        </Button>
+      </div>
+
+      <FilterBar />
+
+      <div className="mt-4">
+        {dashboard.widgets.length === 0 ? (
+          <div className="text-center py-12 text-gray-400">
+            <p>This dashboard has no widgets yet.</p>
+            <Button
+              variant="outline"
+              className="mt-4"
+              onClick={() => router.push(`/dashboards/${dashboardId}/edit`)}
+            >
+              <Pencil className="h-4 w-4 mr-1" /> Add widgets
+            </Button>
+          </div>
+        ) : (
+          <ResponsiveGrid
+            className="layout"
+            layouts={layouts}
+            breakpoints={{ lg: 1200, md: 996, sm: 768 }}
+            cols={{ lg: 12, md: 12, sm: 6 }}
+            rowHeight={80}
+            isDraggable={false}
+            isResizable={false}
+            margin={[12, 12]}
+          >
+            {dashboard.widgets.map((widget) => {
+              const layout = layouts.lg?.find((l) => l.i === widget.id);
+              const heightPx = (layout?.h || 3) * 80 - 12;
+              return (
+                <div key={widget.id}>
+                  <WidgetCard
+                    widget={{ ...widget, data: [] }}
+                    isEditing={false}
+                    height={heightPx}
+                  />
+                </div>
+              );
+            })}
+          </ResponsiveGrid>
+        )}
+      </div>
+    </div>
+  );
+}

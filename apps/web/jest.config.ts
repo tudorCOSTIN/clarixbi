@@ -8,6 +8,9 @@ const createJestConfig = nextJest({
 const config: Config = {
   testMatch: ['**/*.test.tsx', '**/*.test.ts'],
   testEnvironment: 'jsdom',
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
 };
 
 export default createJestConfig(config);
