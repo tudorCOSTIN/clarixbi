@@ -65,6 +65,58 @@ Maria`;
       // papaparse handles this gracefully
       expect(result.totalRows).toBeGreaterThanOrEqual(1);
     });
+
+    it('should parse semicolon-delimited CSV (European locale)', () => {
+      // PapaParse auto-detects delimiters
+      const csv = `name;amount;date
+Ion Popescu;1500,50;15.01.2024
+Maria Ionescu;2300,75;20.02.2024
+Andrei Vasile;750,00;10.03.2024`;
+
+      const result = connector.parseCsv(csv);
+
+      expect(result.headers).toEqual(['name', 'amount', 'date']);
+      expect(result.totalRows).toBe(3);
+      expect(result.rows[0]!['name']).toBe('Ion Popescu');
+      expect(result.rows[0]!['amount']).toBe('1500,50');
+      expect(result.rows[1]!['date']).toBe('20.02.2024');
+    });
+
+    it('should return zero rows for empty CSV file (headers only)', () => {
+      const csv = `name,value`;
+
+      const result = connector.parseCsv(csv);
+
+      expect(result.headers).toEqual(['name', 'value']);
+      expect(result.totalRows).toBe(0);
+      expect(result.rows).toEqual([]);
+    });
+
+    it('should return zero rows for completely empty CSV', () => {
+      const csv = '';
+
+      const result = connector.parseCsv(csv);
+
+      expect(result.totalRows).toBe(0);
+      expect(result.rows).toEqual([]);
+    });
+
+    it('should handle Unicode characters in CSV values', () => {
+      const csv = `name,city,note
+Ștefan Bălan,București,"Notă cu diacritice: ăîâșț"
+Müller Günther,München,"Ümlauts: äöü"
+田中太郎,東京,"日本語テスト"`;
+
+      const result = connector.parseCsv(csv);
+
+      expect(result.totalRows).toBe(3);
+      expect(result.rows[0]!['name']).toBe('Ștefan Bălan');
+      expect(result.rows[0]!['city']).toBe('București');
+      expect(result.rows[0]!['note']).toBe('Notă cu diacritice: ăîâșț');
+      expect(result.rows[1]!['name']).toBe('Müller Günther');
+      expect(result.rows[2]!['name']).toBe('田中太郎');
+      expect(result.rows[2]!['city']).toBe('東京');
+    });
   });
 
   describe('parseExcel', () => {
@@ -96,6 +148,32 @@ Maria`;
       expect(result.totalRows).toBe(2);
       expect(result.rows[0]!['name']).toBe('Product A');
       expect(result.rows[0]!['amount']).toBe('100');
+    });
+
+    it('should use only the first sheet when multiple sheets exist', () => {
+      const XLSX = require('xlsx');
+      const wb = XLSX.utils.book_new();
+
+      const ws1 = XLSX.utils.aoa_to_sheet([
+        ['col_a', 'col_b'],
+        ['first_sheet_val1', '100'],
+        ['first_sheet_val2', '200'],
+      ]);
+      XLSX.utils.book_append_sheet(wb, ws1, 'MainData');
+
+      const ws2 = XLSX.utils.aoa_to_sheet([['other_col'], ['second_sheet_val']]);
+      XLSX.utils.book_append_sheet(wb, ws2, 'ExtraSheet');
+
+      const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+      const result = connector.parseExcel(buffer);
+
+      // Should read from the first sheet only
+      expect(result.headers).toEqual(['col_a', 'col_b']);
+      expect(result.totalRows).toBe(2);
+      expect(result.rows[0]!['col_a']).toBe('first_sheet_val1');
+      // Should NOT contain columns from the second sheet
+      expect(result.headers).not.toContain('other_col');
     });
   });
 

@@ -125,6 +125,18 @@ describe('WooCommerceConnector', () => {
         }),
       );
     });
+
+    it('should default totalPages to 1 when x-wp-totalpages header is missing', async () => {
+      mockAxiosInstance.request.mockResolvedValueOnce({
+        status: 200,
+        data: [{ id: 1 }],
+        headers: {},
+      });
+
+      const result = await connector.fetchOrders({ page: 1, perPage: 100 });
+
+      expect(result.totalPages).toBe(1);
+    });
   });
 
   describe('fetchAllOrders', () => {
@@ -182,6 +194,56 @@ describe('WooCommerceConnector', () => {
     });
   });
 
+  describe('fetchAllProducts', () => {
+    it('should fetch all pages of products', async () => {
+      const page1Products = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        name: `Product ${i + 1}`,
+        sku: `SKU-${i + 1}`,
+        price: '10.00',
+        status: 'publish',
+        categories: [],
+      }));
+      const page2Products = Array.from({ length: 50 }, (_, i) => ({
+        id: 101 + i,
+        name: `Product ${101 + i}`,
+        sku: `SKU-${101 + i}`,
+        price: '20.00',
+        status: 'publish',
+        categories: [],
+      }));
+
+      mockAxiosInstance.request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: page1Products,
+          headers: { 'x-wp-totalpages': '2' },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: page2Products,
+          headers: { 'x-wp-totalpages': '2' },
+        });
+
+      const result = await connector.fetchAllProducts();
+
+      expect(result).toHaveLength(150);
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle single page of products', async () => {
+      mockAxiosInstance.request.mockResolvedValueOnce({
+        status: 200,
+        data: [{ id: 1, name: 'Only Product' }],
+        headers: { 'x-wp-totalpages': '1' },
+      });
+
+      const result = await connector.fetchAllProducts();
+      expect(result).toHaveLength(1);
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('fetchCustomers', () => {
     it('should fetch paginated customers', async () => {
       const mockCustomers = [
@@ -203,6 +265,60 @@ describe('WooCommerceConnector', () => {
 
       const result = await connector.fetchCustomers({ page: 1, perPage: 100 });
       expect(result.data).toEqual(mockCustomers);
+    });
+  });
+
+  describe('fetchAllCustomers', () => {
+    it('should fetch all pages of customers', async () => {
+      const page1Customers = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        email: `user${i + 1}@test.com`,
+        first_name: `First${i + 1}`,
+        last_name: `Last${i + 1}`,
+        orders_count: i,
+        total_spent: String(i * 100),
+      }));
+      const page2Customers = [
+        {
+          id: 101,
+          email: 'last@test.com',
+          first_name: 'Last',
+          last_name: 'Customer',
+          orders_count: 1,
+          total_spent: '50.00',
+        },
+      ];
+
+      mockAxiosInstance.request
+        .mockResolvedValueOnce({
+          status: 200,
+          data: page1Customers,
+          headers: { 'x-wp-totalpages': '2' },
+        })
+        .mockResolvedValueOnce({
+          status: 200,
+          data: page2Customers,
+          headers: { 'x-wp-totalpages': '2' },
+        });
+
+      const result = await connector.fetchAllCustomers();
+
+      expect(result).toHaveLength(101);
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle missing x-wp-totalpages header (defaults to 1)', async () => {
+      mockAxiosInstance.request.mockResolvedValueOnce({
+        status: 200,
+        data: [{ id: 1, email: 'solo@test.com' }],
+        headers: {},
+      });
+
+      const result = await connector.fetchAllCustomers();
+
+      // With totalPages defaulting to 1, only one page is fetched
+      expect(result).toHaveLength(1);
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -258,5 +374,24 @@ describe('WooCommerceConnector', () => {
       expect(result).toBe(false);
       expect(mockAxiosInstance.request).toHaveBeenCalledTimes(1);
     });
+
+    it('should exhaust all retries and throw after MAX_RETRIES (3)', async () => {
+      const error503 = new Error('Service Unavailable');
+      (error503 as any).response = { status: 503 };
+
+      // Initial attempt + 3 retries = 4 calls total
+      mockAxiosInstance.request
+        .mockRejectedValueOnce(error503)
+        .mockRejectedValueOnce(error503)
+        .mockRejectedValueOnce(error503)
+        .mockRejectedValueOnce(error503);
+
+      // fetchOrders calls makeRequestWithHeaders which will throw after exhausting retries
+      await expect(connector.fetchOrders({ page: 1, perPage: 10 })).rejects.toThrow(
+        'Service Unavailable',
+      );
+
+      expect(mockAxiosInstance.request).toHaveBeenCalledTimes(4);
+    }, 30000);
   });
 });

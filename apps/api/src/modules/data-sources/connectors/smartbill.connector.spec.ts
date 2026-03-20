@@ -31,6 +31,22 @@ describe('SmartBillConnector', () => {
         }),
       );
     });
+
+    it('should handle empty credentials without throwing', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockedAxios.create.mockReturnValue({ request: jest.fn() } as any);
+      const c = new SmartBillConnector({ email: '', token: '' });
+      expect(c).toBeDefined();
+
+      const expectedAuth = Buffer.from(':').toString('base64');
+      expect(mockedAxios.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: `Basic ${expectedAuth}`,
+          }),
+        }),
+      );
+    });
   });
 
   describe('testConnection', () => {
@@ -98,6 +114,33 @@ describe('SmartBillConnector', () => {
       });
 
       expect(result).toHaveLength(0);
+    });
+
+    it('should request one more page when last page has exactly 100 items', async () => {
+      // Page 1: exactly 100 items → hasMore = true, fetches page 2
+      // Page 2: exactly 100 items → hasMore = true, fetches page 3
+      // Page 3: 0 items → hasMore = false, stops
+      const fullPage = Array(100).fill({
+        seriesName: 'FCT',
+        number: '001',
+        date: '2024-01-15',
+        clientName: 'Client',
+        totalValue: 100,
+      });
+
+      mockRequest
+        .mockResolvedValueOnce({ status: 200, data: { invoices: fullPage } })
+        .mockResolvedValueOnce({ status: 200, data: { invoices: fullPage } })
+        .mockResolvedValueOnce({ status: 200, data: { invoices: [] } });
+
+      const result = await connector.fetchInvoices({
+        cif: 'RO12345',
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      });
+
+      expect(result).toHaveLength(200);
+      expect(mockRequest).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -177,6 +220,44 @@ describe('SmartBillConnector', () => {
           endDate: '2024-01-02',
         }),
       ).rejects.toBeDefined();
+
+      expect(mockRequest).toHaveBeenCalledTimes(1);
+    });
+
+    it('should exhaust all retries and throw after MAX_RETRIES (3)', async () => {
+      const error500 = { response: { status: 500 }, isAxiosError: true };
+
+      // Initial attempt + 3 retries = 4 calls total
+      mockRequest
+        .mockRejectedValueOnce(error500)
+        .mockRejectedValueOnce(error500)
+        .mockRejectedValueOnce(error500)
+        .mockRejectedValueOnce(error500);
+
+      await expect(
+        connector.fetchInvoices({
+          cif: 'RO12345',
+          startDate: '2024-01-01',
+          endDate: '2024-01-02',
+        }),
+      ).rejects.toBeDefined();
+
+      // 1 initial + 3 retries = 4 total
+      expect(mockRequest).toHaveBeenCalledTimes(4);
+    }, 30000);
+
+    it('should throw immediately on network timeout (no response object)', async () => {
+      const timeoutError = new Error('timeout of 30000ms exceeded');
+      // No .response property → status is undefined → not 429 and not >= 500 → no retry
+      mockRequest.mockRejectedValueOnce(timeoutError);
+
+      await expect(
+        connector.fetchInvoices({
+          cif: 'RO12345',
+          startDate: '2024-01-01',
+          endDate: '2024-01-02',
+        }),
+      ).rejects.toThrow('timeout of 30000ms exceeded');
 
       expect(mockRequest).toHaveBeenCalledTimes(1);
     });

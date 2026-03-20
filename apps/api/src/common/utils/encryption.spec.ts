@@ -70,5 +70,65 @@ describe('Encryption Utils', () => {
       expect(parsed).toHaveProperty('encrypted');
       expect(parsed).toHaveProperty('tag');
     });
+
+    it('should throw on malformed JSON input in decryptFromString', () => {
+      expect(() => decryptFromString('not-valid-json', testKey)).toThrow();
+    });
+
+    it('should throw on incomplete JSON object (missing fields)', () => {
+      const incomplete = JSON.stringify({ iv: 'abc123' });
+      expect(() => decryptFromString(incomplete, testKey)).toThrow();
+    });
+
+    it('should throw on empty string input in decryptFromString', () => {
+      expect(() => decryptFromString('', testKey)).toThrow();
+    });
+  });
+
+  describe('ENCRYPTION_KEY env var', () => {
+    const originalEnv = process.env['ENCRYPTION_KEY'];
+
+    afterEach(() => {
+      if (originalEnv !== undefined) {
+        process.env['ENCRYPTION_KEY'] = originalEnv;
+      } else {
+        delete process.env['ENCRYPTION_KEY'];
+      }
+    });
+
+    it('should throw when ENCRYPTION_KEY is missing and no key override provided', () => {
+      delete process.env['ENCRYPTION_KEY'];
+      expect(() => encrypt('test')).toThrow('ENCRYPTION_KEY environment variable is required');
+    });
+
+    it('should throw when ENCRYPTION_KEY is missing for decrypt', () => {
+      delete process.env['ENCRYPTION_KEY'];
+      const encrypted = encrypt('test', testKey);
+      expect(() => decrypt(encrypted)).toThrow('ENCRYPTION_KEY environment variable is required');
+    });
+
+    it('should use ENCRYPTION_KEY from env when no override is provided', () => {
+      process.env['ENCRYPTION_KEY'] = testKey.toString('hex');
+      const encrypted = encrypt('env-key-test');
+      const decrypted = decrypt(encrypted);
+      expect(decrypted).toBe('env-key-test');
+    });
+  });
+
+  describe('large data handling', () => {
+    it('should encrypt and decrypt a 10KB string', () => {
+      const largeString = 'A'.repeat(10 * 1024);
+      const encrypted = encrypt(largeString, testKey);
+      const decrypted = decrypt(encrypted, testKey);
+      expect(decrypted).toBe(largeString);
+      expect(decrypted.length).toBe(10 * 1024);
+    });
+
+    it('should round-trip 10KB through string serialization', () => {
+      const largeString = 'B'.repeat(10 * 1024);
+      const encStr = encryptToString(largeString, testKey);
+      const decrypted = decryptFromString(encStr, testKey);
+      expect(decrypted).toBe(largeString);
+    });
   });
 });
