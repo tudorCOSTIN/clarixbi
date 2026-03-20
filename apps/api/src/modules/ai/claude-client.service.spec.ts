@@ -82,14 +82,15 @@ describe('ClaudeClientService', () => {
     mockCreate
       .mockRejectedValueOnce(overloadedError)
       .mockRejectedValueOnce(overloadedError)
+      .mockRejectedValueOnce(overloadedError)
       .mockRejectedValueOnce(overloadedError);
 
     const result = await service.generateSQL('system', 'test');
 
-    expect(mockCreate).toHaveBeenCalledTimes(3);
+    expect(mockCreate).toHaveBeenCalledTimes(4); // 1 initial + 3 retries
     expect(result.error).toBe('AI unavailable');
     expect(result.tokensUsed).toBe(0);
-  }, 30000);
+  }, 60000);
 
   it('should not retry on non-529 errors', async () => {
     const otherError = new Error('Bad request');
@@ -104,11 +105,43 @@ describe('ClaudeClientService', () => {
   });
 
   it('should handle timeout', async () => {
-    // Mock a very slow response
+    // Mock a very slow response — use 0 retries for faster test
     mockCreate.mockImplementation(() => new Promise((resolve) => setTimeout(resolve, 60000)));
 
-    const result = await service.generateSQL('system', 'test');
+    const result = await service.generateSQL('system', 'test', 0);
 
     expect(result.error).toBe('AI unavailable');
   }, 35000);
+
+  it('should respect maxRetries parameter (0 = no retry)', async () => {
+    const overloadedError = new Error('Overloaded');
+    (overloadedError as unknown as { status: number }).status = 529;
+
+    mockCreate.mockRejectedValue(overloadedError);
+
+    const result = await service.generateSQL('system', 'test', 0);
+
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+    expect(result.error).toBe('AI unavailable');
+  });
+
+  it('should support custom maxRetries (5 for Enterprise)', async () => {
+    const overloadedError = new Error('Overloaded');
+    (overloadedError as unknown as { status: number }).status = 529;
+
+    mockCreate
+      .mockRejectedValueOnce(overloadedError)
+      .mockRejectedValueOnce(overloadedError)
+      .mockRejectedValueOnce(overloadedError)
+      .mockRejectedValueOnce(overloadedError)
+      .mockResolvedValueOnce({
+        content: [{ type: 'text', text: '```sql\nSELECT 1\n```' }],
+        usage: { input_tokens: 10, output_tokens: 5 },
+      });
+
+    const result = await service.generateSQL('system', 'test', 5);
+
+    expect(mockCreate).toHaveBeenCalledTimes(5);
+    expect(result.sql).toBe('SELECT 1');
+  }, 60000);
 });

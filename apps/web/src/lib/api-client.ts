@@ -42,7 +42,13 @@ export async function apiClient<T = any>(path: string, options: FetchOptions = {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message || `API error: ${response.status}`);
+
+    // Preserve error code for downstream handling
+    const errorMessage = error.error
+      ? `${error.error}: ${error.message || `API error: ${response.status}`}`
+      : error.message || `API error: ${response.status}`;
+
+    throw new Error(errorMessage);
   }
 
   return response.json();

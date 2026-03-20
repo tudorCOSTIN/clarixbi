@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, LayoutDashboard, Database, Sparkles } from 'lucide-react';
+import { Home, LayoutDashboard, Database, Sparkles, FileText, Bell } from 'lucide-react';
 import { AiUsageBadge } from '@/components/ai/AiUsageBadge';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +31,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             >
               <Database className="h-4 w-4" />
               Data Sources
+            </Link>
+            <Link
+              href="/reports"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              <FileText className="h-4 w-4" />
+              Reports
+            </Link>
+            <Link
+              href="/alerts"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              <Bell className="h-4 w-4" />
+              Alerts
             </Link>
             <Link
               href="/ai"

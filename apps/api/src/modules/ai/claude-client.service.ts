@@ -13,7 +13,6 @@ export class ClaudeClientService {
   private readonly logger = new Logger(ClaudeClientService.name);
   private client: Anthropic;
   private readonly model = 'claude-sonnet-4-5-20250514';
-  private readonly maxRetries = 3;
   private readonly timeout = 30000;
 
   constructor() {
@@ -22,10 +21,15 @@ export class ClaudeClientService {
     });
   }
 
-  async generateSQL(systemPrompt: string, userMessage: string): Promise<ClaudeResponse> {
+  async generateSQL(
+    systemPrompt: string,
+    userMessage: string,
+    maxRetries = 3,
+  ): Promise<ClaudeResponse> {
     let lastError: Error | null = null;
+    const attempts = maxRetries + 1; // maxRetries=0 means 1 attempt
 
-    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
       try {
         const response = await Promise.race([
           this.client.messages.create({
@@ -58,23 +62,28 @@ export class ClaudeClientService {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         const statusCode = (error as { status?: number })?.status;
+        const isRetryable =
+          statusCode === 529 ||
+          statusCode === 500 ||
+          statusCode === 502 ||
+          statusCode === 503 ||
+          lastError.message === 'Request timeout';
 
-        if (statusCode === 529 && attempt < this.maxRetries) {
+        if (isRetryable && attempt < attempts) {
           const delay = Math.pow(2, attempt) * 1000;
           this.logger.warn(
-            `Claude API overloaded (529), retry ${attempt}/${this.maxRetries} in ${delay}ms`,
+            `Claude API failed (${statusCode || 'timeout'}), retry ${attempt}/${attempts - 1} in ${delay}ms`,
           );
           await new Promise((resolve) => setTimeout(resolve, delay));
           continue;
         }
 
-        if (statusCode !== 529) {
-          break;
-        }
+        // Non-retryable error or out of retries — break immediately
+        break;
       }
     }
 
-    this.logger.error(`Claude API failed after ${this.maxRetries} retries: ${lastError?.message}`);
+    this.logger.error(`Claude API failed after retries: ${lastError?.message}`);
     return {
       text: '',
       sql: null,

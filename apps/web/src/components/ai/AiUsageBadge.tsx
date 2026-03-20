@@ -7,6 +7,7 @@ interface UsageData {
   used: number;
   limit: number;
   percentage: number;
+  tier: string;
 }
 
 export function AiUsageBadge() {
@@ -24,20 +25,39 @@ export function AiUsageBadge() {
       }
     };
     fetchUsage();
+    // Refresh every 60 seconds
+    const interval = setInterval(fetchUsage, 60_000);
+    return () => clearInterval(interval);
   }, []);
 
   if (!usage) return null;
 
   const colorClass =
-    usage.percentage > 90
-      ? 'text-red-600 bg-red-50'
+    usage.percentage > 85
+      ? 'text-red-600'
       : usage.percentage > 70
-        ? 'text-amber-600 bg-amber-50'
-        : 'text-green-600 bg-green-50';
+        ? 'text-amber-600'
+        : 'text-green-600';
+
+  const barColor =
+    usage.percentage > 85 ? 'bg-red-500' : usage.percentage > 70 ? 'bg-amber-500' : 'bg-green-500';
+
+  const bgColor =
+    usage.percentage > 85 ? 'bg-red-50' : usage.percentage > 70 ? 'bg-amber-50' : 'bg-green-50';
 
   return (
-    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${colorClass}`}>
-      {usage.used}/{usage.limit}
+    <span
+      className={`inline-flex items-center gap-1.5 text-[10px] font-medium px-1.5 py-0.5 rounded-full ${colorClass} ${bgColor}`}
+    >
+      <span>
+        {usage.used}/{usage.limit}
+      </span>
+      <span className="w-8 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <span
+          className={`block h-full rounded-full transition-all ${barColor}`}
+          style={{ width: `${Math.min(usage.percentage, 100)}%` }}
+        />
+      </span>
     </span>
   );
 }

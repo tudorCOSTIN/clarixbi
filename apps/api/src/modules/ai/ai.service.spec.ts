@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AiService } from './ai.service';
+import { AiRateLimitService } from './ai-rate-limit.service';
 import { ClaudeClientService } from './claude-client.service';
 import { SqlValidatorService } from './sql-validator.service';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
@@ -38,6 +39,21 @@ describe('AiService', () => {
     query: jest.fn(),
   };
 
+  const mockRateLimitService = {
+    checkAndIncrement: jest.fn().mockResolvedValue({
+      allowed: true,
+      usage: { used: 1, limit: 500, percentage: 0.2, resetsAt: '2026-04-01', tier: 'pro' },
+    }),
+    getRetryConfig: jest.fn().mockResolvedValue({ maxRetries: 3, notifyOnFinalFailure: false }),
+    getUsage: jest.fn().mockResolvedValue({
+      used: 42,
+      limit: 500,
+      percentage: 8.4,
+      resetsAt: '2026-04-01',
+      tier: 'pro',
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -47,11 +63,21 @@ describe('AiService', () => {
         { provide: ClaudeClientService, useValue: mockClaudeClient },
         { provide: SqlValidatorService, useValue: mockSqlValidator },
         { provide: ClickHouseService, useValue: mockClickhouse },
+        { provide: AiRateLimitService, useValue: mockRateLimitService },
       ],
     }).compile();
 
     service = module.get<AiService>(AiService);
     jest.clearAllMocks();
+    // Reset rate limit mock default
+    mockRateLimitService.checkAndIncrement.mockResolvedValue({
+      allowed: true,
+      usage: { used: 1, limit: 500, percentage: 0.2, resetsAt: '2026-04-01', tier: 'pro' },
+    });
+    mockRateLimitService.getRetryConfig.mockResolvedValue({
+      maxRetries: 3,
+      notifyOnFinalFailure: false,
+    });
   });
 
   describe('createConversation', () => {
@@ -107,6 +133,7 @@ describe('AiService', () => {
       expect(result.data).toHaveLength(5);
       expect(result.chartType).toBe('bar');
       expect(result.chartConfig).toBeDefined();
+      expect(mockRateLimitService.checkAndIncrement).toHaveBeenCalledWith(orgId, userId);
     });
 
     it('should return KPI chart for single row single numeric', async () => {
@@ -200,18 +227,49 @@ describe('AiService', () => {
         }),
       );
     });
+
+    it('should block with 429 when rate limited', async () => {
+      mockRateLimitService.checkAndIncrement.mockResolvedValue({
+        allowed: false,
+        usage: { used: 100, limit: 100, percentage: 100, resetsAt: '2026-04-01', tier: 'starter' },
+      });
+
+      await expect(service.sendMessage(orgId, userId, convId, 'test query')).rejects.toThrow(
+        'Ai atins limita de interogari AI',
+      );
+    });
+
+    it('should pass plan-based retry config to Claude client', async () => {
+      mockRateLimitService.getRetryConfig.mockResolvedValue({
+        maxRetries: 5,
+        notifyOnFinalFailure: true,
+      });
+
+      mockClaudeClient.generateSQL.mockResolvedValue({
+        text: 'Result',
+        sql: null,
+        tokensUsed: 50,
+      });
+
+      await service.sendMessage(orgId, userId, convId, 'test');
+
+      expect(mockClaudeClient.generateSQL).toHaveBeenCalledWith(
+        expect.any(String),
+        'test',
+        5, // Enterprise maxRetries
+      );
+    });
   });
 
   describe('getUsage', () => {
-    it('should return usage stats', async () => {
-      mockMsgRepo.count.mockResolvedValue(42);
-
+    it('should delegate to rate limit service', async () => {
       const usage = await service.getUsage(orgId);
 
+      expect(mockRateLimitService.getUsage).toHaveBeenCalledWith(orgId);
       expect(usage.used).toBe(42);
       expect(usage.limit).toBe(500);
       expect(usage.percentage).toBe(8.4);
-      expect(usage.resetsAt).toBeDefined();
+      expect(usage.tier).toBe('pro');
     });
   });
 });

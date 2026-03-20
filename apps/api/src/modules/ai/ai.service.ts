@@ -1,9 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ClaudeClientService } from './claude-client.service';
 import { SqlValidatorService } from './sql-validator.service';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
+import { AiRateLimitService, AiUsageInfo } from './ai-rate-limit.service';
 import { AIConversation } from './entities/ai-conversation.entity';
 import { AIMessage, AIMessageRole } from './entities/ai-message.entity';
 
@@ -68,6 +69,7 @@ export class AiService {
     private claudeClient: ClaudeClientService,
     private sqlValidator: SqlValidatorService,
     private clickhouse: ClickHouseService,
+    private rateLimitService: AiRateLimitService,
   ) {}
 
   async createConversation(orgId: string, userId: string): Promise<AIConversation> {
@@ -120,6 +122,20 @@ export class AiService {
   ): Promise<SendMessageResult> {
     const startTime = Date.now();
 
+    // Check rate limit before Claude API call
+    const { allowed, usage } = await this.rateLimitService.checkAndIncrement(orgId, userId);
+    if (!allowed) {
+      throw new HttpException(
+        {
+          error: 'AI_RATE_LIMIT',
+          message: 'Ai atins limita de interogari AI. Upgradeaza planul.',
+          used: usage.used,
+          limit: usage.limit,
+        },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
     // Get or verify conversation
     const conversation = await this.conversationRepo.findOne({
       where: { id: conversationId, org_id: orgId },
@@ -143,8 +159,15 @@ export class AiService {
     // Build system prompt
     const systemPrompt = this.buildSystemPrompt(schema, orgId, lang);
 
-    // Call Claude API
-    const claudeResponse = await this.claudeClient.generateSQL(systemPrompt, userMessage);
+    // Get retry config based on plan
+    const retryConfig = await this.rateLimitService.getRetryConfig(orgId);
+
+    // Call Claude API with plan-based retry
+    const claudeResponse = await this.claudeClient.generateSQL(
+      systemPrompt,
+      userMessage,
+      retryConfig.maxRetries,
+    );
 
     if (claudeResponse.error) {
       const errorMsg =
@@ -233,34 +256,8 @@ export class AiService {
     };
   }
 
-  async getUsage(orgId: string): Promise<{
-    used: number;
-    limit: number;
-    percentage: number;
-    resetsAt: string;
-  }> {
-    // Count messages this month
-    const now = new Date();
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-    const used = await this.messageRepo.count({
-      where: {
-        role: AIMessageRole.USER,
-        conversation: { org_id: orgId },
-      },
-      relations: ['conversation'],
-    });
-
-    // For now, use a default limit of 500 (will be plan-based in Sprint 9)
-    const limit = 500;
-    const percentage = Math.round((used / limit) * 1000) / 10;
-
-    return {
-      used,
-      limit,
-      percentage,
-      resetsAt: nextMonth.toISOString().split('T')[0] as string,
-    };
+  async getUsage(orgId: string): Promise<AiUsageInfo> {
+    return this.rateLimitService.getUsage(orgId);
   }
 
   private detectLanguage(text: string): 'ro' | 'en' {
@@ -276,17 +273,12 @@ export class AiService {
 
     for (const table of AVAILABLE_TABLES) {
       try {
-        // Get column info
-        const columns = await this.clickhouse.query<{
-          name: string;
-          type: string;
-        }>(
+        const columns = await this.clickhouse.query<{ name: string; type: string }>(
           `SELECT name, type FROM system.columns WHERE database = currentDatabase() AND table = '${table}' ORDER BY position`,
         );
 
         if (columns.length === 0) continue;
 
-        // Get sample values
         let samples: Record<string, unknown>[] = [];
         try {
           samples = await this.clickhouse.query(
@@ -368,7 +360,6 @@ Grouping: GROUP BY, ORDER BY, HAVING, LIMIT`;
     const firstRow = data[0]!;
     const columns = Object.keys(firstRow);
 
-    // KPI: 1 row, 1 numeric column
     if (data.length === 1) {
       const numericCols = columns.filter(
         (c) => typeof firstRow[c] === 'number' || !isNaN(Number(firstRow[c])),
@@ -376,7 +367,6 @@ Grouping: GROUP BY, ORDER BY, HAVING, LIMIT`;
       if (numericCols.length === 1 && columns.length <= 2) return 'kpi';
     }
 
-    // Identify column types from first row
     const stringCols = columns.filter(
       (c) => typeof firstRow[c] === 'string' && isNaN(Number(firstRow[c])),
     );
@@ -390,10 +380,7 @@ Grouping: GROUP BY, ORDER BY, HAVING, LIMIT`;
       return /^\d{4}-\d{2}/.test(val) || /^\d{4}\d{2}$/.test(val);
     });
 
-    // Line: has date column
     if (data.length > 1 && dateCols.length > 0) return 'line';
-
-    // Pie: 1 string + 1 numeric, few categories
     if (data.length > 1 && stringCols.length >= 1 && numericCols.length >= 1) {
       if (data.length < 5) return 'pie';
       return 'bar';
