@@ -73,6 +73,25 @@ export const QUEUE_CONFIGS: QueueConfig[] = [
       removeOnFail: 500,
     },
   },
+  {
+    name: 'gdpr-hard-delete',
+    concurrency: 1,
+    defaultJobOptions: {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 5000 },
+      removeOnComplete: 50,
+      removeOnFail: 500,
+    },
+  },
+  {
+    name: 'gdpr-export',
+    concurrency: 2,
+    defaultJobOptions: {
+      attempts: 2,
+      removeOnComplete: 50,
+      removeOnFail: 500,
+    },
+  },
 ];
 
 export const queues: Record<string, Queue> = {};
@@ -90,3 +109,5 @@ export const syncCsvQueue = queues['sync-csv']!;
 export const reportsGenerateQueue = queues['reports-generate']!;
 export const reportsEmailQueue = queues['reports-email']!;
 export const alertsCheckQueue = queues['alerts-check']!;
+export const gdprHardDeleteQueue = queues['gdpr-hard-delete']!;
+export const gdprExportQueue = queues['gdpr-export']!;

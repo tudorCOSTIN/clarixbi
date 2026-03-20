@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -16,6 +17,7 @@ export class AuthController {
 
   @Public()
   @Post('callback')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Exchange Auth0 authorization code for JWT tokens' })
   async callback(@Body() dto: AuthCallbackDto, @Res({ passthrough: true }) res: Response) {
     const auth0Profile = await this.authService.validateAuth0Token(dto.code);
@@ -52,6 +54,7 @@ export class AuthController {
 
   @Public()
   @Post('magic-link')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Send magic link email via Auth0 Passwordless' })
   async magicLink(@Body() dto: MagicLinkDto) {
     await this.authService.sendMagicLink(dto.email);

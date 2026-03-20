@@ -5,7 +5,7 @@ import { routing } from './i18n/routing';
 const intlMiddleware = createMiddleware(routing);
 
 // Paths that don't require authentication
-const publicPaths = ['/login', '/signup', '/callback', '/d/'];
+const publicPaths = ['/login', '/signup', '/callback', '/d/', '/legal'];
 
 function isPublicPath(pathname: string): boolean {
   // Remove locale prefix (e.g., /ro/login → /login)

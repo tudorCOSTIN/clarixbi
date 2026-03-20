@@ -58,6 +58,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <footer className="border-t border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-center gap-6 px-4 py-4">
+          <Link
+            href="/legal/terms"
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Terms
+          </Link>
+          <Link
+            href="/legal/privacy"
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/legal/cookies"
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Cookies
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }

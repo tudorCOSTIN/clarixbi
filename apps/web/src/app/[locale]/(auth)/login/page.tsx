@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [gdprConsent, setGdprConsent] = useState(false);
 
   const handleGoogleLogin = () => {
     const domain = process.env['NEXT_PUBLIC_AUTH0_DOMAIN'];
@@ -53,10 +54,42 @@ export default function LoginPage() {
         <p className="mt-2 text-sm text-gray-500">{t('signInTitle')}</p>
       </div>
 
+      {/* GDPR Consent */}
+      <div className="mb-6 flex items-start gap-2">
+        <input
+          id="gdpr-consent"
+          type="checkbox"
+          checked={gdprConsent}
+          onChange={(e) => setGdprConsent(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-blue focus:ring-primary-blue"
+        />
+        <label htmlFor="gdpr-consent" className="text-xs text-gray-600">
+          {t('gdprConsent')}{' '}
+          <a
+            href="/legal/terms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-blue hover:underline"
+          >
+            {t('termsLink')}
+          </a>{' '}
+          {t('andText')}{' '}
+          <a
+            href="/legal/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-blue hover:underline"
+          >
+            {t('privacyLink')}
+          </a>
+        </label>
+      </div>
+
       {/* Google OAuth Button */}
       <button
         onClick={handleGoogleLogin}
-        className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+        disabled={!gdprConsent}
+        className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -114,7 +147,7 @@ export default function LoginPage() {
           {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
           <button
             type="submit"
-            disabled={isLoading || !email}
+            disabled={isLoading || !email || !gdprConsent}
             className="mt-4 w-full rounded-lg bg-primary-blue px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isLoading ? t('sending') : t('sendMagicLink')}

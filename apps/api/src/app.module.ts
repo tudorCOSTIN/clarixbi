@@ -1,8 +1,12 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import { dataSourceOptions } from './config/database.config';
 import { getLoggerConfig } from './common/logger';
+import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -21,11 +25,19 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ClickHouseModule } from './modules/clickhouse/clickhouse.module';
+import { GdprModule } from './modules/gdpr/gdpr.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot(dataSourceOptions),
     LoggerModule.forRoot(getLoggerConfig()),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
+    ScheduleModule.forRoot(),
     ClickHouseModule,
     HealthModule,
     AuthModule,
@@ -44,6 +56,13 @@ import { ClickHouseModule } from './modules/clickhouse/clickhouse.module';
     OnboardingModule,
     SettingsModule,
     AdminModule,
+    GdprModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerBehindProxyGuard,
+    },
   ],
 })
 export class AppModule {}

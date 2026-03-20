@@ -11,7 +11,125 @@
     "magicLinkSent": "Link-ul magic a fost trimis! Verifica-ti email-ul.",
     "magicLinkError": "Nu am putut trimite link-ul magic. Incearca din nou.",
     "tryAgain": "Incearca din nou",
-    "termsNotice": "Prin conectare, accepti Termenii si Conditiile ClarixBI."
+    "termsNotice": "Prin conectare, accepti Termenii si Conditiile ClarixBI.",
+    "gdprConsent": "Sunt de acord cu",
+    "termsLink": "Termenii si Conditiile",
+    "andText": "si",
+    "privacyLink": "Politica de Confidentialitate"
+  },
+  "cookies": {
+    "message": "Folosim cookie-uri pentru a imbunatati experienta ta pe ClarixBI. Unele cookie-uri sunt necesare pentru functionarea platformei, iar altele ne ajuta sa intelegem cum folosesti serviciul.",
+    "acceptAll": "Accepta toate",
+    "necessaryOnly": "Doar necesare",
+    "cookiePolicy": "Politica de cookie-uri"
+  },
+  "legal": {
+    "terms": {
+      "title": "Termeni si Conditii",
+      "lastUpdated": "Ultima actualizare: Martie 2026",
+      "draft": "Acest document este un draft si va fi revizuit de un jurist.",
+      "definitions": {
+        "title": "1. Definitii",
+        "content": "\"ClarixBI\" se refera la platforma de business intelligence operata de ClarixBI SRL. \"Utilizator\" se refera la orice persoana fizica sau juridica care se inregistreaza si utilizeaza Serviciul. \"Serviciu\" se refera la aplicatia web ClarixBI, API-urile si toate functionalitatile conexe. \"Date\" se refera la orice informatie incarcata, procesata sau generata prin intermediul Serviciului."
+      },
+      "services": {
+        "title": "2. Servicii",
+        "content": "ClarixBI ofera o platforma cloud de business intelligence care permite utilizatorilor sa conecteze surse de date, sa creeze dashboard-uri, sa genereze rapoarte si sa utilizeze analiza de date bazata pe inteligenta artificiala. Serviciul este oferit \"ca atare\" si poate fi actualizat, modificat sau intrerupt oricand cu notificare rezonabila catre utilizatori."
+      },
+      "userObligations": {
+        "title": "3. Obligatiile Utilizatorului",
+        "content": "Utilizatorii sunt de acord: (a) sa furnizeze informatii de inregistrare corecte; (b) sa mentina confidentialitatea credentialelor contului; (c) sa utilizeze Serviciul doar in scopuri legale; (d) sa nu incerce sa faca inginerie inversa, decompilare sau dezasamblare a oricarei parti a Serviciului; (e) sa nu incarce continut malitios sau date care incalca drepturile tertilor; (f) sa respecte toate legile si reglementarile aplicabile, inclusiv GDPR."
+      },
+      "intellectualProperty": {
+        "title": "4. Proprietate Intelectuala",
+        "content": "Toate drepturile de proprietate intelectuala asupra Serviciului, inclusiv software, design, marci inregistrate si documentatie, raman proprietatea exclusiva a ClarixBI SRL. Utilizatorii pastreaza toate drepturile asupra datelor lor incarcate in Serviciu. Prin utilizarea Serviciului, utilizatorii acorda ClarixBI o licenta limitata de a procesa datele lor exclusiv in scopul furnizarii Serviciului."
+      },
+      "limitation": {
+        "title": "5. Limitarea Responsabilitatii",
+        "content": "In masura maxima permisa de lege, ClarixBI SRL nu va fi responsabila pentru nicio dauna indirecta, incidentala, speciala, consecventiala sau punitiva, incluzand dar fara a se limita la pierderea profiturilor, datelor sau oportunitatilor de afaceri, rezultata din sau in legatura cu utilizarea Serviciului. Responsabilitatea totala a ClarixBI nu va depasi sumele platite de utilizator in cele douasprezece (12) luni anterioare reclamatiei."
+      },
+      "termination": {
+        "title": "6. Incetare",
+        "content": "Oricare parte poate inceta acordul in orice moment. Utilizatorii isi pot sterge contul prin pagina de setari. La incetare, ClarixBI va sterge datele utilizatorului in termen de 30 de zile, cu exceptia cazului in care pastrarea este ceruta de lege. ClarixBI isi rezerva dreptul de a suspenda sau inceta conturile care incalca acesti termeni."
+      },
+      "governingLaw": {
+        "title": "7. Legea Aplicabila",
+        "content": "Acesti Termeni sunt guvernati si interpretati in conformitate cu legile din Romania. Orice dispute rezultate din acesti Termeni vor fi supuse jurisdictiei exclusive a instantelor din Bucuresti, Romania. Pentru consumatorii din UE, se aplica dispozitiile obligatorii de protectie a consumatorilor din tara lor de rezidenta."
+      }
+    },
+    "privacy": {
+      "title": "Politica de Confidentialitate",
+      "lastUpdated": "Ultima actualizare: Martie 2026",
+      "draft": "Acest document este un draft si va fi revizuit de un jurist.",
+      "controller": {
+        "title": "1. Operatorul de Date",
+        "content": "ClarixBI SRL, inregistrata in Romania, actioneaza ca operator de date personale pentru datele prelucrate prin platforma ClarixBI. Pentru orice intrebari privind prelucrarea datelor, ne puteti contacta la privacy@clarixbi.com."
+      },
+      "dataCollected": {
+        "title": "2. Datele pe care le Colectam",
+        "content": "Colectam: (a) Date de cont: nume, adresa de email si informatii de autentificare furnizate la inregistrare; (b) Date de utilizare: cum interactionati cu platforma, functionalitati utilizate si marcaje temporale; (c) Date de business: datele pe care le incarcati sau conectati prin sursele de date (facturi, comenzi, date de vanzari); (d) Date tehnice: adresa IP, tipul browserului, informatii despre dispozitiv si cookie-uri; (e) Date de comunicare: cererile de suport si feedback-ul pe care ni le trimiteti."
+      },
+      "legalBasis": {
+        "title": "3. Baza Legala pentru Prelucrare",
+        "content": "Prelucram datele dumneavoastra personale pe baza: (a) Executarea contractului — pentru a furniza Serviciul la care v-ati abonat; (b) Interes legitim — pentru analiza, securitate si imbunatatirea serviciului; (c) Consimtamant — pentru cookie-uri optionale de analiza si comunicari de marketing; (d) Obligatie legala — pentru conformitate fiscala, contabila si de reglementare."
+      },
+      "retention": {
+        "title": "4. Pastrarea Datelor",
+        "content": "Pastram datele dumneavoastra personale atat timp cat contul este activ sau cat este necesar pentru a furniza Serviciul. Dupa stergerea contului, stergem datele in termen de 30 de zile, cu exceptia cazului in care pastrarea este ceruta de lege (de ex., inregistrarile fiscale pot fi pastrate pana la 10 ani conform legislatiei romanesti). Datele de analiza de utilizare sunt anonimizate dupa 24 de luni."
+      },
+      "rights": {
+        "title": "5. Drepturile Tale (GDPR)",
+        "intro": "In conformitate cu Regulamentul General privind Protectia Datelor (GDPR), aveti urmatoarele drepturi:",
+        "access": "Dreptul de acces — Puteti solicita o copie a tuturor datelor personale pe care le detinem despre dumneavoastra.",
+        "rectification": "Dreptul la rectificare — Puteti solicita corectarea datelor personale inexacte.",
+        "erasure": "Dreptul la stergere — Puteti solicita stergerea datelor personale (\"dreptul de a fi uitat\").",
+        "portability": "Dreptul la portabilitatea datelor — Puteti solicita datele intr-un format structurat, citibil automat.",
+        "restriction": "Dreptul la restrictionare — Puteti solicita limitarea modului in care prelucram datele dumneavoastra.",
+        "objection": "Dreptul de opozitie — Puteti obiecta la prelucrarea bazata pe interes legitim sau pentru marketing direct."
+      },
+      "transfers": {
+        "title": "6. Transferuri Internationale",
+        "content": "Datele dumneavoastra sunt prelucrate in principal in Spatiul Economic European (SEE). Acolo unde datele sunt transferate in afara SEE, ne asiguram ca exista masuri de protectie adecvate, cum ar fi Clauzele Contractuale Standard (CCS) aprobate de Comisia Europeana. Furnizorul nostru de analiza (PostHog) prelucreaza datele in UE (eu.posthog.com)."
+      },
+      "contact": {
+        "title": "7. Contact",
+        "content": "Pentru orice intrebari legate de confidentialitate sau pentru a va exercita drepturile GDPR, contactati-ne la: privacy@clarixbi.com. Aveti, de asemenea, dreptul de a depune o plangere la Autoritatea Nationala de Supraveghere a Prelucrarii Datelor cu Caracter Personal (ANSPDCP) la anspdcp.ro."
+      }
+    },
+    "cookies": {
+      "title": "Politica de Cookie-uri",
+      "lastUpdated": "Ultima actualizare: Martie 2026",
+      "whatAreCookies": {
+        "title": "Ce sunt cookie-urile?",
+        "content": "Cookie-urile sunt fisiere text mici stocate pe dispozitivul dumneavoastra cand vizitati un site web. Ele ajuta site-ul sa isi aminteasca preferintele dumneavoastra si sa inteleaga cum utilizati serviciul."
+      },
+      "necessary": {
+        "title": "Cookie-uri necesare",
+        "content": "Aceste cookie-uri sunt esentiale pentru functionarea corecta a platformei. Includ: cookie-uri de sesiune pentru autentificare (access_token), preferinte de limba si preferinte de consimtamant pentru cookie-uri. Aceste cookie-uri nu pot fi dezactivate deoarece sunt necesare pentru functionarea Serviciului."
+      },
+      "analytics": {
+        "title": "Cookie-uri de analiza",
+        "content": "Folosim PostHog (eu.posthog.com) pentru analiza, pentru a intelege cum interactioneaza utilizatorii cu ClarixBI. PostHog prelucreaza datele in UE si ne ajuta sa imbunatatim platforma. Cookie-urile de analiza sunt activate doar cu consimtamantul dumneavoastra explicit. Puteti renunta oricand prin bannerul de cookie-uri sau setarile browserului."
+      },
+      "manage": {
+        "title": "Gestionarea preferintelor",
+        "content": "Puteti gestiona preferintele cookie-urilor oricand stergand cookie-urile browserului si revisitand ClarixBI — bannerul de consimtamant va aparea din nou. Puteti, de asemenea, configura browserul sa blocheze sau sa stearga cookie-urile. Retineti ca blocarea cookie-urilor necesare poate impiedica functionarea corecta a platformei."
+      }
+    }
+  },
+  "settings": {
+    "title": "Setari",
+    "yourData": "Datele tale",
+    "dataDescription": "Poti solicita un export al tuturor datelor tale personale stocate in ClarixBI.",
+    "exportData": "Exporta toate datele mele",
+    "exportRequested": "Cererea ta a fost inregistrata. Vei primi un email cand exportul este gata.",
+    "dangerZone": "Zona periculoasa",
+    "deleteAccount": "Sterge contul",
+    "deleteConfirmTitle": "Esti sigur?",
+    "deleteConfirmMessage": "Aceasta actiune este ireversibila. Toate datele tale vor fi sterse permanent dupa 30 de zile.",
+    "deleteConfirmLabel": "Scrie DELETE pentru a confirma",
+    "deleteConfirmButton": "Sterge contul permanent",
+    "cancel": "Anuleaza"
   },
   "connect": {
     "title": "Conecteaza sursa de date",

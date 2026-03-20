@@ -11,7 +11,125 @@
     "magicLinkSent": "Magic link sent! Check your email.",
     "magicLinkError": "Could not send magic link. Please try again.",
     "tryAgain": "Try again",
-    "termsNotice": "By signing in, you agree to ClarixBI Terms and Conditions."
+    "termsNotice": "By signing in, you agree to ClarixBI Terms and Conditions.",
+    "gdprConsent": "I agree to the",
+    "termsLink": "Terms and Conditions",
+    "andText": "and",
+    "privacyLink": "Privacy Policy"
+  },
+  "cookies": {
+    "message": "We use cookies to improve your experience on ClarixBI. Some cookies are necessary for the platform to work, while others help us understand how you use the service.",
+    "acceptAll": "Accept all",
+    "necessaryOnly": "Necessary only",
+    "cookiePolicy": "Cookie Policy"
+  },
+  "legal": {
+    "terms": {
+      "title": "Terms and Conditions",
+      "lastUpdated": "Last updated: March 2026",
+      "draft": "This document is a draft and will be reviewed by a lawyer.",
+      "definitions": {
+        "title": "1. Definitions",
+        "content": "\"ClarixBI\" refers to the business intelligence platform operated by ClarixBI SRL. \"User\" refers to any individual or legal entity that registers for and uses the Service. \"Service\" refers to the ClarixBI web application, APIs, and all related features. \"Data\" refers to any information uploaded, processed, or generated through the Service."
+      },
+      "services": {
+        "title": "2. Services",
+        "content": "ClarixBI provides a cloud-based business intelligence platform that allows users to connect data sources, create dashboards, generate reports, and use AI-powered data analysis. The Service is provided \"as is\" and may be updated, modified, or discontinued at any time with reasonable notice to users."
+      },
+      "userObligations": {
+        "title": "3. User Obligations",
+        "content": "Users agree to: (a) provide accurate registration information; (b) maintain the confidentiality of their account credentials; (c) use the Service only for lawful purposes; (d) not attempt to reverse engineer, decompile, or disassemble any part of the Service; (e) not upload malicious content or data that infringes on third-party rights; (f) comply with all applicable laws and regulations, including GDPR."
+      },
+      "intellectualProperty": {
+        "title": "4. Intellectual Property",
+        "content": "All intellectual property rights in the Service, including software, designs, trademarks, and documentation, remain the exclusive property of ClarixBI SRL. Users retain all rights to their data uploaded to the Service. By using the Service, users grant ClarixBI a limited license to process their data solely for the purpose of providing the Service."
+      },
+      "limitation": {
+        "title": "5. Limitation of Liability",
+        "content": "To the maximum extent permitted by law, ClarixBI SRL shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or business opportunities, arising out of or in connection with the use of the Service. ClarixBI's total liability shall not exceed the amounts paid by the user in the twelve (12) months preceding the claim."
+      },
+      "termination": {
+        "title": "6. Termination",
+        "content": "Either party may terminate the agreement at any time. Users may delete their account through the settings page. Upon termination, ClarixBI will delete the user's data within 30 days, unless retention is required by law. ClarixBI reserves the right to suspend or terminate accounts that violate these terms."
+      },
+      "governingLaw": {
+        "title": "7. Governing Law",
+        "content": "These Terms are governed by and construed in accordance with the laws of Romania. Any disputes arising from these Terms shall be subject to the exclusive jurisdiction of the courts of Bucharest, Romania. For EU consumers, mandatory consumer protection provisions of their country of residence shall apply."
+      }
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "lastUpdated": "Last updated: March 2026",
+      "draft": "This document is a draft and will be reviewed by a lawyer.",
+      "controller": {
+        "title": "1. Data Controller",
+        "content": "ClarixBI SRL, registered in Romania, acts as the data controller for personal data processed through the ClarixBI platform. For any questions regarding data processing, you may contact us at privacy@clarixbi.com."
+      },
+      "dataCollected": {
+        "title": "2. Data We Collect",
+        "content": "We collect: (a) Account data: name, email address, and authentication information provided during registration; (b) Usage data: how you interact with the platform, features used, and timestamps; (c) Business data: data you upload or connect through data sources (invoices, orders, sales data); (d) Technical data: IP address, browser type, device information, and cookies; (e) Communication data: support requests and feedback you send us."
+      },
+      "legalBasis": {
+        "title": "3. Legal Basis for Processing",
+        "content": "We process your personal data based on: (a) Contract performance — to provide the Service you subscribed to; (b) Legitimate interest — for analytics, security, and service improvement; (c) Consent — for optional analytics cookies and marketing communications; (d) Legal obligation — for tax, accounting, and regulatory compliance."
+      },
+      "retention": {
+        "title": "4. Data Retention",
+        "content": "We retain your personal data for as long as your account is active or as needed to provide the Service. After account deletion, we delete your data within 30 days, except where retention is required by law (e.g., tax records may be retained for up to 10 years as required by Romanian law). Usage analytics data is anonymized after 24 months."
+      },
+      "rights": {
+        "title": "5. Your Rights (GDPR)",
+        "intro": "Under the General Data Protection Regulation (GDPR), you have the following rights:",
+        "access": "Right of access — You can request a copy of all personal data we hold about you.",
+        "rectification": "Right to rectification — You can request correction of inaccurate personal data.",
+        "erasure": "Right to erasure — You can request deletion of your personal data (\"right to be forgotten\").",
+        "portability": "Right to data portability — You can request your data in a structured, machine-readable format.",
+        "restriction": "Right to restriction — You can request that we limit how we process your data.",
+        "objection": "Right to object — You can object to processing based on legitimate interest or for direct marketing."
+      },
+      "transfers": {
+        "title": "6. International Transfers",
+        "content": "Your data is primarily processed within the European Economic Area (EEA). Where data is transferred outside the EEA, we ensure appropriate safeguards are in place, such as Standard Contractual Clauses (SCCs) approved by the European Commission. Our analytics provider (PostHog) processes data in the EU (eu.posthog.com)."
+      },
+      "contact": {
+        "title": "7. Contact",
+        "content": "For any privacy-related inquiries or to exercise your GDPR rights, contact us at: privacy@clarixbi.com. You also have the right to lodge a complaint with the Romanian National Supervisory Authority for Personal Data Processing (ANSPDCP) at anspdcp.ro."
+      }
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "lastUpdated": "Last updated: March 2026",
+      "whatAreCookies": {
+        "title": "What are cookies?",
+        "content": "Cookies are small text files stored on your device when you visit a website. They help the website remember your preferences and understand how you use the service."
+      },
+      "necessary": {
+        "title": "Necessary cookies",
+        "content": "These cookies are essential for the platform to function properly. They include: session cookies for authentication (access_token), locale preferences, and cookie consent preferences. These cookies cannot be disabled as they are required for the Service to work."
+      },
+      "analytics": {
+        "title": "Analytics cookies",
+        "content": "We use PostHog (eu.posthog.com) for analytics to understand how users interact with ClarixBI. PostHog processes data in the EU and helps us improve the platform. Analytics cookies are only activated with your explicit consent. You can opt out at any time through the cookie banner or browser settings."
+      },
+      "manage": {
+        "title": "Managing your preferences",
+        "content": "You can manage your cookie preferences at any time by clearing your browser cookies and revisiting ClarixBI — the consent banner will appear again. You can also configure your browser to block or delete cookies. Note that blocking necessary cookies may prevent the platform from functioning correctly."
+      }
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "yourData": "Your Data",
+    "dataDescription": "You can request an export of all your personal data stored in ClarixBI.",
+    "exportData": "Export all my data",
+    "exportRequested": "Your request has been registered. You will receive an email when the export is ready.",
+    "dangerZone": "Danger Zone",
+    "deleteAccount": "Delete account",
+    "deleteConfirmTitle": "Are you sure?",
+    "deleteConfirmMessage": "This action is irreversible. All your data will be permanently deleted after 30 days.",
+    "deleteConfirmLabel": "Type DELETE to confirm",
+    "deleteConfirmButton": "Permanently delete account",
+    "cancel": "Cancel"
   },
   "connect": {
     "title": "Connect your data source",
