@@ -5,11 +5,12 @@ import { useParams, useRouter } from 'next/navigation';
 import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
-import { ArrowLeft, Pencil, Loader2 } from 'lucide-react';
+import { ArrowLeft, Pencil, Loader2, Share2, Download, Copy, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WidgetCard } from '@/components/dashboard/WidgetCard';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { apiClient } from '@/lib/api-client';
+import { ShareModal } from '@/components/dashboard/ShareModal';
 
 const ResponsiveGrid = WidthProvider(Responsive);
 
@@ -34,6 +35,7 @@ export default function DashboardViewPage() {
   const router = useRouter();
   const dashboardId = params.id as string;
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
 
   useEffect(() => {
     apiClient<{ data: DashboardData }>(`/organizations/current/dashboards/${dashboardId}`)
@@ -76,13 +78,82 @@ export default function DashboardViewPage() {
             )}
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/dashboards/${dashboardId}/edit`)}
-        >
-          <Pencil className="h-4 w-4 mr-1" /> Edit
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
+            <Share2 className="h-4 w-4 mr-1" /> Partajeaza
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                const res = await fetch(
+                  `${process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000/api/v1'}/organizations/current/dashboards/${dashboardId}/export`,
+                  {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format: 'pdf' }),
+                    credentials: 'include',
+                  },
+                );
+                if (!res.ok) throw new Error('Export failed');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${dashboard?.name || 'dashboard'}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                // ignore
+              }
+            }}
+          >
+            <Download className="h-4 w-4 mr-1" /> Exporta PDF
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                const res = await apiClient<{ data: { id: string } }>(
+                  `/organizations/current/dashboards/${dashboardId}/duplicate`,
+                  { method: 'POST' },
+                );
+                router.push(`/dashboards/${res.data.id}`);
+              } catch {
+                // ignore
+              }
+            }}
+          >
+            <Copy className="h-4 w-4 mr-1" /> Cloneaza
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/dashboards/${dashboardId}/edit`)}
+          >
+            <Pencil className="h-4 w-4 mr-1" /> Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-500 hover:text-red-700"
+            onClick={async () => {
+              if (!confirm('Sterge dashboard-ul?')) return;
+              try {
+                await apiClient(`/organizations/current/dashboards/${dashboardId}`, {
+                  method: 'DELETE',
+                });
+                router.push('/dashboards');
+              } catch {
+                // ignore
+              }
+            }}
+          >
+            <Trash2 className="h-4 w-4 mr-1" /> Sterge
+          </Button>
+        </div>
       </div>
 
       <FilterBar />
@@ -126,6 +197,12 @@ export default function DashboardViewPage() {
           </ResponsiveGrid>
         )}
       </div>
+      <ShareModal
+        dashboardId={dashboardId}
+        orgId="current"
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+      />
     </div>
   );
 }

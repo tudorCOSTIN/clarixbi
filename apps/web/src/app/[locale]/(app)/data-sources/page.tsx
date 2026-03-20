@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Loader2,
   Database,
+  Trash2,
 } from 'lucide-react';
 
 interface DataSource {
@@ -213,7 +214,12 @@ export default function DataSourcesPage() {
             const isSyncing = ds.status === 'syncing' || syncingIds.has(ds.id);
 
             return (
-              <Card key={ds.id} className="transition-shadow hover:shadow-md">
+              <Card
+                key={ds.id}
+                className="transition-shadow hover:shadow-md cursor-pointer"
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                onClick={() => router.push(`/data-sources/${ds.id}` as any)}
+              >
                 <CardHeader className="flex flex-row items-center gap-3">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-lg ${config.iconBg}`}
@@ -243,7 +249,10 @@ export default function DataSourcesPage() {
                     size="sm"
                     className="w-full"
                     disabled={isSyncing}
-                    onClick={() => handleSync(ds.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSync(ds.id);
+                    }}
                   >
                     {isSyncing ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -251,6 +260,26 @@ export default function DataSourcesPage() {
                       <RefreshCw className="mr-2 h-4 w-4" />
                     )}
                     {isSyncing ? t('syncInProgress') : t('syncNow')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full text-red-500 mt-2"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!confirm('Sterge sursa de date?')) return;
+                      try {
+                        await apiClient(`/organizations/current/data-sources/${ds.id}`, {
+                          method: 'DELETE',
+                        });
+                        setDataSources((prev) => prev.filter((d) => d.id !== ds.id));
+                      } catch {
+                        // ignore
+                      }
+                    }}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Sterge
                   </Button>
                 </CardContent>
               </Card>

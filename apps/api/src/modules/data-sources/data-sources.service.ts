@@ -229,6 +229,26 @@ export class DataSourcesService {
     return JSON.parse(decryptFromString(ds.credentials_encrypted));
   }
 
+  async updateDataSource(
+    orgId: string,
+    id: string,
+    dto: { name?: string; sync_interval_minutes?: number },
+  ): Promise<DataSourceEntity> {
+    const ds = await this.findOne(orgId, id);
+    if (dto.name !== undefined) ds.name = dto.name;
+    if (dto.sync_interval_minutes !== undefined)
+      ds.sync_interval_minutes = dto.sync_interval_minutes;
+    return this.dataSourceRepo.save(ds);
+  }
+
+  async deleteDataSource(orgId: string, id: string): Promise<void> {
+    const ds = await this.findOne(orgId, id);
+    if (ds.status === DataSourceStatus.SYNCING) {
+      await this.dataSourceRepo.update(id, { status: DataSourceStatus.DISCONNECTED });
+    }
+    await this.dataSourceRepo.softRemove(ds);
+  }
+
   private async testCredentials(
     type: DataSourceType,
     credentials: Record<string, string>,

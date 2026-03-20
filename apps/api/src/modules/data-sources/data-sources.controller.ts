@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -143,5 +144,24 @@ export class DataSourcesController {
       skip: (page - 1) * limit,
     });
     return { data: logs, total, page, limit };
+  }
+
+  @Patch(':id')
+  async updateDataSource(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { name?: string; sync_interval_minutes?: number },
+  ) {
+    const ds = await this.dataSourcesService.updateDataSource(orgId, id, dto);
+    return { data: ds };
+  }
+
+  @Delete(':id')
+  async deleteDataSource(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    await this.dataSourcesService.deleteDataSource(orgId, id);
+    return { data: { message: 'Data source deleted' } };
   }
 }

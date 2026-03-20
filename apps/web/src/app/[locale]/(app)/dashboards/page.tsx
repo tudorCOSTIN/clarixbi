@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, LayoutDashboard, Pencil, Trash2, Calendar, Loader2 } from 'lucide-react';
+import { Plus, LayoutDashboard, Pencil, Trash2, Calendar, Loader2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { apiClient } from '@/lib/api-client';
@@ -37,6 +37,20 @@ export default function DashboardsPage() {
       setDashboards((prev) => prev.filter((d) => d.id !== id));
     } catch (err) {
       console.error('Delete failed:', err);
+    }
+  };
+
+  const handleClone = async (id: string) => {
+    try {
+      const res = await apiClient<{ data: Dashboard }>(
+        `/organizations/current/dashboards/${id}/duplicate`,
+        {
+          method: 'POST',
+        },
+      );
+      setDashboards((prev) => [res.data, ...prev]);
+    } catch (err) {
+      console.error('Clone failed:', err);
     }
   };
 
@@ -85,6 +99,17 @@ export default function DashboardsPage() {
                     </CardTitle>
                   </Link>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleClone(d.id);
+                      }}
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

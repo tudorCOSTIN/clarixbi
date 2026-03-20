@@ -93,6 +93,7 @@ describe('DataSourcesService', () => {
   let mockFind: jest.Mock;
   let mockFindOne: jest.Mock;
   let mockUpdate: jest.Mock;
+  let mockSoftRemove: jest.Mock;
   let mockClickhouseQuery: jest.Mock;
 
   beforeEach(async () => {
@@ -103,6 +104,7 @@ describe('DataSourcesService', () => {
     mockFind = jest.fn().mockResolvedValue([]);
     mockFindOne = jest.fn();
     mockUpdate = jest.fn().mockResolvedValue({});
+    mockSoftRemove = jest.fn().mockResolvedValue({});
     mockClickhouseQuery = jest.fn().mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -116,6 +118,7 @@ describe('DataSourcesService', () => {
             find: mockFind,
             findOne: mockFindOne,
             update: mockUpdate,
+            softRemove: mockSoftRemove,
           },
         },
         {
@@ -646,6 +649,79 @@ describe('DataSourcesService', () => {
       mockFindOne.mockResolvedValue(null);
 
       await expect(service.getPreview('org-123', 'ds-missing')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ===== updateDataSource =====
+
+  describe('updateDataSource', () => {
+    it('should update name only', async () => {
+      mockFindOne.mockResolvedValue(makeDataSource({ id: 'ds-1', name: 'Old Name' }));
+
+      const result = await service.updateDataSource('org-123', 'ds-1', { name: 'New Name' });
+
+      expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'New Name' }));
+      expect(result).toBeDefined();
+    });
+
+    it('should update sync_interval_minutes only', async () => {
+      mockFindOne.mockResolvedValue(makeDataSource({ id: 'ds-1', sync_interval_minutes: 15 }));
+
+      await service.updateDataSource('org-123', 'ds-1', { sync_interval_minutes: 60 });
+
+      expect(mockSave).toHaveBeenCalledWith(expect.objectContaining({ sync_interval_minutes: 60 }));
+    });
+
+    it('should update both name and interval', async () => {
+      mockFindOne.mockResolvedValue(makeDataSource());
+
+      await service.updateDataSource('org-123', 'ds-1', {
+        name: 'Updated',
+        sync_interval_minutes: 120,
+      });
+
+      expect(mockSave).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'Updated', sync_interval_minutes: 120 }),
+      );
+    });
+
+    it('should throw NotFoundException for non-existent data source', async () => {
+      mockFindOne.mockResolvedValue(null);
+
+      await expect(
+        service.updateDataSource('org-123', 'ds-missing', { name: 'X' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ===== deleteDataSource =====
+
+  describe('deleteDataSource', () => {
+    it('should soft remove the data source', async () => {
+      const ds = makeDataSource({ status: DataSourceStatus.ACTIVE });
+      mockFindOne.mockResolvedValue(ds);
+
+      await service.deleteDataSource('org-123', 'ds-1');
+
+      expect(mockSoftRemove).toHaveBeenCalledWith(ds);
+    });
+
+    it('should set status to disconnected if currently syncing before delete', async () => {
+      const ds = makeDataSource({ status: DataSourceStatus.SYNCING });
+      mockFindOne.mockResolvedValue(ds);
+
+      await service.deleteDataSource('org-123', 'ds-1');
+
+      expect(mockUpdate).toHaveBeenCalledWith('ds-1', { status: DataSourceStatus.DISCONNECTED });
+      expect(mockSoftRemove).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException for non-existent data source', async () => {
+      mockFindOne.mockResolvedValue(null);
+
+      await expect(service.deleteDataSource('org-123', 'ds-missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
