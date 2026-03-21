@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/http-exception.filter';
 import { validateEnvironment } from './config/env.validation';
 
 async function bootstrap() {
@@ -16,6 +17,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
+
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   if (process.env['SENTRY_DSN']) {
     app.useGlobalFilters(new SentryGlobalFilter());

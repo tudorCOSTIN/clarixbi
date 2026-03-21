@@ -1,6 +1,9 @@
+import { Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { dataSourceOptions } from '../config/database.config';
 import { Plan } from '../modules/billing/entities/plan.entity';
+
+const logger = new Logger('SeedPlans');
 
 async function seed() {
   const dataSource = new DataSource(dataSourceOptions);
@@ -88,18 +91,18 @@ async function seed() {
     const existing = await planRepo.findOne({ where: { name: planData.name } });
     if (existing) {
       await planRepo.update(existing.id, planData);
-      console.log(`Updated plan: ${planData.name}`);
+      logger.log(`Updated plan: ${planData.name}`);
     } else {
       await planRepo.save(planRepo.create(planData));
-      console.log(`Created plan: ${planData.name}`);
+      logger.log(`Created plan: ${planData.name}`);
     }
   }
 
-  console.log('Seed completed successfully.');
+  logger.log('Seed completed successfully.');
   await dataSource.destroy();
 }
 
 seed().catch((err) => {
-  console.error('Seed failed:', err);
+  logger.error('Seed failed:', err);
   process.exit(1);
 });
