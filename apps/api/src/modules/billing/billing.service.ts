@@ -5,6 +5,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { LessThan, Repository, DataSource } from 'typeorm';
 import { Plan } from './entities/plan.entity';
 import { Subscription, SubscriptionStatus, BillingPeriod } from './entities/subscription.entity';
+import { EmailService } from '../email/email.service';
+import { User } from '../users/entities/user.entity';
 
 export interface UsageInfo {
   dataSources: { used: number; limit: number };
@@ -25,8 +27,11 @@ export class BillingService {
     private subscriptionRepo: Repository<Subscription>,
     @InjectRepository(Plan)
     private planRepo: Repository<Plan>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
     private configService: ConfigService,
     private dataSource: DataSource,
+    private emailService: EmailService,
   ) {
     this.stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || '';
     this.appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
@@ -566,6 +571,30 @@ export class BillingService {
         sub.plan_id = starterPlan.id;
       }
       await this.subscriptionRepo.save(sub);
+
+      // Send trial expired email to org owner
+      await this.notifyOrgOwner(sub.org_id, (email) => this.emailService.sendTrialExpired(email));
+    }
+
+    // Send reminders for trials expiring soon (3 days, 1 day)
+    for (const daysLeft of [3, 1]) {
+      const reminderDate = new Date(now);
+      reminderDate.setDate(reminderDate.getDate() + daysLeft);
+      const nextDay = new Date(reminderDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+
+      const expiringTrials = await this.subscriptionRepo
+        .createQueryBuilder('sub')
+        .where('sub.status = :status', { status: SubscriptionStatus.TRIALING })
+        .andWhere('sub.trial_ends_at >= :start', { start: reminderDate })
+        .andWhere('sub.trial_ends_at < :end', { end: nextDay })
+        .getMany();
+
+      for (const sub of expiringTrials) {
+        await this.notifyOrgOwner(sub.org_id, (email) =>
+          this.emailService.sendTrialReminder(email, daysLeft),
+        );
+      }
     }
 
     if (expiredTrials.length > 0) {
@@ -591,6 +620,26 @@ export class BillingService {
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
+
+  private async notifyOrgOwner(
+    orgId: string,
+    sendFn: (email: string) => Promise<void>,
+  ): Promise<void> {
+    try {
+      const owner = await this.dataSource.query(
+        `SELECT u.email FROM users u
+         JOIN team_members tm ON tm.user_id = u.id
+         WHERE tm.org_id = $1 AND tm.role = 'owner'
+         LIMIT 1`,
+        [orgId],
+      );
+      if (owner?.[0]?.email) {
+        await sendFn(owner[0].email);
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to notify org owner for ${orgId}: ${error}`);
+    }
+  }
 
   private async findPlanOrFail(planId: string): Promise<Plan> {
     const plan = await this.planRepo.findOne({ where: { id: planId } });

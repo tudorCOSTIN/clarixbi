@@ -6,6 +6,8 @@ import { Repository, DataSource } from 'typeorm';
 import { BillingService } from './billing.service';
 import { Plan } from './entities/plan.entity';
 import { Subscription, SubscriptionStatus, BillingPeriod } from './entities/subscription.entity';
+import { User } from '../users/entities/user.entity';
+import { EmailService } from '../email/email.service';
 
 jest.mock('./billing.utils', () => ({
   encryptStripeId: jest.fn((id: string | null) => id),
@@ -16,12 +18,19 @@ type MockRepository<T extends Record<string, any> = any> = Partial<
   Record<keyof Repository<T>, jest.Mock>
 >;
 
+const createMockQueryBuilder = () => ({
+  where: jest.fn().mockReturnThis(),
+  andWhere: jest.fn().mockReturnThis(),
+  getMany: jest.fn().mockResolvedValue([]),
+});
+
 const createMockRepository = (): MockRepository => ({
   findOne: jest.fn(),
   find: jest.fn(),
   create: jest.fn(),
   save: jest.fn(),
   count: jest.fn(),
+  createQueryBuilder: jest.fn().mockReturnValue(createMockQueryBuilder()),
 });
 
 describe('BillingService', () => {
@@ -74,9 +83,20 @@ describe('BillingService', () => {
           },
         },
         {
+          provide: getRepositoryToken(User),
+          useValue: createMockRepository(),
+        },
+        {
           provide: DataSource,
           useValue: {
             query: jest.fn().mockResolvedValue([{ count: '0' }]),
+          },
+        },
+        {
+          provide: EmailService,
+          useValue: {
+            sendTrialExpired: jest.fn(),
+            sendTrialReminder: jest.fn(),
           },
         },
       ],

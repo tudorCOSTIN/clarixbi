@@ -4,9 +4,10 @@ import { TeamMember } from './entities/team-member.entity';
 import { TeamsService } from './teams.service';
 import { TeamsController, InviteAcceptController } from './teams.controller';
 import { BillingModule } from '../billing/billing.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TeamMember]), BillingModule],
+  imports: [TypeOrmModule.forFeature([TeamMember]), BillingModule, EmailModule],
   controllers: [TeamsController, InviteAcceptController],
   providers: [TeamsService],
   exports: [TeamsService],

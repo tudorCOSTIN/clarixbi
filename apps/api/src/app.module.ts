@@ -27,6 +27,8 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ClickHouseModule } from './modules/clickhouse/clickhouse.module';
 import { GdprModule } from './modules/gdpr/gdpr.module';
+import { EmailModule } from './modules/email/email.module';
+import { OverviewModule } from './modules/overview/overview.module';
 
 @Module({
   imports: [
@@ -58,6 +60,8 @@ import { GdprModule } from './modules/gdpr/gdpr.module';
     SettingsModule,
     AdminModule,
     GdprModule,
+    EmailModule,
+    OverviewModule,
   ],
   providers: [
     {

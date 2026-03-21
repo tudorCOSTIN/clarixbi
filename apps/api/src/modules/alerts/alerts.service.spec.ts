@@ -10,6 +10,7 @@ import { TeamMember } from '../teams/entities/team-member.entity';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { SqlValidatorService } from '../ai/sql-validator.service';
+import { EmailService } from '../email/email.service';
 
 describe('AlertsService', () => {
   let service: AlertsService;
@@ -60,6 +61,12 @@ describe('AlertsService', () => {
         { provide: ClickHouseService, useValue: mockClickhouse },
         { provide: NotificationsGateway, useValue: mockGateway },
         { provide: SqlValidatorService, useValue: mockSqlValidator },
+        {
+          provide: EmailService,
+          useValue: {
+            sendAlertTriggered: jest.fn(),
+          },
+        },
       ],
     }).compile();
 

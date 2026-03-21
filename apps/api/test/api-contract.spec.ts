@@ -169,6 +169,7 @@ import { OrgMemberGuard } from '../src/modules/auth/guards/org-member.guard';
 import { RolesGuard } from '../src/modules/auth/guards/roles.guard';
 import { PlanLimitGuard } from '../src/modules/billing/guards/plan-limit.guard';
 import { BillingService } from '../src/modules/billing/billing.service';
+import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -238,6 +239,15 @@ describe('ClarixBI API Contract Tests', () => {
         { provide: UsersService, useValue: stubUsersService },
         { provide: OrganizationsService, useValue: stubOrganizationsService },
         { provide: BillingService, useValue: stubBillingService },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'NEXT_PUBLIC_APP_URL') return 'http://localhost:3000';
+              return undefined;
+            }),
+          },
+        },
         { provide: getRepositoryToken(SyncJob), useValue: stubSyncJobRepo },
         {
           provide: getRepositoryToken(TeamMember),

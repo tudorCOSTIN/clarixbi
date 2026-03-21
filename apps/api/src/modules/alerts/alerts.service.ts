@@ -9,6 +9,7 @@ import { TeamMember } from '../teams/entities/team-member.entity';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
 import { SqlValidatorService } from '../ai/sql-validator.service';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AlertsService {
@@ -28,6 +29,7 @@ export class AlertsService {
     private clickhouse: ClickHouseService,
     private notificationsGateway: NotificationsGateway,
     private sqlValidator: SqlValidatorService,
+    private emailService: EmailService,
   ) {}
 
   async create(
@@ -316,15 +318,26 @@ export class AlertsService {
       threshold: Number(alert.threshold_value),
     });
 
-    // Email notification via Resend (simplified)
-    this.logger.log(`Email notification sent for alert ${alert.id}`);
-    // In production:
-    // await resend.emails.send({
-    //   from: 'ClarixBI <alerts@clarixbi.com>',
-    //   to: orgOwnerEmail,
-    //   subject: `Alert: ${alert.name}`,
-    //   html: `<p>Alert ${alert.name} triggered. Current value: ${currentValue}, Threshold: ${alert.threshold_value}</p>`,
-    // });
+    // Email notification to org members
+    for (const member of members) {
+      try {
+        const user = await this.teamMemberRepo
+          .createQueryBuilder('tm')
+          .innerJoinAndSelect('tm.user', 'user')
+          .where('tm.id = :id', { id: member.id })
+          .getOne();
+        if (user?.user?.email) {
+          await this.emailService.sendAlertTriggered(
+            user.user.email,
+            alert.name,
+            currentValue,
+            Number(alert.threshold_value),
+          );
+        }
+      } catch (emailError) {
+        this.logger.warn(`Failed to send alert email for member ${member.id}: ${emailError}`);
+      }
+    }
   }
 
   private async enforceAlertLimit(orgId: string): Promise<void> {

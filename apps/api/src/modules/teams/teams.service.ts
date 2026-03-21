@@ -8,12 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { TeamMember, TeamRole, InviteStatus } from './entities/team-member.entity';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class TeamsService {
   constructor(
     @InjectRepository(TeamMember)
     private teamMemberRepo: Repository<TeamMember>,
+    private emailService: EmailService,
   ) {}
 
   /**
@@ -55,7 +57,14 @@ export class TeamsService {
       invite_expires_at: expiresAt,
     });
 
-    return this.teamMemberRepo.save(member);
+    const saved = await this.teamMemberRepo.save(member);
+
+    // Send invite email
+    const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'http://localhost:3000';
+    const inviteUrl = `${appUrl}/invites/${inviteToken}/accept`;
+    await this.emailService.sendTeamInvite(email, orgId, 'Team Admin', inviteUrl);
+
+    return saved;
   }
 
   /**

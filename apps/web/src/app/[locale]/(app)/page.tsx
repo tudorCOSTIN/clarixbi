@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { KPICard } from '@/components/dashboard/KPICard';
 import { LineChartWidget } from '@/components/dashboard/LineChart';
 import { BarChartWidget } from '@/components/dashboard/BarChart';
-// import { apiClient } from '@/lib/api-client'; // Will be used when backend overview endpoint is ready
+import { apiClient } from '@/lib/api-client';
 import { Badge } from '@/components/ui/badge';
 
 interface OverviewData {
@@ -40,110 +40,52 @@ interface OverviewData {
   recentAlertTriggers: { id: string; alert_name: string; value: number; created_at: string }[];
 }
 
-// Generate demo data for the overview
-function getDemoData(): OverviewData {
-  const now = Date.now();
-  const day = 86400000;
-  return {
-    totalRevenue: 47850,
-    previousRevenue: 42100,
-    totalOrders: 342,
-    previousOrders: 310,
-    activeDataSources: 3,
-    activeAlerts: 2,
-    revenueTrend: Array.from({ length: 7 }, (_, i) => ({
-      date: new Date(now - (6 - i) * day).toLocaleDateString('ro-RO', {
-        month: 'short',
-        day: 'numeric',
-      }),
-      revenue: 5000 + Math.floor(Math.random() * 3000),
-    })),
-    topProducts: [
-      { name: 'Produs A', sales: 128 },
-      { name: 'Produs B', sales: 95 },
-      { name: 'Produs C', sales: 72 },
-      { name: 'Produs D', sales: 58 },
-      { name: 'Produs E', sales: 41 },
-    ],
-    recentSyncJobs: [
-      {
-        id: '1',
-        status: 'completed',
-        source_name: 'WooCommerce',
-        duration: 12,
-        rows_imported: 156,
-        created_at: new Date(now - 3600000).toISOString(),
-      },
-      {
-        id: '2',
-        status: 'completed',
-        source_name: 'SmartBill',
-        duration: 8,
-        rows_imported: 89,
-        created_at: new Date(now - 7200000).toISOString(),
-      },
-      {
-        id: '3',
-        status: 'failed',
-        source_name: 'CSV Upload',
-        duration: 2,
-        rows_imported: 0,
-        created_at: new Date(now - 14400000).toISOString(),
-      },
-      {
-        id: '4',
-        status: 'completed',
-        source_name: 'WooCommerce',
-        duration: 15,
-        rows_imported: 203,
-        created_at: new Date(now - 28800000).toISOString(),
-      },
-      {
-        id: '5',
-        status: 'completed',
-        source_name: 'SmartBill',
-        duration: 6,
-        rows_imported: 67,
-        created_at: new Date(now - 43200000).toISOString(),
-      },
-    ],
-    recentAlertTriggers: [
-      {
-        id: '1',
-        alert_name: 'Revenue drop',
-        value: -12.5,
-        created_at: new Date(now - 1800000).toISOString(),
-      },
-      {
-        id: '2',
-        alert_name: 'High order volume',
-        value: 45,
-        created_at: new Date(now - 10800000).toISOString(),
-      },
-    ],
-  };
-}
-
 export default function HomePage() {
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEmpty, setIsEmpty] = useState(false);
 
   useEffect(() => {
-    // Try to fetch real data, fallback to demo
-    // For now, use demo data since backend overview endpoint isn't built yet
-    const timer = setTimeout(() => {
-      setData(getDemoData());
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    apiClient<{ data: OverviewData }>('/organizations/current/overview')
+      .then((res) => {
+        setData(res.data);
+        // Consider empty if no data sources connected
+        setIsEmpty(res.data.activeDataSources === 0);
+      })
+      .catch(() => {
+        setIsEmpty(true);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <Loader2 className="h-8 w-8 animate-spin text-primary-blue" />
       </div>
     );
+  }
+
+  if (isEmpty && !data) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 space-y-4">
+        <Database className="h-16 w-16 text-gray-300" />
+        <h2 className="text-xl font-semibold text-gray-700">Bine ai venit in ClarixBI!</h2>
+        <p className="text-gray-500 text-center max-w-md">
+          Conecteaza prima sursa de date pentru a vedea statistici si dashboard-uri.
+        </p>
+        <Link href="/data-sources">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Conecteaza sursa de date
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
   }
 
   return (
@@ -152,6 +94,20 @@ export default function HomePage() {
         <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
         <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleTimeString()}</p>
       </div>
+
+      {isEmpty && (
+        <Card className="border-dashed border-2 border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-center gap-3">
+            <Database className="h-5 w-5 text-blue-500" />
+            <p className="text-sm text-blue-700">
+              Conecteaza prima sursa de date pentru a vedea statistici reale.{' '}
+              <Link href="/data-sources" className="font-medium underline">
+                Adauga sursa
+              </Link>
+            </p>
+          </div>
+        </Card>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -182,36 +138,42 @@ export default function HomePage() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Revenue Trend (7 days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <LineChartWidget
-              data={data.revenueTrend}
-              xKey="date"
-              yKeys={['revenue']}
-              colorScheme="primary"
-              height={220}
-            />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Top 5 Products</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <BarChartWidget
-              data={data.topProducts}
-              xKey="name"
-              yKeys={['sales']}
-              colorScheme="cool"
-              height={220}
-            />
-          </CardContent>
-        </Card>
-      </div>
+      {(data.revenueTrend.length > 0 || data.topProducts.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {data.revenueTrend.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Revenue Trend (7 days)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <LineChartWidget
+                  data={data.revenueTrend}
+                  xKey="date"
+                  yKeys={['revenue']}
+                  colorScheme="primary"
+                  height={220}
+                />
+              </CardContent>
+            </Card>
+          )}
+          {data.topProducts.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Top 5 Products</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <BarChartWidget
+                  data={data.topProducts}
+                  xKey="name"
+                  yKeys={['sales']}
+                  colorScheme="cool"
+                  height={220}
+                />
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
 
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -222,29 +184,33 @@ export default function HomePage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {data.recentSyncJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0"
-                >
-                  <div className="flex items-center gap-2">
-                    {job.status === 'completed' ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    )}
-                    <span className="text-sm font-medium text-gray-700">{job.source_name}</span>
+              {data.recentSyncJobs.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">No recent sync jobs</p>
+              ) : (
+                data.recentSyncJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0"
+                  >
+                    <div className="flex items-center gap-2">
+                      {job.status === 'completed' ? (
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-red-500" />
+                      )}
+                      <span className="text-sm font-medium text-gray-700">{job.source_name}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <span>{job.rows_imported} rows</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {job.duration}s
+                      </span>
+                      <span>{new Date(job.created_at).toLocaleTimeString()}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <span>{job.rows_imported} rows</span>
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {job.duration}s
-                    </span>
-                    <span>{new Date(job.created_at).toLocaleTimeString()}</span>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

@@ -12,6 +12,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { AiModule } from '../ai/ai.module';
 import { AuthModule } from '../auth/auth.module';
 import { BillingModule } from '../billing/billing.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BillingModule } from '../billing/billing.module';
     AiModule,
     AuthModule,
     BillingModule,
+    EmailModule,
   ],
   controllers: [AlertsController],
   providers: [AlertsService, AlertsCheckProcessor],

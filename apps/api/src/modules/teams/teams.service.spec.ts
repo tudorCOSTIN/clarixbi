@@ -4,6 +4,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { Repository } from 'typeorm';
 import { TeamsService } from './teams.service';
 import { TeamMember, TeamRole, InviteStatus } from './entities/team-member.entity';
+import { EmailService } from '../email/email.service';
 
 type MockRepository<T extends Record<string, any> = any> = Partial<
   Record<keyof Repository<T>, jest.Mock>
@@ -36,6 +37,12 @@ describe('TeamsService', () => {
         {
           provide: getRepositoryToken(TeamMember),
           useValue: repo,
+        },
+        {
+          provide: EmailService,
+          useValue: {
+            sendTeamInvite: jest.fn(),
+          },
         },
       ],
     }).compile();
