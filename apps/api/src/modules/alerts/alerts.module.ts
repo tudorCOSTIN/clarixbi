@@ -10,12 +10,16 @@ import { Notification } from '../notifications/entities/notification.entity';
 import { TeamMember } from '../teams/entities/team-member.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AiModule } from '../ai/ai.module';
+import { AuthModule } from '../auth/auth.module';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Alert, AlertTrigger, Subscription, Notification, TeamMember]),
     NotificationsModule,
     AiModule,
+    AuthModule,
+    BillingModule,
   ],
   controllers: [AlertsController],
   providers: [AlertsService, AlertsCheckProcessor],

@@ -12,6 +12,8 @@ import { TeamMember } from '../teams/entities/team-member.entity';
 import { Subscription } from '../billing/entities/subscription.entity';
 import { Notification } from '../notifications/entities/notification.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AuthModule } from '../auth/auth.module';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { NotificationsModule } from '../notifications/notifications.module';
       Notification,
     ]),
     NotificationsModule,
+    AuthModule,
+    BillingModule,
   ],
   controllers: [AiController],
   providers: [AiService, AiRateLimitService, ClaudeClientService, SqlValidatorService],

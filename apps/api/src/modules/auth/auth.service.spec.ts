@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { User } from '../users/entities/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
+import { BillingService } from '../billing/billing.service';
 
 // Mock ioredis — factory returns a constructor that yields our mock instance
 const mockRedis = {
@@ -89,6 +90,10 @@ describe('AuthService', () => {
         {
           provide: getRepositoryToken(TeamMember),
           useValue: { find: jest.fn(), create: jest.fn(), save: jest.fn() },
+        },
+        {
+          provide: BillingService,
+          useValue: { autoEnrollTrial: jest.fn().mockResolvedValue(undefined) },
         },
       ],
     }).compile();

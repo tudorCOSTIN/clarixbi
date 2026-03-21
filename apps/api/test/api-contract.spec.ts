@@ -136,6 +136,10 @@ const stubSyncJobRepo = {
   findAndCount: jest.fn().mockResolvedValue([[], 0]),
 };
 
+const stubBillingService = {
+  checkPlanLimit: jest.fn().mockResolvedValue(null),
+};
+
 // ---------------------------------------------------------------------------
 // Minimal module assembly (avoids bootstrapping the full AppModule which
 // requires real TypeORM, Redis, ClickHouse, BullMQ, etc.)
@@ -163,6 +167,8 @@ import { OrganizationsService } from '../src/modules/organizations/organizations
 import { JwtAuthGuard } from '../src/modules/auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../src/modules/auth/guards/org-member.guard';
 import { RolesGuard } from '../src/modules/auth/guards/roles.guard';
+import { PlanLimitGuard } from '../src/modules/billing/guards/plan-limit.guard';
+import { BillingService } from '../src/modules/billing/billing.service';
 import { Reflector } from '@nestjs/core';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -231,6 +237,7 @@ describe('ClarixBI API Contract Tests', () => {
         { provide: DataSourcesService, useValue: stubDataSourcesService },
         { provide: UsersService, useValue: stubUsersService },
         { provide: OrganizationsService, useValue: stubOrganizationsService },
+        { provide: BillingService, useValue: stubBillingService },
         { provide: getRepositoryToken(SyncJob), useValue: stubSyncJobRepo },
         {
           provide: getRepositoryToken(TeamMember),
@@ -246,6 +253,7 @@ describe('ClarixBI API Contract Tests', () => {
         JwtAuthGuard,
         OrgMemberGuard,
         RolesGuard,
+        PlanLimitGuard,
         Reflector,
       ],
     }).compile();
@@ -269,6 +277,16 @@ describe('ClarixBI API Contract Tests', () => {
   afterAll(async () => {
     await app?.close();
   });
+
+  // Helper to make authenticated requests
+  const authGet = (url: string) =>
+    request(app.getHttpServer()).get(url).set('Authorization', `Bearer ${validToken}`);
+  const authPost = (url: string) =>
+    request(app.getHttpServer()).post(url).set('Authorization', `Bearer ${validToken}`);
+  const authPatch = (url: string) =>
+    request(app.getHttpServer()).patch(url).set('Authorization', `Bearer ${validToken}`);
+  const authDelete = (url: string) =>
+    request(app.getHttpServer()).delete(url).set('Authorization', `Bearer ${validToken}`);
 
   // =========================================================================
   // Health
@@ -302,23 +320,24 @@ describe('ClarixBI API Contract Tests', () => {
   });
 
   // =========================================================================
-  // Dashboards — unauthenticated (controller has no guards → should be 200)
-  // Note: DashboardsController has NO auth guards, so unauthenticated
-  // requests will succeed. We test the actual behavior, not assumed behavior.
+  // Dashboards — protected by JwtAuthGuard + OrgMemberGuard + RolesGuard
   // =========================================================================
 
-  describe('Dashboards — no auth guard on controller', () => {
-    it('GET /api/v1/organizations/:orgId/dashboards → 200 (no guard)', async () => {
-      const res = await request(app.getHttpServer())
+  describe('Dashboards — protected', () => {
+    it('GET /api/v1/organizations/:orgId/dashboards → 401 (no JWT)', async () => {
+      await request(app.getHttpServer())
         .get(`/api/v1/organizations/${TEST_ORG_ID}/dashboards`)
-        .expect(200);
+        .expect(401);
+    });
+
+    it('GET /api/v1/organizations/:orgId/dashboards → 200 with JWT', async () => {
+      const res = await authGet(`/api/v1/organizations/${TEST_ORG_ID}/dashboards`).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('POST /api/v1/organizations/:orgId/dashboards → 201 (create)', async () => {
-      const res = await request(app.getHttpServer())
-        .post(`/api/v1/organizations/${TEST_ORG_ID}/dashboards`)
+      const res = await authPost(`/api/v1/organizations/${TEST_ORG_ID}/dashboards`)
         .send({ name: 'New Dashboard' })
         .expect(201);
       expect(res.body).toHaveProperty('data');
@@ -326,57 +345,57 @@ describe('ClarixBI API Contract Tests', () => {
     });
 
     it('GET /api/v1/organizations/:orgId/dashboards/:id → 200 (found)', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`)
-        .expect(200);
+      const res = await authGet(
+        `/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`,
+      ).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(res.body.data).toHaveProperty('id', TEST_DASHBOARD_ID);
     });
 
     it('GET /api/v1/organizations/:orgId/dashboards/:id → 404 (not found)', async () => {
-      await request(app.getHttpServer())
-        .get(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${MISSING_ID}`)
-        .expect(404);
+      await authGet(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${MISSING_ID}`).expect(404);
     });
 
     it('PATCH /api/v1/organizations/:orgId/dashboards/:id → 200 (update)', async () => {
-      const res = await request(app.getHttpServer())
-        .patch(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`)
+      const res = await authPatch(
+        `/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`,
+      )
         .send({ name: 'Updated' })
         .expect(200);
       expect(res.body).toHaveProperty('data');
     });
 
     it('DELETE /api/v1/organizations/:orgId/dashboards/:id → 200 (delete)', async () => {
-      const res = await request(app.getHttpServer())
-        .delete(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`)
-        .expect(200);
+      const res = await authDelete(
+        `/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`,
+      ).expect(200);
       expect(res.body.data).toHaveProperty('message');
     });
 
     it('rejects invalid UUID orgId → 400', async () => {
-      await request(app.getHttpServer())
-        .get('/api/v1/organizations/not-a-uuid/dashboards')
-        .expect(400);
+      await authGet('/api/v1/organizations/not-a-uuid/dashboards').expect(400);
     });
   });
 
   // =========================================================================
-  // Widgets — no auth guard on controller
+  // Widgets — protected
   // =========================================================================
 
-  describe('Widgets', () => {
+  describe('Widgets — protected', () => {
     const widgetsBase = `/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}/widgets`;
 
+    it('GET → 401 (no JWT)', async () => {
+      await request(app.getHttpServer()).get(widgetsBase).expect(401);
+    });
+
     it('GET → 200 (list)', async () => {
-      const res = await request(app.getHttpServer()).get(widgetsBase).expect(200);
+      const res = await authGet(widgetsBase).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('POST → 201 (create)', async () => {
-      const res = await request(app.getHttpServer())
-        .post(widgetsBase)
+      const res = await authPost(widgetsBase)
         .send({ type: 'bar', title: 'Revenue', config: {} })
         .expect(201);
       expect(res.body).toHaveProperty('data');
@@ -384,43 +403,50 @@ describe('ClarixBI API Contract Tests', () => {
   });
 
   // =========================================================================
-  // AI — no auth guard on controller
+  // AI — protected
   // =========================================================================
 
-  describe('AI', () => {
+  describe('AI — protected', () => {
     const aiBase = `/api/v1/organizations/${TEST_ORG_ID}/ai`;
 
+    it('GET /conversations → 401 (no JWT)', async () => {
+      await request(app.getHttpServer()).get(`${aiBase}/conversations`).expect(401);
+    });
+
     it('POST /conversations → 201', async () => {
-      const res = await request(app.getHttpServer()).post(`${aiBase}/conversations`).expect(201);
+      const res = await authPost(`${aiBase}/conversations`).expect(201);
       expect(res.body).toHaveProperty('data');
     });
 
     it('GET /conversations → 200 (list)', async () => {
-      const res = await request(app.getHttpServer()).get(`${aiBase}/conversations`).expect(200);
+      const res = await authGet(`${aiBase}/conversations`).expect(200);
       expect(res.body).toHaveProperty('data');
     });
 
     it('GET /usage → 200', async () => {
-      const res = await request(app.getHttpServer()).get(`${aiBase}/usage`).expect(200);
+      const res = await authGet(`${aiBase}/usage`).expect(200);
       expect(res.body).toHaveProperty('data');
     });
   });
 
   // =========================================================================
-  // Reports — no auth guard on controller
+  // Reports — protected
   // =========================================================================
 
-  describe('Reports', () => {
+  describe('Reports — protected', () => {
     const reportsBase = `/api/v1/organizations/${TEST_ORG_ID}/reports`;
 
+    it('GET → 401 (no JWT)', async () => {
+      await request(app.getHttpServer()).get(reportsBase).expect(401);
+    });
+
     it('GET → 200 (list)', async () => {
-      const res = await request(app.getHttpServer()).get(reportsBase).expect(200);
+      const res = await authGet(reportsBase).expect(200);
       expect(res.body).toHaveProperty('data');
     });
 
     it('POST → 201 (create)', async () => {
-      const res = await request(app.getHttpServer())
-        .post(reportsBase)
+      const res = await authPost(reportsBase)
         .send({
           name: 'Monthly Report',
           dashboardId: TEST_DASHBOARD_ID,
@@ -432,20 +458,23 @@ describe('ClarixBI API Contract Tests', () => {
   });
 
   // =========================================================================
-  // Alerts — no auth guard on controller
+  // Alerts — protected
   // =========================================================================
 
-  describe('Alerts', () => {
+  describe('Alerts — protected', () => {
     const alertsBase = `/api/v1/organizations/${TEST_ORG_ID}/alerts`;
 
+    it('GET → 401 (no JWT)', async () => {
+      await request(app.getHttpServer()).get(alertsBase).expect(401);
+    });
+
     it('GET → 200 (list)', async () => {
-      const res = await request(app.getHttpServer()).get(alertsBase).expect(200);
+      const res = await authGet(alertsBase).expect(200);
       expect(res.body).toHaveProperty('data');
     });
 
     it('POST → 201 (create)', async () => {
-      const res = await request(app.getHttpServer())
-        .post(alertsBase)
+      const res = await authPost(alertsBase)
         .send({
           name: 'High Error Rate',
           dataSourceId: TEST_DASHBOARD_ID,
@@ -460,14 +489,18 @@ describe('ClarixBI API Contract Tests', () => {
   });
 
   // =========================================================================
-  // Data Sources — no auth guard on controller
+  // Data Sources — protected
   // =========================================================================
 
-  describe('Data Sources', () => {
+  describe('Data Sources — protected', () => {
     const dsBase = `/api/v1/organizations/${TEST_ORG_ID}/data-sources`;
 
+    it('GET → 401 (no JWT)', async () => {
+      await request(app.getHttpServer()).get(dsBase).expect(401);
+    });
+
     it('GET → 200 (list)', async () => {
-      const res = await request(app.getHttpServer()).get(dsBase).expect(200);
+      const res = await authGet(dsBase).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBe(true);
     });
@@ -483,10 +516,7 @@ describe('ClarixBI API Contract Tests', () => {
     });
 
     it('GET /api/v1/users/me → 200 with valid JWT', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/v1/users/me')
-        .set('Authorization', `Bearer ${validToken}`)
-        .expect(200);
+      const res = await authGet('/api/v1/users/me').expect(200);
       expect(res.body).toHaveProperty('data');
     });
 
@@ -519,11 +549,7 @@ describe('ClarixBI API Contract Tests', () => {
     });
 
     it('POST /api/v1/organizations → 201 with valid JWT', async () => {
-      const res = await request(app.getHttpServer())
-        .post('/api/v1/organizations')
-        .set('Authorization', `Bearer ${validToken}`)
-        .send({ name: 'Acme Corp' })
-        .expect(201);
+      const res = await authPost('/api/v1/organizations').send({ name: 'Acme Corp' }).expect(201);
       expect(res.body).toHaveProperty('data');
     });
   });
@@ -534,10 +560,7 @@ describe('ClarixBI API Contract Tests', () => {
 
   describe('Auth — authenticated', () => {
     it('GET /api/v1/auth/me → 200 with valid JWT', async () => {
-      const res = await request(app.getHttpServer())
-        .get('/api/v1/auth/me')
-        .set('Authorization', `Bearer ${validToken}`)
-        .expect(200);
+      const res = await authGet('/api/v1/auth/me').expect(200);
       expect(res.body).toHaveProperty('data');
     });
   });
@@ -548,35 +571,31 @@ describe('ClarixBI API Contract Tests', () => {
 
   describe('Response envelope format', () => {
     it('list endpoints return { data: [...] }', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/v1/organizations/${TEST_ORG_ID}/dashboards`)
-        .expect(200);
+      const res = await authGet(`/api/v1/organizations/${TEST_ORG_ID}/dashboards`).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBe(true);
     });
 
     it('detail endpoints return { data: {...} }', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`)
-        .expect(200);
+      const res = await authGet(
+        `/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`,
+      ).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(typeof res.body.data).toBe('object');
       expect(Array.isArray(res.body.data)).toBe(false);
     });
 
     it('paginated endpoints return { data: [...], total: number }', async () => {
-      const res = await request(app.getHttpServer())
-        .get(`/api/v1/organizations/${TEST_ORG_ID}/reports`)
-        .expect(200);
+      const res = await authGet(`/api/v1/organizations/${TEST_ORG_ID}/reports`).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(res.body).toHaveProperty('total');
       expect(typeof res.body.total).toBe('number');
     });
 
     it('delete endpoints return { data: { message: string } }', async () => {
-      const res = await request(app.getHttpServer())
-        .delete(`/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`)
-        .expect(200);
+      const res = await authDelete(
+        `/api/v1/organizations/${TEST_ORG_ID}/dashboards/${TEST_DASHBOARD_ID}`,
+      ).expect(200);
       expect(res.body).toHaveProperty('data');
       expect(res.body.data).toHaveProperty('message');
       expect(typeof res.body.data.message).toBe('string');

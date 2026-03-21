@@ -8,30 +8,39 @@ import {
   Param,
   Query,
   ParseUUIDPipe,
-  Req,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OrgMemberGuard } from '../auth/guards/org-member.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtUser } from '../auth/interfaces/jwt-user.interface';
+import { TeamRole } from '../teams/entities/team-member.entity';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ScheduleReportDto } from './dto/schedule-report.dto';
 
 @Controller('organizations/:orgId/reports')
+@UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Post()
+  @Roles(TeamRole.EDITOR)
   async create(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Body() dto: CreateReportDto,
-    @Req() req: { user?: { id: string } },
+    @CurrentUser() user: JwtUser,
   ) {
-    const userId = req.user?.id || orgId;
-    const report = await this.reportsService.create(orgId, userId, dto);
+    const report = await this.reportsService.create(orgId, user.id, dto);
     return { data: report };
   }
 
   @Get()
+  @Roles(TeamRole.VIEWER)
   async list(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Query('page') page?: string,
@@ -46,6 +55,7 @@ export class ReportsController {
   }
 
   @Get(':id')
+  @Roles(TeamRole.VIEWER)
   async findOne(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -55,6 +65,7 @@ export class ReportsController {
   }
 
   @Patch(':id')
+  @Roles(TeamRole.EDITOR)
   async update(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -65,6 +76,7 @@ export class ReportsController {
   }
 
   @Delete(':id')
+  @Roles(TeamRole.EDITOR)
   async remove(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -74,6 +86,7 @@ export class ReportsController {
   }
 
   @Post(':id/generate')
+  @Roles(TeamRole.EDITOR)
   async generate(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -83,6 +96,7 @@ export class ReportsController {
   }
 
   @Get(':id/download')
+  @Roles(TeamRole.VIEWER)
   async download(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -93,6 +107,7 @@ export class ReportsController {
   }
 
   @Get(':id/history')
+  @Roles(TeamRole.VIEWER)
   async history(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -102,6 +117,7 @@ export class ReportsController {
   }
 
   @Post(':id/schedule')
+  @Roles(TeamRole.ADMIN)
   async createSchedule(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -112,6 +128,7 @@ export class ReportsController {
   }
 
   @Delete(':id/schedule')
+  @Roles(TeamRole.ADMIN)
   async removeSchedule(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,

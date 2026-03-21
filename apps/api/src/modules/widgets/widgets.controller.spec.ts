@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { WidgetsController } from './widgets.controller';
 import { WidgetsService } from './widgets.service';
 import { WidgetType } from './entities/widget.entity';
@@ -14,13 +13,8 @@ describe('WidgetsController', () => {
     bulkUpdatePositions: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [WidgetsController],
-      providers: [{ provide: WidgetsService, useValue: mockService }],
-    }).compile();
-
-    controller = module.get<WidgetsController>(WidgetsController);
+  beforeEach(() => {
+    controller = new WidgetsController(mockService as unknown as WidgetsService);
   });
 
   it('should be defined', () => {

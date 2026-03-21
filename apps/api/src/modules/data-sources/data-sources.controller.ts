@@ -11,10 +11,18 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OrgMemberGuard } from '../auth/guards/org-member.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { TeamRole } from '../teams/entities/team-member.entity';
+import { PlanLimitGuard } from '../billing/guards/plan-limit.guard';
+import { CheckPlanLimit } from '../billing/decorators/requires-plan.decorator';
 import { DataSourcesService } from './data-sources.service';
 import { CreateDataSourceDto } from './dto/create-data-source.dto';
 import { SyncJob } from '../sync/entities/sync-job.entity';
@@ -23,6 +31,7 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls'];
 
 @Controller('organizations/:orgId/data-sources')
+@UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class DataSourcesController {
   constructor(
     private readonly dataSourcesService: DataSourcesService,
@@ -31,12 +40,18 @@ export class DataSourcesController {
   ) {}
 
   @Post()
+  @Roles(TeamRole.EDITOR)
+  @UseGuards(PlanLimitGuard)
+  @CheckPlanLimit('data_sources')
   async create(@Param('orgId', ParseUUIDPipe) orgId: string, @Body() dto: CreateDataSourceDto) {
     const ds = await this.dataSourcesService.addDataSource(orgId, dto);
     return { data: ds };
   }
 
   @Post('upload')
+  @Roles(TeamRole.EDITOR)
+  @UseGuards(PlanLimitGuard)
+  @CheckPlanLimit('data_sources')
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: MAX_FILE_SIZE },
@@ -69,12 +84,14 @@ export class DataSourcesController {
   }
 
   @Get()
+  @Roles(TeamRole.VIEWER)
   async findAll(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const dataSources = await this.dataSourcesService.findAll(orgId);
     return { data: dataSources };
   }
 
   @Get(':id')
+  @Roles(TeamRole.VIEWER)
   async findOne(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -84,6 +101,7 @@ export class DataSourcesController {
   }
 
   @Get(':id/preview')
+  @Roles(TeamRole.VIEWER)
   async preview(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -93,6 +111,7 @@ export class DataSourcesController {
   }
 
   @Patch(':id/schema')
+  @Roles(TeamRole.EDITOR)
   async updateSchema(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -104,6 +123,7 @@ export class DataSourcesController {
   }
 
   @Post(':id/test')
+  @Roles(TeamRole.EDITOR)
   async testConnection(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -113,6 +133,7 @@ export class DataSourcesController {
   }
 
   @Post(':id/sync')
+  @Roles(TeamRole.EDITOR)
   async triggerSync(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -122,6 +143,7 @@ export class DataSourcesController {
   }
 
   @Get(':id/columns')
+  @Roles(TeamRole.VIEWER)
   async getColumns(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -131,6 +153,7 @@ export class DataSourcesController {
   }
 
   @Get(':id/logs')
+  @Roles(TeamRole.VIEWER)
   async getSyncLogs(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -147,6 +170,7 @@ export class DataSourcesController {
   }
 
   @Patch(':id')
+  @Roles(TeamRole.EDITOR)
   async updateDataSource(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -157,6 +181,7 @@ export class DataSourcesController {
   }
 
   @Delete(':id')
+  @Roles(TeamRole.ADMIN)
   async deleteDataSource(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,

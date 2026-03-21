@@ -10,30 +10,49 @@ import {
   Headers,
   ParseUUIDPipe,
   BadRequestException,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OrgMemberGuard } from '../auth/guards/org-member.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { TeamRole } from '../teams/entities/team-member.entity';
+import { PlanLimitGuard } from '../billing/guards/plan-limit.guard';
+import { CheckPlanLimit } from '../billing/decorators/requires-plan.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { DashboardsService } from './dashboards.service';
 import { CreateDashboardDto } from './dto/create-dashboard.dto';
 import { UpdateDashboardDto } from './dto/update-dashboard.dto';
 
 @Controller('organizations/:orgId/dashboards')
+@UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class DashboardsController {
   constructor(private readonly dashboardsService: DashboardsService) {}
 
   @Post()
-  async create(@Param('orgId', ParseUUIDPipe) orgId: string, @Body() dto: CreateDashboardDto) {
-    // Use a placeholder userId for now (will come from JWT in production)
-    const dashboard = await this.dashboardsService.create(orgId, orgId, dto);
+  @Roles(TeamRole.EDITOR)
+  @UseGuards(PlanLimitGuard)
+  @CheckPlanLimit('dashboards')
+  async create(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @CurrentUser() user: JwtUser,
+    @Body() dto: CreateDashboardDto,
+  ) {
+    const dashboard = await this.dashboardsService.create(orgId, user.id, dto);
     return { data: dashboard };
   }
 
   @Get()
+  @Roles(TeamRole.VIEWER)
   async findAll(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const dashboards = await this.dashboardsService.findAll(orgId);
     return { data: dashboards };
   }
 
   @Get(':id')
+  @Roles(TeamRole.VIEWER)
   async findOne(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -43,6 +62,7 @@ export class DashboardsController {
   }
 
   @Patch(':id')
+  @Roles(TeamRole.EDITOR)
   async update(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -53,6 +73,7 @@ export class DashboardsController {
   }
 
   @Delete(':id')
+  @Roles(TeamRole.EDITOR)
   async remove(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -64,15 +85,18 @@ export class DashboardsController {
   // ─── SHARING ──────────────────────────────────────────────────
 
   @Post(':id/share')
+  @Roles(TeamRole.EDITOR)
   async createShare(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
   ) {
-    const result = await this.dashboardsService.createShare(orgId, id, orgId);
+    const result = await this.dashboardsService.createShare(orgId, id, user.id);
     return { data: result };
   }
 
   @Get(':id/shares')
+  @Roles(TeamRole.VIEWER)
   async getShares(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -82,6 +106,7 @@ export class DashboardsController {
   }
 
   @Delete(':id/shares/:shareId')
+  @Roles(TeamRole.EDITOR)
   async revokeShare(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -92,6 +117,7 @@ export class DashboardsController {
   }
 
   @Delete(':id/shares')
+  @Roles(TeamRole.ADMIN)
   async revokeAllShares(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -107,6 +133,7 @@ export class DashboardsController {
   // ─── EXPORT ───────────────────────────────────────────────────
 
   @Post(':id/export')
+  @Roles(TeamRole.VIEWER)
   async exportDashboard(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -131,17 +158,22 @@ export class DashboardsController {
   // ─── DUPLICATE ────────────────────────────────────────────────
 
   @Post(':id/duplicate')
+  @Roles(TeamRole.EDITOR)
+  @UseGuards(PlanLimitGuard)
+  @CheckPlanLimit('dashboards')
   async duplicate(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: JwtUser,
   ) {
-    const dashboard = await this.dashboardsService.duplicate(orgId, id, orgId);
+    const dashboard = await this.dashboardsService.duplicate(orgId, id, user.id);
     return { data: dashboard };
   }
 
   // ─── RESTORE ──────────────────────────────────────────────────
 
   @Patch(':id/restore')
+  @Roles(TeamRole.EDITOR)
   async restore(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,

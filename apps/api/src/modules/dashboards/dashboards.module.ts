@@ -7,9 +7,16 @@ import { DashboardsController } from './dashboards.controller';
 import { SharedDashboardController } from './shared-dashboard.controller';
 import { DashboardsService } from './dashboards.service';
 import { ClickHouseModule } from '../clickhouse/clickhouse.module';
+import { AuthModule } from '../auth/auth.module';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Dashboard, DashboardShare, Widget]), ClickHouseModule],
+  imports: [
+    TypeOrmModule.forFeature([Dashboard, DashboardShare, Widget]),
+    ClickHouseModule,
+    AuthModule,
+    BillingModule,
+  ],
   controllers: [DashboardsController, SharedDashboardController],
   providers: [DashboardsService],
   exports: [DashboardsService],

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,6 +7,7 @@ import Redis from 'ioredis';
 import { User } from '../users/entities/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
+import { BillingService } from '../billing/billing.service';
 
 interface Auth0UserInfo {
   sub: string;
@@ -32,6 +33,7 @@ export class AuthService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Organization) private orgRepo: Repository<Organization>,
     @InjectRepository(TeamMember) private teamMemberRepo: Repository<TeamMember>,
+    @Inject(forwardRef(() => BillingService)) private billingService: BillingService,
   ) {
     this.redis = new Redis(
       this.configService.get<string>('auth.redisUrl') || 'redis://localhost:6379',
@@ -122,6 +124,9 @@ export class AuthService {
     await this.teamMemberRepo.save(membership);
 
     this.logger.log(`Created new user ${user.email} with org "${savedOrg.name}"`);
+
+    // Auto-enroll in Pro trial (14 days)
+    await this.billingService.autoEnrollTrial(savedOrg.id);
 
     return { user, isNew: true };
   }

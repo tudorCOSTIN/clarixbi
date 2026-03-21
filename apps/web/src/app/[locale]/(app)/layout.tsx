@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, LayoutDashboard, Database, Sparkles, FileText, Bell } from 'lucide-react';
+import { Home, LayoutDashboard, Database, Sparkles, FileText, Bell, Settings } from 'lucide-react';
 import { AiUsageBadge } from '@/components/ai/AiUsageBadge';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -53,6 +53,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <Sparkles className="h-4 w-4" />
               <span>AI Assistant</span>
               <AiUsageBadge />
+            </Link>
+            <Link
+              href="/settings"
+              className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Settings
             </Link>
           </nav>
         </div>

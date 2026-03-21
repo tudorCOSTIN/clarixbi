@@ -14,6 +14,8 @@ async function seed() {
       display_name: 'Starter',
       price_monthly_eur: 49,
       price_annual_eur: 470.4,
+      stripe_price_monthly_id: process.env['STRIPE_PRICE_STARTER_MONTHLY'] || null,
+      stripe_price_annual_id: process.env['STRIPE_PRICE_STARTER_ANNUAL'] || null,
       limits: {
         max_data_sources: 1,
         max_dashboards: 3,
@@ -29,6 +31,8 @@ async function seed() {
       display_name: 'Pro',
       price_monthly_eur: 149,
       price_annual_eur: 1430.4,
+      stripe_price_monthly_id: process.env['STRIPE_PRICE_PRO_MONTHLY'] || null,
+      stripe_price_annual_id: process.env['STRIPE_PRICE_PRO_ANNUAL'] || null,
       limits: {
         max_data_sources: 5,
         max_dashboards: 20,
@@ -52,6 +56,8 @@ async function seed() {
       display_name: 'Enterprise',
       price_monthly_eur: 299,
       price_annual_eur: 2870.4,
+      stripe_price_monthly_id: process.env['STRIPE_PRICE_ENTERPRISE_MONTHLY'] || null,
+      stripe_price_annual_id: process.env['STRIPE_PRICE_ENTERPRISE_ANNUAL'] || null,
       limits: {
         max_data_sources: 20,
         max_dashboards: -1,

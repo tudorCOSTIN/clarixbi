@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { BillingService } from './billing.service';
 import { Plan } from './entities/plan.entity';
 import { Subscription, SubscriptionStatus, BillingPeriod } from './entities/subscription.entity';
@@ -71,6 +71,12 @@ describe('BillingService', () => {
               if (key === 'STRIPE_SECRET_KEY') return 'sk_test_mock';
               return undefined;
             }),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            query: jest.fn().mockResolvedValue([{ count: '0' }]),
           },
         },
       ],

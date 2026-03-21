@@ -154,6 +154,78 @@ export class TeamsService {
   }
 
   /**
+   * Accept invite by token (public endpoint — user provides token from email link).
+   */
+  async acceptInviteByToken(token: string, userId: string): Promise<TeamMember> {
+    const invite = await this.teamMemberRepo.findOne({
+      where: { invite_token: token, invite_status: InviteStatus.PENDING },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Invite not found or already accepted');
+    }
+
+    if (invite.invite_expires_at && invite.invite_expires_at < new Date()) {
+      invite.invite_status = InviteStatus.EXPIRED;
+      await this.teamMemberRepo.save(invite);
+      throw new BadRequestException('Invite has expired');
+    }
+
+    invite.user_id = userId;
+    invite.invite_status = InviteStatus.ACCEPTED;
+    invite.joined_at = new Date();
+
+    return this.teamMemberRepo.save(invite);
+  }
+
+  /**
+   * Resend an existing pending invite (regenerate token + extend expiry).
+   */
+  async resendInvite(orgId: string, inviteId: string): Promise<TeamMember> {
+    const invite = await this.teamMemberRepo.findOne({
+      where: { id: inviteId, org_id: orgId, invite_status: InviteStatus.PENDING },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Pending invite not found');
+    }
+
+    invite.invite_token = randomUUID();
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+    invite.invite_expires_at = expiresAt;
+
+    return this.teamMemberRepo.save(invite);
+  }
+
+  /**
+   * Revoke (delete) a pending invite.
+   */
+  async revokeInvite(orgId: string, inviteId: string): Promise<void> {
+    const invite = await this.teamMemberRepo.findOne({
+      where: { id: inviteId, org_id: orgId, invite_status: InviteStatus.PENDING },
+    });
+
+    if (!invite) {
+      throw new NotFoundException('Pending invite not found');
+    }
+
+    await this.teamMemberRepo.remove(invite);
+  }
+
+  /**
+   * Get count of active (accepted) members for an organization.
+   */
+  async getMemberCount(orgId: string): Promise<number> {
+    return this.teamMemberRepo.count({
+      where: {
+        org_id: orgId,
+        invite_status: InviteStatus.ACCEPTED,
+      },
+    });
+  }
+
+  /**
    * Throws BadRequestException if the given org has only one OWNER.
    */
   private async assertNotLastOwner(orgId: string): Promise<void> {

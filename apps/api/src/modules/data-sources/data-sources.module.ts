@@ -5,9 +5,16 @@ import { DataSourcesController } from './data-sources.controller';
 import { DataSourcesService } from './data-sources.service';
 import { SyncJob } from '../sync/entities/sync-job.entity';
 import { ClickHouseModule } from '../clickhouse/clickhouse.module';
+import { AuthModule } from '../auth/auth.module';
+import { BillingModule } from '../billing/billing.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DataSourceEntity, SyncJob]), ClickHouseModule],
+  imports: [
+    TypeOrmModule.forFeature([DataSourceEntity, SyncJob]),
+    ClickHouseModule,
+    AuthModule,
+    BillingModule,
+  ],
   controllers: [DataSourcesController],
   providers: [DataSourcesService],
   exports: [DataSourcesService],

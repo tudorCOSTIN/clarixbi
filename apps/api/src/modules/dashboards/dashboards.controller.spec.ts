@@ -1,4 +1,3 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { DashboardsController } from './dashboards.controller';
 import { DashboardsService } from './dashboards.service';
 
@@ -12,13 +11,10 @@ describe('DashboardsController', () => {
     remove: jest.fn(),
   };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [DashboardsController],
-      providers: [{ provide: DashboardsService, useValue: mockService }],
-    }).compile();
+  const mockUser = { id: 'user-1', email: 'test@test.com', auth0_id: 'auth0|123' };
 
-    controller = module.get<DashboardsController>(DashboardsController);
+  beforeEach(() => {
+    controller = new DashboardsController(mockService as unknown as DashboardsService);
   });
 
   it('should be defined', () => {
@@ -32,9 +28,9 @@ describe('DashboardsController', () => {
       const dashboard = { id: '00000000-0000-0000-0000-000000000002', ...dto, org_id: orgId };
       mockService.create.mockResolvedValue(dashboard);
 
-      const result = await controller.create(orgId, dto);
+      const result = await controller.create(orgId, mockUser, dto);
       expect(result).toEqual({ data: dashboard });
-      expect(mockService.create).toHaveBeenCalledWith(orgId, orgId, dto);
+      expect(mockService.create).toHaveBeenCalledWith(orgId, mockUser.id, dto);
     });
   });
 

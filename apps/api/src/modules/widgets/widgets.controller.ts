@@ -1,14 +1,31 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Delete,
+  Body,
+  Param,
+  ParseUUIDPipe,
+  UseGuards,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OrgMemberGuard } from '../auth/guards/org-member.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { TeamRole } from '../teams/entities/team-member.entity';
 import { WidgetsService } from './widgets.service';
 import { CreateWidgetDto } from './dto/create-widget.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { BulkUpdatePositionsDto } from './dto/bulk-update-positions.dto';
 
 @Controller('organizations/:orgId/dashboards/:dashboardId/widgets')
+@UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class WidgetsController {
   constructor(private readonly widgetsService: WidgetsService) {}
 
   @Post()
+  @Roles(TeamRole.EDITOR)
   async create(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('dashboardId', ParseUUIDPipe) dashboardId: string,
@@ -19,6 +36,7 @@ export class WidgetsController {
   }
 
   @Get()
+  @Roles(TeamRole.VIEWER)
   async findAll(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('dashboardId', ParseUUIDPipe) dashboardId: string,
@@ -28,6 +46,7 @@ export class WidgetsController {
   }
 
   @Patch(':id')
+  @Roles(TeamRole.EDITOR)
   async update(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('dashboardId', ParseUUIDPipe) dashboardId: string,
@@ -39,6 +58,7 @@ export class WidgetsController {
   }
 
   @Delete(':id')
+  @Roles(TeamRole.EDITOR)
   async remove(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('dashboardId', ParseUUIDPipe) dashboardId: string,
@@ -49,6 +69,7 @@ export class WidgetsController {
   }
 
   @Post('bulk')
+  @Roles(TeamRole.EDITOR)
   async bulkUpdatePositions(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('dashboardId', ParseUUIDPipe) dashboardId: string,
