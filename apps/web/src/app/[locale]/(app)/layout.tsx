@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, LayoutDashboard, Database, Sparkles, FileText, Bell, Settings } from 'lucide-react';
 import { AiUsageBadge } from '@/components/ai/AiUsageBadge';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const navLinks = [
   { href: '/', label: 'Home', icon: Home },
@@ -27,7 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Link href="/" className="text-lg font-bold text-dark-navy mr-8">
             ClarixBI
           </Link>
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-1 flex-1">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive =
@@ -56,6 +57,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
+          <NotificationBell />
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
