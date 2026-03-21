@@ -1,54 +1,58 @@
-import { Controller, Get, Post, Body, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { OrgMemberGuard } from '../auth/guards/org-member.guard';
 import { OnboardingService } from './onboarding.service';
 
-@Controller('onboarding')
+@Controller('organizations/:orgId/onboarding')
+@UseGuards(OrgMemberGuard)
 export class OnboardingController {
   constructor(private readonly onboardingService: OnboardingService) {}
 
-  @Get('status/:orgId')
+  @Get('status')
   async getStatus(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const status = await this.onboardingService.getStatus(orgId);
     return { data: status };
   }
 
   @Post('select-source')
-  async selectSource(@Body() body: { orgId: string; sourceType: string }) {
-    await this.onboardingService.selectSource(body.orgId, body.sourceType);
+  async selectSource(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Body() body: { sourceType: string },
+  ) {
+    await this.onboardingService.selectSource(orgId, body.sourceType);
     return { data: { message: 'Source type selected' } };
   }
 
   @Post('connect')
   async connect(
-    @Body()
-    body: {
-      orgId: string;
-      sourceType: string;
-      credentials: Record<string, string>;
-    },
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Body() body: { sourceType: string; credentials: Record<string, string> },
   ) {
     const result = await this.onboardingService.testAndConnect(
-      body.orgId,
+      orgId,
       body.sourceType,
       body.credentials,
     );
     return { data: result };
   }
 
-  @Get('sync-status/:orgId')
+  @Get('sync-status')
   async getSyncStatus(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const status = await this.onboardingService.getSyncStatus(orgId);
     return { data: status };
   }
 
   @Post('complete')
-  async complete(@Body() body: { orgId: string }) {
-    await this.onboardingService.completeOnboarding(body.orgId);
+  async complete(@Param('orgId', ParseUUIDPipe) orgId: string) {
+    await this.onboardingService.completeOnboarding(orgId);
     return { data: { message: 'Onboarding completed' } };
   }
 
   @Post('demo-data')
-  async loadDemoData(@Body() body: { orgId: string; dataset?: string }) {
-    const result = await this.onboardingService.loadDemoData(body.orgId, body.dataset);
+  async loadDemoData(
+    @Param('orgId', ParseUUIDPipe) orgId: string,
+    @Body() body: { dataset?: string },
+  ) {
+    const result = await this.onboardingService.loadDemoData(orgId, body.dataset);
     return { data: result };
   }
 }

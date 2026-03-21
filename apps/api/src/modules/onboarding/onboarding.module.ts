@@ -7,6 +7,7 @@ import { SyncJob } from '../sync/entities/sync-job.entity';
 import { ClickHouseModule } from '../clickhouse/clickhouse.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { DataSourcesModule } from '../data-sources/data-sources.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { DataSourcesModule } from '../data-sources/data-sources.module';
     ClickHouseModule,
     NotificationsModule,
     DataSourcesModule,
+    AuthModule,
   ],
   controllers: [OnboardingController],
   providers: [OnboardingService],

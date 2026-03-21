@@ -2,6 +2,7 @@ const API_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000/api
 
 interface FetchOptions extends RequestInit {
   skipOrgHeader?: boolean;
+  _isRetry?: boolean;
 }
 
 function getOrgId(): string | null {
@@ -18,9 +19,38 @@ function getOrgId(): string | null {
   return null;
 }
 
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefreshToken(): Promise<boolean> {
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({}),
+      });
+      return res.ok;
+    } catch {
+      return false;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiClient<T = any>(path: string, options: FetchOptions = {}): Promise<T> {
-  const { skipOrgHeader, ...fetchOptions } = options;
+  const { skipOrgHeader, _isRetry, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -39,6 +69,20 @@ export async function apiClient<T = any>(path: string, options: FetchOptions = {
     headers,
     credentials: 'include',
   });
+
+  // Auto-refresh on 401 (only once to prevent infinite loops)
+  if (response.status === 401 && !_isRetry) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      return apiClient<T>(path, { ...options, _isRetry: true });
+    }
+
+    // Refresh failed — redirect to login
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    throw new Error('Session expired');
+  }
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));

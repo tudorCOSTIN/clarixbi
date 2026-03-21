@@ -84,10 +84,11 @@ describe('SqlValidatorService', () => {
     expect(result.isValid).toBe(true);
   });
 
-  it('should auto-add org_id when missing and mark as valid', async () => {
+  it('should auto-add org_id when missing using parameterized syntax', async () => {
     const result = await service.validate('SELECT * FROM invoices', orgId);
     expect(result.isValid).toBe(true);
-    expect(result.sanitizedSql).toContain(`org_id = '${orgId}'`);
+    expect(result.sanitizedSql).toContain('org_id = {org_id_param:String}');
+    expect(result.params).toEqual({ org_id_param: orgId });
   });
 
   it('should allow SELECT with LIMIT 500 as-is', async () => {
@@ -533,14 +534,15 @@ describe('SqlValidatorService', () => {
     expect(result.sanitizedSql).toContain('LIMIT 100');
   });
 
-  it('should add org_id before GROUP BY when WHERE is missing', async () => {
+  it('should add org_id before GROUP BY when WHERE is missing (parameterized)', async () => {
     const result = await service.validate(
       'SELECT customer_name, COUNT(*) FROM invoices GROUP BY customer_name',
       orgId,
     );
     expect(result.isValid).toBe(true);
-    expect(result.sanitizedSql).toContain(`WHERE org_id = '${orgId}'`);
+    expect(result.sanitizedSql).toContain('WHERE org_id = {org_id_param:String}');
     expect(result.sanitizedSql).toContain('GROUP BY');
+    expect(result.params).toEqual({ org_id_param: orgId });
   });
 
   it('should handle audit log save failure silently', async () => {
@@ -552,5 +554,33 @@ describe('SqlValidatorService', () => {
       orgId,
     );
     expect(result.isValid).toBe(true);
+  });
+
+  // ===== SQL INJECTION VIA ORG_ID =====
+
+  it('should NOT inject orgId with special characters into SQL (parameterized)', async () => {
+    const maliciousOrgId = "' OR '1'='1";
+    const result = await service.validate('SELECT * FROM invoices', maliciousOrgId);
+    expect(result.isValid).toBe(true);
+    // The SQL should use parameterized placeholder, not the raw orgId
+    expect(result.sanitizedSql).toContain('org_id = {org_id_param:String}');
+    expect(result.sanitizedSql).not.toContain(maliciousOrgId);
+    expect(result.params).toEqual({ org_id_param: maliciousOrgId });
+  });
+
+  it('should use parameterized syntax for valid UUID orgId', async () => {
+    const result = await service.validate('SELECT * FROM invoices', orgId);
+    expect(result.isValid).toBe(true);
+    expect(result.sanitizedSql).toContain('org_id = {org_id_param:String}');
+    expect(result.params).toEqual({ org_id_param: orgId });
+  });
+
+  it('should not add params when org_id is already in the query', async () => {
+    const result = await service.validate(
+      `SELECT * FROM invoices WHERE org_id = '${orgId}'`,
+      orgId,
+    );
+    expect(result.isValid).toBe(true);
+    expect(result.params).toBeUndefined();
   });
 });

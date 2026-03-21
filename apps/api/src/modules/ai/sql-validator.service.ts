@@ -7,6 +7,7 @@ interface ValidationResult {
   isValid: boolean;
   errors: string[];
   sanitizedSql: string;
+  params?: Record<string, string>;
 }
 
 const ALLOWED_TABLES = [
@@ -217,10 +218,21 @@ export class SqlValidatorService {
     // Fix LIMIT if > 1000
     sanitizedSql = this.enforceLimitCap(sanitizedSql);
 
-    // Ensure org_id filter
-    sanitizedSql = this.ensureOrgIdFilter(sanitizedSql, orgId);
+    // Ensure org_id filter (parameterized)
+    const orgIdAlreadyPresent = /\borg_id\s*=/i.test(sanitizedSql);
+    sanitizedSql = this.ensureOrgIdFilter(sanitizedSql);
 
-    const result: ValidationResult = { isValid: true, errors: [], sanitizedSql };
+    const params: Record<string, string> = {};
+    if (!orgIdAlreadyPresent) {
+      params['org_id_param'] = orgId;
+    }
+
+    const result: ValidationResult = {
+      isValid: true,
+      errors: [],
+      sanitizedSql,
+      ...(Object.keys(params).length > 0 ? { params } : {}),
+    };
     await this.logValidation(sql, result);
     return result;
   }
@@ -302,24 +314,26 @@ export class SqlValidatorService {
     return sql;
   }
 
-  private ensureOrgIdFilter(sql: string, orgId: string): string {
+  private ensureOrgIdFilter(sql: string): string {
     if (/\borg_id\s*=/i.test(sql)) {
       return sql;
     }
 
+    const orgIdPlaceholder = `org_id = {org_id_param:String}`;
+
     const whereMatch = /\bWHERE\b/i.exec(sql);
     if (whereMatch) {
       const afterWhere = whereMatch.index + whereMatch[0].length;
-      sql = sql.substring(0, afterWhere) + ` org_id = '${orgId}' AND` + sql.substring(afterWhere);
+      sql = sql.substring(0, afterWhere) + ` ${orgIdPlaceholder} AND` + sql.substring(afterWhere);
     } else {
       const insertBefore = sql.search(/\b(GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING)\b/i);
       if (insertBefore > -1) {
         sql =
           sql.substring(0, insertBefore) +
-          `WHERE org_id = '${orgId}' ` +
+          `WHERE ${orgIdPlaceholder} ` +
           sql.substring(insertBefore);
       } else {
-        sql = sql + ` WHERE org_id = '${orgId}'`;
+        sql = sql + ` WHERE ${orgIdPlaceholder}`;
       }
     }
     return sql;

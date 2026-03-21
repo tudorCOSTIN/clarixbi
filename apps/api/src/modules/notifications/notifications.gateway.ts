@@ -68,7 +68,12 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
         return;
       }
 
-      const jwtSecret = process.env['JWT_SECRET'] || 'clarixbi-jwt-secret-dev';
+      const jwtSecret = process.env['JWT_SECRET'];
+      if (!jwtSecret) {
+        this.logger.error('JWT_SECRET environment variable is not configured');
+        client.disconnect();
+        return;
+      }
       const payload = verify(token, jwtSecret) as JwtPayload & {
         sub: string;
         org_id?: string;

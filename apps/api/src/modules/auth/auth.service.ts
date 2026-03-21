@@ -143,10 +143,10 @@ export class AuthService {
     const refreshExpiresIn =
       this.configService.get<number>('auth.refreshTokenExpiresIn') || 2592000;
 
-    // Store refresh token in Redis
+    // Store refresh token in Redis with last_activity for idle timeout
     await this.redis.set(
       `refresh:${user.id}:${refreshToken}`,
-      JSON.stringify({ userId: user.id, createdAt: Date.now() }),
+      JSON.stringify({ userId: user.id, createdAt: Date.now(), lastActivity: Date.now() }),
       'EX',
       refreshExpiresIn,
     );
@@ -171,7 +171,16 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token expired');
     }
 
-    const { userId } = JSON.parse(data);
+    const parsed = JSON.parse(data);
+    const { userId, lastActivity } = parsed;
+
+    // Idle timeout: 7 days of inactivity → force re-login
+    const IDLE_TIMEOUT_MS = 7 * 24 * 60 * 60 * 1000;
+    if (lastActivity && Date.now() - lastActivity > IDLE_TIMEOUT_MS) {
+      await this.redis.del(key);
+      throw new UnauthorizedException('Session expired due to inactivity');
+    }
+
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user || !user.is_active) {
       throw new UnauthorizedException('User not found or inactive');
@@ -180,7 +189,7 @@ export class AuthService {
     // Delete old refresh token
     await this.redis.del(key);
 
-    // Generate new token pair
+    // Generate new token pair (lastActivity is reset in generateTokenPair)
     return this.generateTokenPair(user);
   }
 

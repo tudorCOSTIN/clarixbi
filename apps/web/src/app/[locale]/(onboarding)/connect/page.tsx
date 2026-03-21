@@ -285,9 +285,9 @@ export default function ConnectPage() {
       const orgId =
         JSON.parse(localStorage.getItem('clarixbi-org-store') || '{}')?.state?.currentOrgId || '';
 
-      await apiClient('/onboarding/demo-data', {
+      await apiClient(`/organizations/${orgId}/onboarding/demo-data`, {
         method: 'POST',
-        body: JSON.stringify({ orgId }),
+        body: JSON.stringify({}),
       });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       router.push('/sync' as any);

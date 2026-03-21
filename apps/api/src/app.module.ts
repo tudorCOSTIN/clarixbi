@@ -7,6 +7,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { dataSourceOptions } from './config/database.config';
 import { getLoggerConfig } from './common/logger';
 import { ThrottlerBehindProxyGuard } from './common/guards/throttler-behind-proxy.guard';
+import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { HealthModule } from './modules/health/health.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
@@ -62,6 +63,10 @@ import { GdprModule } from './modules/gdpr/gdpr.module';
     {
       provide: APP_GUARD,
       useClass: ThrottlerBehindProxyGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
     },
   ],
 })

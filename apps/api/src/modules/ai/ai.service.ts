@@ -208,7 +208,7 @@ export class AiService {
 
       if (validation.isValid) {
         try {
-          data = await this.clickhouse.query(validation.sanitizedSql);
+          data = await this.clickhouse.query(validation.sanitizedSql, validation.params);
           chartType = this.determineChartType(data);
           chartConfig = this.buildChartConfig(data, chartType);
         } catch (error) {
@@ -274,15 +274,19 @@ export class AiService {
     for (const table of AVAILABLE_TABLES) {
       try {
         const columns = await this.clickhouse.query<{ name: string; type: string }>(
-          `SELECT name, type FROM system.columns WHERE database = currentDatabase() AND table = '${table}' ORDER BY position`,
+          `SELECT name, type FROM system.columns WHERE database = currentDatabase() AND table = {table_name:String} ORDER BY position`,
+          { table_name: table },
         );
 
         if (columns.length === 0) continue;
 
         let samples: Record<string, unknown>[] = [];
         try {
+          // Note: table name cannot be parameterized in FROM clause in ClickHouse,
+          // but table is from our hardcoded AVAILABLE_TABLES constant, not user input
           samples = await this.clickhouse.query(
-            `SELECT * FROM ${table} WHERE org_id = '${orgId}' LIMIT 3`,
+            `SELECT * FROM ${table} WHERE org_id = {org_id_param:String} LIMIT 3`,
+            { org_id_param: orgId },
           );
         } catch {
           // Table might be empty for this org
