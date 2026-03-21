@@ -50,7 +50,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: 'http://localhost:3000',
+    origin: process.env['CORS_ORIGIN']?.split(',') || 'http://localhost:3000',
     credentials: true,
   });
 
@@ -73,7 +73,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(4000);
+  await app.listen(parseInt(process.env['PORT'] || '4000', 10));
 }
 
 bootstrap();
