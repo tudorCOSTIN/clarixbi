@@ -4,26 +4,17 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api-client';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  avatar_url: string | null;
-  preferred_language: string;
-  preferred_timezone: string;
-}
+import { useSettings } from '@/hooks/useSettings';
 
 export default function SettingsPage() {
   const t = useTranslations('settings');
   const router = useRouter();
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const { profile: user, loading, updateProfile } = useSettings();
   const [name, setName] = useState('');
   const [language, setLanguage] = useState('ro');
   const [timezone, setTimezone] = useState('Europe/Bucharest');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [exportMessage, setExportMessage] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -31,43 +22,30 @@ export default function SettingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // Sync local state when profile loads
   useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await apiClient<{ data: UserProfile }>('/users/me', {
-          skipOrgHeader: true,
-        });
-        setUser(res.data);
-        setName(res.data.name);
-        setLanguage(res.data.preferred_language || 'ro');
-        setTimezone(res.data.preferred_timezone || 'Europe/Bucharest');
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
+    if (user) {
+      setName(user.name);
+      setLanguage(user.preferred_language || 'ro');
+      setTimezone(user.preferred_timezone || 'Europe/Bucharest');
+    }
+  }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
     try {
-      const res = await apiClient<{ data: UserProfile }>('/users/me', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          name,
-          preferred_language: language,
-          preferred_timezone: timezone,
-        }),
+      const prevLanguage = user?.preferred_language;
+      await updateProfile({
+        name,
+        preferred_language: language,
+        preferred_timezone: timezone,
       });
-      setUser(res.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
 
       // If language changed, redirect to the new locale
-      if (language !== user?.preferred_language) {
+      if (language !== prevLanguage) {
         const path = window.location.pathname.replace(/^\/(ro|en)/, `/${language}`);
         router.push(path);
       }

@@ -28,9 +28,11 @@ export class Report {
   @Column({ type: 'uuid' })
   org_id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   dashboard_id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   created_by: string;
 

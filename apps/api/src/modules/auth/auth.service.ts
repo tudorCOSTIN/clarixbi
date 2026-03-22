@@ -35,9 +35,7 @@ export class AuthService {
     @InjectRepository(TeamMember) private teamMemberRepo: Repository<TeamMember>,
     @Inject(forwardRef(() => BillingService)) private billingService: BillingService,
   ) {
-    this.redis = new Redis(
-      this.configService.get<string>('auth.redisUrl') || 'redis://localhost:6379',
-    );
+    this.redis = new Redis(this.configService.get<string>('auth.redisUrl')!);
   }
 
   async validateAuth0Token(code: string): Promise<Auth0UserInfo> {

@@ -28,6 +28,7 @@ export class Widget {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   dashboard_id: string;
 
@@ -50,6 +51,7 @@ export class Widget {
   @Column({ type: 'jsonb', default: {} })
   position: Record<string, unknown>;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   data_source_id: string | null;
 

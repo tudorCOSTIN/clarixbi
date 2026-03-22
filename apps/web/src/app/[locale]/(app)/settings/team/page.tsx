@@ -1,59 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { apiClient } from '@/lib/api-client';
-import { useOrgStore } from '@/stores/org-store';
-
-interface TeamMember {
-  id: string;
-  user_id: string;
-  role: string;
-  invite_email: string | null;
-  invite_status: string | null;
-  invite_expires_at: string | null;
-  joined_at: string | null;
-  user?: {
-    id: string;
-    name: string;
-    email: string;
-    avatar_url: string | null;
-  };
-}
+import { useTeam } from '@/hooks/useTeam';
 
 const ROLES = ['owner', 'admin', 'editor', 'viewer'] as const;
 
 export default function TeamPage() {
   const t = useTranslations('team');
-  const { currentOrgId } = useOrgStore();
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [pendingInvites, setPendingInvites] = useState<TeamMember[]>([]);
+  const {
+    members,
+    pendingInvites,
+    loading,
+    inviteMember,
+    removeMember,
+    updateRole,
+    resendInvite,
+    revokeInvite,
+  } = useTeam();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('editor');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteError, setInviteError] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  const fetchTeam = async () => {
-    if (!currentOrgId) return;
-    try {
-      const res = await apiClient<{
-        data: { members: TeamMember[]; pendingInvites: TeamMember[] };
-      }>(`/organizations/${currentOrgId}/team`);
-      setMembers(
-        res.data.members.filter((m) => m.invite_status === 'accepted' || !m.invite_status),
-      );
-      setPendingInvites(res.data.pendingInvites);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchTeam();
-  }, [currentOrgId]);
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,12 +29,8 @@ export default function TeamPage() {
     setInviteLoading(true);
     setInviteError('');
     try {
-      await apiClient(`/organizations/${currentOrgId}/team/invite`, {
-        method: 'POST',
-        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
-      });
+      await inviteMember({ email: inviteEmail, role: inviteRole });
       setInviteEmail('');
-      await fetchTeam();
     } catch (err) {
       setInviteError(err instanceof Error ? err.message : 'Error');
     } finally {
@@ -76,11 +40,7 @@ export default function TeamPage() {
 
   const handleChangeRole = async (memberId: string, role: string) => {
     try {
-      await apiClient(`/organizations/${currentOrgId}/team/${memberId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ role }),
-      });
-      await fetchTeam();
+      await updateRole(memberId, role);
     } catch {
       // ignore
     }
@@ -89,10 +49,7 @@ export default function TeamPage() {
   const handleRemove = async (memberId: string) => {
     if (!confirm(t('confirmRemove'))) return;
     try {
-      await apiClient(`/organizations/${currentOrgId}/team/${memberId}`, {
-        method: 'DELETE',
-      });
-      await fetchTeam();
+      await removeMember(memberId);
     } catch {
       // ignore
     }
@@ -100,10 +57,7 @@ export default function TeamPage() {
 
   const handleResend = async (inviteId: string) => {
     try {
-      await apiClient(`/organizations/${currentOrgId}/team/${inviteId}/resend`, {
-        method: 'POST',
-      });
-      await fetchTeam();
+      await resendInvite(inviteId);
     } catch {
       // ignore
     }
@@ -111,10 +65,7 @@ export default function TeamPage() {
 
   const handleRevoke = async (inviteId: string) => {
     try {
-      await apiClient(`/organizations/${currentOrgId}/team/${inviteId}/revoke`, {
-        method: 'DELETE',
-      });
-      await fetchTeam();
+      await revokeInvite(inviteId);
     } catch {
       // ignore
     }

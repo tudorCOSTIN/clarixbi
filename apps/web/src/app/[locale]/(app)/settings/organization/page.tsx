@@ -2,27 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { apiClient } from '@/lib/api-client';
-import { useOrgStore } from '@/stores/org-store';
-
-interface Organization {
-  id: string;
-  name: string;
-  slug: string;
-  logo_url: string | null;
-  default_timezone: string;
-  default_language: string;
-}
+import { useOrganization } from '@/hooks/useOrganization';
 
 export default function OrganizationPage() {
   const t = useTranslations('organization');
-  const { currentOrgId } = useOrgStore();
-  const [org, setOrg] = useState<Organization | null>(null);
+  const { data: org, loading, update: updateOrg, remove: removeOrg } = useOrganization();
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
   const [timezone, setTimezone] = useState('Europe/Bucharest');
   const [language, setLanguage] = useState('ro');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -30,38 +18,24 @@ export default function OrganizationPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
-    if (!currentOrgId) return;
-    const load = async () => {
-      try {
-        const res = await apiClient<{ data: Organization }>(`/organizations/${currentOrgId}`);
-        setOrg(res.data);
-        setName(res.data.name);
-        setSlug(res.data.slug);
-        setTimezone(res.data.default_timezone || 'Europe/Bucharest');
-        setLanguage(res.data.default_language || 'ro');
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, [currentOrgId]);
+    if (org) {
+      setName(org.name);
+      setSlug(org.slug);
+      setTimezone(org.default_timezone || 'Europe/Bucharest');
+      setLanguage(org.default_language || 'ro');
+    }
+  }, [org]);
 
   const handleSave = async () => {
     setSaving(true);
     setSaved(false);
     try {
-      const res = await apiClient<{ data: Organization }>(`/organizations/${currentOrgId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          name,
-          slug,
-          default_timezone: timezone,
-          default_language: language,
-        }),
+      await updateOrg({
+        name,
+        slug,
+        default_timezone: timezone,
+        default_language: language,
       });
-      setOrg(res.data);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
@@ -75,7 +49,7 @@ export default function OrganizationPage() {
     if (deleteConfirm !== org?.name) return;
     setDeleteLoading(true);
     try {
-      await apiClient(`/organizations/${currentOrgId}`, { method: 'DELETE' });
+      await removeOrg();
       window.location.href = '/';
     } catch {
       setDeleteLoading(false);

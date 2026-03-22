@@ -22,6 +22,7 @@ export class AIConversation {
   @Column({ type: 'uuid' })
   org_id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   user_id: string;
 

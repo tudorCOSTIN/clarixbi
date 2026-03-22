@@ -30,7 +30,10 @@ export class ReportsGenerateProcessor {
   }
 
   private initWorker() {
-    const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
+    const redisUrl = process.env['REDIS_URL'];
+    if (!redisUrl) {
+      throw new Error('REDIS_URL environment variable is required');
+    }
     const parsed = new URL(redisUrl);
 
     this.worker = new Worker(

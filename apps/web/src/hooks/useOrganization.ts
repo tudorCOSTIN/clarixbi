@@ -19,6 +19,8 @@ interface UseOrganizationReturn {
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  update: (dto: Partial<Organization>) => Promise<Organization | null>;
+  remove: () => Promise<void>;
 }
 
 export function useOrganization(): UseOrganizationReturn {
@@ -48,5 +50,29 @@ export function useOrganization(): UseOrganizationReturn {
     fetch();
   }, [fetch]);
 
-  return { data, loading, error, refetch: fetch };
+  const update = useCallback(
+    async (dto: Partial<Organization>): Promise<Organization | null> => {
+      if (!currentOrgId) return null;
+      try {
+        setError(null);
+        const res = await apiClient<{ data: Organization }>(`/organizations/${currentOrgId}`, {
+          method: 'PATCH',
+          body: JSON.stringify(dto),
+        });
+        setData(res.data);
+        return res.data;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to update organization');
+        return null;
+      }
+    },
+    [currentOrgId],
+  );
+
+  const remove = useCallback(async () => {
+    if (!currentOrgId) return;
+    await apiClient(`/organizations/${currentOrgId}`, { method: 'DELETE' });
+  }, [currentOrgId]);
+
+  return { data, loading, error, refetch: fetch, update, remove };
 }

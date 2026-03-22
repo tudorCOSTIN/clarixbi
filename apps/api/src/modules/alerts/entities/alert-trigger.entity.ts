@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Alert } from './alert.entity';
 import { User } from '../../users/entities/user.entity';
 
@@ -7,6 +7,7 @@ export class AlertTrigger {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   alert_id: string;
 
@@ -25,6 +26,7 @@ export class AlertTrigger {
   @Column({ type: 'timestamp', nullable: true })
   acknowledged_at: Date | null;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   acknowledged_by: string | null;
 

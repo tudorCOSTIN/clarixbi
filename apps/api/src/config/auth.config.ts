@@ -9,5 +9,5 @@ export const authConfig = registerAs('auth', () => ({
   jwtSecret: process.env['JWT_SECRET'] || 'clarixbi-jwt-secret-dev',
   jwtExpiresIn: '1h',
   refreshTokenExpiresIn: 30 * 24 * 60 * 60, // 30 days in seconds
-  redisUrl: process.env['REDIS_URL'] || 'redis://localhost:6379',
+  redisUrl: process.env['REDIS_URL'],
 }));

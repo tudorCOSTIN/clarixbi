@@ -14,6 +14,10 @@ jest.mock('./billing.utils', () => ({
   decryptStripeId: jest.fn((id: string | null) => id),
 }));
 
+// Mock global fetch to prevent real Stripe API calls
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
+
 type MockRepository<T extends Record<string, any> = any> = Partial<
   Record<keyof Repository<T>, jest.Mock>
 >;
@@ -59,6 +63,13 @@ describe('BillingService', () => {
   };
 
   beforeEach(async () => {
+    mockFetch.mockReset();
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ id: 'cus_test123', email: 'test@test.com', object: 'customer' }),
+    });
+
     subscriptionRepo = createMockRepository();
     planRepo = createMockRepository();
 
@@ -133,9 +144,13 @@ describe('BillingService', () => {
 
       const result = await service.getOrCreateStripeCustomer(orgId, 'test@example.com');
 
-      expect(result).toMatch(/^cus_mock_/);
+      expect(result).toBe('cus_test123');
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.stripe.com/v1/customers',
+        expect.objectContaining({ method: 'POST' }),
+      );
       expect(subscriptionRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ stripe_customer_id: expect.any(String) }),
+        expect.objectContaining({ stripe_customer_id: 'cus_test123' }),
       );
     });
 
@@ -144,7 +159,8 @@ describe('BillingService', () => {
 
       const result = await service.getOrCreateStripeCustomer(orgId, 'test@example.com');
 
-      expect(result).toMatch(/^cus_mock_/);
+      expect(result).toBe('cus_test123');
+      expect(mockFetch).toHaveBeenCalled();
       // No subscription to update
       expect(subscriptionRepo.save).not.toHaveBeenCalled();
     });

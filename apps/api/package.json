@@ -101,6 +101,9 @@
       "^.+\\.ts$": "ts-jest"
     },
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/jest.setup.ts"
+    ],
     "collectCoverageFrom": [
       "src/modules/**/*.ts",
       "!src/modules/**/*.entity.ts",
