@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -35,6 +41,13 @@ export class BillingService {
   ) {
     this.stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || '';
     this.appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
+
+    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    if (nodeEnv === 'production' && !this.stripeSecretKey) {
+      throw new InternalServerErrorException(
+        'STRIPE_SECRET_KEY is required in production environment',
+      );
+    }
   }
 
   /**

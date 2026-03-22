@@ -709,8 +709,8 @@ describe('AlertsService', () => {
       );
       expect(mockTriggerRepo.save).toHaveBeenCalled();
 
-      // Notifications created for each member
-      expect(mockNotificationRepo.save).toHaveBeenCalledTimes(2);
+      // Notifications bulk-created for all members
+      expect(mockNotificationRepo.create).toHaveBeenCalledTimes(2);
       expect(mockNotificationRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           type: NotificationType.ALERT_TRIGGERED,
@@ -718,6 +718,8 @@ describe('AlertsService', () => {
           link_url: '/alerts',
         }),
       );
+      // Bulk save called once with array of notifications
+      expect(mockNotificationRepo.save).toHaveBeenCalledTimes(1);
 
       // WebSocket notification
       expect(mockGateway.emitAlertTriggered).toHaveBeenCalledWith('org-1', {
@@ -747,7 +749,8 @@ describe('AlertsService', () => {
       await service.checkAlerts();
 
       expect(mockTriggerRepo.save).toHaveBeenCalled();
-      expect(mockNotificationRepo.save).not.toHaveBeenCalled();
+      // Bulk save called with empty array (no members)
+      expect(mockNotificationRepo.save).toHaveBeenCalledWith([]);
       expect(mockGateway.emitAlertTriggered).toHaveBeenCalled();
     });
   });

@@ -9,6 +9,12 @@ export const dataSourceOptions = {
   migrations: [path.join(__dirname, '..', 'migrations', '*.{ts,js}')],
   synchronize: false,
   logging: process.env['NODE_ENV'] !== 'production',
+  extra: {
+    max: 30,
+    min: 5,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  },
 };
 
 const dataSource = new DataSource(dataSourceOptions);

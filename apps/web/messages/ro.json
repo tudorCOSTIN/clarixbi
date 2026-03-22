@@ -567,5 +567,10 @@
     "analyzing": "Analizez datele tale...",
     "inputPlaceholder": "Intreaba orice despre datele tale...",
     "errorGeneric": "A aparut o eroare. Te rugam sa incerci din nou."
+  },
+  "errors": {
+    "title": "Ceva nu a functionat",
+    "description": "A aparut o eroare neasteptata. Te rugam sa incerci din nou.",
+    "retry": "Incearca din nou"
   }
 }

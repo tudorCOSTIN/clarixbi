@@ -289,12 +289,15 @@ export class AlertsService {
     });
     await this.triggerRepo.save(trigger);
 
-    // Notify all org members
-    const members = await this.teamMemberRepo.find({ where: { org_id: alert.org_id } });
+    // Batch fetch all org members with user relation (avoids N+1)
+    const members = await this.teamMemberRepo.find({
+      where: { org_id: alert.org_id },
+      relations: ['user'],
+    });
 
-    for (const member of members) {
-      // In-app notification
-      const notification = this.notificationRepo.create({
+    // Bulk insert in-app notifications
+    const notifications = members.map((member) =>
+      this.notificationRepo.create({
         user_id: member.user_id,
         org_id: alert.org_id,
         type: NotificationType.ALERT_TRIGGERED,
@@ -307,9 +310,9 @@ export class AlertsService {
           threshold: Number(alert.threshold_value),
           operator: alert.condition_operator,
         },
-      });
-      await this.notificationRepo.save(notification);
-    }
+      }),
+    );
+    await this.notificationRepo.save(notifications);
 
     // WebSocket notification
     this.notificationsGateway.emitAlertTriggered(alert.org_id, {
@@ -318,26 +321,22 @@ export class AlertsService {
       threshold: Number(alert.threshold_value),
     });
 
-    // Email notification to org members
-    for (const member of members) {
-      try {
-        const user = await this.teamMemberRepo
-          .createQueryBuilder('tm')
-          .innerJoinAndSelect('tm.user', 'user')
-          .where('tm.id = :id', { id: member.id })
-          .getOne();
-        if (user?.user?.email) {
-          await this.emailService.sendAlertTriggered(
-            user.user.email,
+    // Email notifications (emails already loaded via relation)
+    const emailPromises = members
+      .filter((member) => member.user?.email)
+      .map((member) =>
+        this.emailService
+          .sendAlertTriggered(
+            member.user!.email,
             alert.name,
             currentValue,
             Number(alert.threshold_value),
-          );
-        }
-      } catch (emailError) {
-        this.logger.warn(`Failed to send alert email for member ${member.id}: ${emailError}`);
-      }
-    }
+          )
+          .catch((emailError) =>
+            this.logger.warn(`Failed to send alert email for member ${member.id}: ${emailError}`),
+          ),
+      );
+    await Promise.all(emailPromises);
   }
 
   private async enforceAlertLimit(orgId: string): Promise<void> {

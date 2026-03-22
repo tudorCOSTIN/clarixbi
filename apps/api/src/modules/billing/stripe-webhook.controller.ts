@@ -1,4 +1,13 @@
-import { Controller, Post, Req, Res, Headers, Logger, RawBodyRequest } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Req,
+  Res,
+  Headers,
+  InternalServerErrorException,
+  Logger,
+  RawBodyRequest,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
@@ -34,7 +43,7 @@ export class StripeWebhookController {
     }
 
     if (!this.webhookSecret) {
-      this.logger.warn('STRIPE_WEBHOOK_SECRET not configured, skipping verification');
+      throw new InternalServerErrorException('STRIPE_WEBHOOK_SECRET is not configured');
     } else if (!this.verifySignature(rawBody, signature, this.webhookSecret)) {
       this.logger.warn('Invalid Stripe webhook signature');
       return res.status(400).json({ error: 'Invalid signature' });
