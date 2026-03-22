@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { apiClient } from '@/lib/api-client';
+import { useDataSources } from '@/hooks/useDataSources';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import {
   FileSpreadsheet,
@@ -20,16 +20,6 @@ import {
   Database,
   Trash2,
 } from 'lucide-react';
-
-interface DataSource {
-  id: string;
-  type: string;
-  name: string;
-  status: 'active' | 'syncing' | 'error' | 'disconnected';
-  last_sync_at: string | null;
-  total_rows: number;
-  created_at: string;
-}
 
 const typeConfig: Record<
   string,
@@ -77,77 +67,46 @@ const statusColors: Record<string, string> = {
 export default function DataSourcesPage() {
   const t = useTranslations('dataSources');
   const router = useRouter();
-  const [dataSources, setDataSources] = useState<DataSource[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: dataSources, loading, triggerSync, remove, refetch } = useDataSources();
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
 
-  const fetchDataSources = async () => {
-    try {
-      const res = await apiClient<{ data: DataSource[] }>('/organizations/current/data-sources');
-      setDataSources(res.data);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDataSources();
-  }, []);
-
   const onSyncProgress = useCallback(
-    (data: { dataSourceId: string; progress: number; rowsImported: number }) => {
-      setDataSources((prev) =>
-        prev.map((ds) =>
-          ds.id === data.dataSourceId
-            ? { ...ds, status: 'syncing' as const, total_rows: data.rowsImported }
-            : ds,
-        ),
-      );
+    (_data: { dataSourceId: string; progress: number; rowsImported: number }) => {
+      // Refetch will pick up new status
     },
     [],
   );
 
-  const onSyncComplete = useCallback((data: { dataSourceId: string; totalRows: number }) => {
-    setSyncingIds((prev) => {
-      const next = new Set(prev);
-      next.delete(data.dataSourceId);
-      return next;
-    });
-    setDataSources((prev) =>
-      prev.map((ds) =>
-        ds.id === data.dataSourceId
-          ? {
-              ...ds,
-              status: 'active' as const,
-              total_rows: data.totalRows,
-              last_sync_at: new Date().toISOString(),
-            }
-          : ds,
-      ),
-    );
-  }, []);
+  const onSyncComplete = useCallback(
+    (data: { dataSourceId: string }) => {
+      setSyncingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(data.dataSourceId);
+        return next;
+      });
+      refetch();
+    },
+    [refetch],
+  );
 
-  const onSyncError = useCallback((data: { dataSourceId: string }) => {
-    setSyncingIds((prev) => {
-      const next = new Set(prev);
-      next.delete(data.dataSourceId);
-      return next;
-    });
-    setDataSources((prev) =>
-      prev.map((ds) => (ds.id === data.dataSourceId ? { ...ds, status: 'error' as const } : ds)),
-    );
-  }, []);
+  const onSyncError = useCallback(
+    (data: { dataSourceId: string }) => {
+      setSyncingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(data.dataSourceId);
+        return next;
+      });
+      refetch();
+    },
+    [refetch],
+  );
 
   useWebSocket({ onSyncProgress, onSyncComplete, onSyncError });
 
   const handleSync = async (id: string) => {
     setSyncingIds((prev) => new Set(prev).add(id));
     try {
-      await apiClient(`/organizations/current/data-sources/${id}/sync`, {
-        method: 'POST',
-      });
+      await triggerSync(id);
     } catch {
       setSyncingIds((prev) => {
         const next = new Set(prev);
@@ -269,10 +228,7 @@ export default function DataSourcesPage() {
                       e.stopPropagation();
                       if (!confirm(t('deleteConfirm'))) return;
                       try {
-                        await apiClient(`/organizations/current/data-sources/${ds.id}`, {
-                          method: 'DELETE',
-                        });
-                        setDataSources((prev) => prev.filter((d) => d.id !== ds.id));
+                        await remove(ds.id);
                       } catch {
                         // ignore
                       }

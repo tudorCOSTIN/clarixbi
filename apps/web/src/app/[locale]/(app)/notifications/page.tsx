@@ -1,105 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Bell, Check, CheckCheck, Trash2 } from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
-
-interface NotificationItem {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  is_read: boolean;
-  link_url: string | null;
-  created_at: string;
-}
-
-interface NotificationsMeta {
-  page: number;
-  limit: number;
-  total: number;
-  unreadCount: number;
-}
-
-function getOrgId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem('clarixbi-org-store');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed?.state?.currentOrgId || null;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
-}
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function NotificationsPage() {
   const t = useTranslations('notifications');
   const tc = useTranslations('common');
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [meta, setMeta] = useState<NotificationsMeta | null>(null);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-
-  const fetchNotifications = useCallback(async (p: number) => {
-    setLoading(true);
-    try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      const res = await apiClient<{ data: NotificationItem[]; meta: NotificationsMeta }>(
-        `/organizations/${orgId}/notifications?page=${p}&limit=20`,
-      );
-      setNotifications(res.data);
-      setMeta(res.meta);
-    } catch {
-      // silent fail
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchNotifications(page);
-  }, [page, fetchNotifications]);
-
-  const handleMarkRead = async (id: string) => {
-    try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/notifications/${id}/read`, { method: 'PATCH' });
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
-      if (meta) setMeta({ ...meta, unreadCount: Math.max(0, meta.unreadCount - 1) });
-    } catch {
-      // silent fail
-    }
-  };
-
-  const handleMarkAllRead = async () => {
-    try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/notifications/mark-all-read`, { method: 'POST' });
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
-      if (meta) setMeta({ ...meta, unreadCount: 0 });
-    } catch {
-      // silent fail
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/notifications/${id}`, { method: 'DELETE' });
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-      if (meta) setMeta({ ...meta, total: meta.total - 1 });
-    } catch {
-      // silent fail
-    }
-  };
+  const {
+    data: notifications,
+    meta,
+    loading,
+    markRead,
+    markAllRead,
+    remove,
+  } = useNotifications(page);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -127,7 +44,7 @@ export default function NotificationsPage() {
         </div>
         {meta && meta.unreadCount > 0 && (
           <button
-            onClick={handleMarkAllRead}
+            onClick={markAllRead}
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <CheckCheck className="h-4 w-4" />
@@ -186,7 +103,7 @@ export default function NotificationsPage() {
               <div className="flex shrink-0 items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 {!n.is_read && (
                   <button
-                    onClick={() => handleMarkRead(n.id)}
+                    onClick={() => markRead(n.id)}
                     className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                     title={t('markRead')}
                   >
@@ -194,7 +111,7 @@ export default function NotificationsPage() {
                   </button>
                 )}
                 <button
-                  onClick={() => handleDelete(n.id)}
+                  onClick={() => remove(n.id)}
                   className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
                   title={t('delete')}
                 >

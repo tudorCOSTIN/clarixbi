@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
+import { useOrgStore } from '@/stores/org-store';
 import { AiChat } from '@/components/ai/AiChat';
 
 interface Conversation {
@@ -16,16 +17,16 @@ interface Conversation {
 
 export default function AiPage() {
   const t = useTranslations('ai');
+  const { currentOrgId } = useOrgStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchConversations = useCallback(async () => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
+      if (!currentOrgId) return;
       const res = await apiClient<{ data: Conversation[] }>(
-        `/organizations/${orgId}/ai/conversations`,
+        `/organizations/${currentOrgId}/ai/conversations`,
       );
       setConversations(res.data);
     } catch {
@@ -33,7 +34,7 @@ export default function AiPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentOrgId]);
 
   useEffect(() => {
     fetchConversations();
@@ -41,10 +42,9 @@ export default function AiPage() {
 
   const handleNewConversation = async () => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
+      if (!currentOrgId) return;
       const res = await apiClient<{ data: Conversation }>(
-        `/organizations/${orgId}/ai/conversations`,
+        `/organizations/${currentOrgId}/ai/conversations`,
         { method: 'POST' },
       );
       setConversations((prev) => [res.data, ...prev]);
@@ -57,9 +57,8 @@ export default function AiPage() {
   const handleDeleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/ai/conversations/${id}`, {
+      if (!currentOrgId) return;
+      await apiClient(`/organizations/${currentOrgId}/ai/conversations/${id}`, {
         method: 'DELETE',
       });
       setConversations((prev) => prev.filter((c) => c.id !== id));
@@ -142,18 +141,4 @@ export default function AiPage() {
       </div>
     </div>
   );
-}
-
-function getOrgId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem('clarixbi-org-store');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed?.state?.currentOrgId || null;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
 }

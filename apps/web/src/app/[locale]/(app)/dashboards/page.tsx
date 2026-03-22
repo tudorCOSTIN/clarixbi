@@ -1,42 +1,23 @@
 /* eslint-disable no-console */
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, LayoutDashboard, Pencil, Trash2, Calendar, Loader2, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { apiClient } from '@/lib/api-client';
-
-interface Dashboard {
-  id: string;
-  name: string;
-  description: string | null;
-  is_auto_generated: boolean;
-  created_at: string;
-  widgets: { id: string }[];
-}
+import { useDashboards } from '@/hooks/useDashboards';
 
 export default function DashboardsPage() {
   const t = useTranslations('dashboard');
   const router = useRouter();
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    apiClient<{ data: Dashboard[] }>('/organizations/current/dashboards')
-      .then((res) => setDashboards(res.data))
-      .catch(() => setDashboards([]))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: dashboards, loading, clone, remove } = useDashboards();
 
   const handleDelete = async (id: string) => {
     if (!confirm(t('deleteConfirm'))) return;
     try {
-      await apiClient(`/organizations/current/dashboards/${id}`, { method: 'DELETE' });
-      setDashboards((prev) => prev.filter((d) => d.id !== id));
+      await remove(id);
     } catch (err) {
       console.error('Delete failed:', err);
     }
@@ -44,13 +25,7 @@ export default function DashboardsPage() {
 
   const handleClone = async (id: string) => {
     try {
-      const res = await apiClient<{ data: Dashboard }>(
-        `/organizations/current/dashboards/${id}/duplicate`,
-        {
-          method: 'POST',
-        },
-      );
-      setDashboards((prev) => [res.data, ...prev]);
+      await clone(id);
     } catch (err) {
       console.error('Clone failed:', err);
     }

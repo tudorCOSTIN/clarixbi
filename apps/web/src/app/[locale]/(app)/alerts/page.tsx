@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   Bell,
@@ -19,22 +19,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAlerts } from '@/hooks/useAlerts';
 import { apiClient } from '@/lib/api-client';
+import { useOrgStore } from '@/stores/org-store';
 import { useSocketEvent } from '@/hooks/useWebSocket';
 import Link from 'next/link';
-
-interface Alert {
-  id: string;
-  name: string;
-  metric_query: string;
-  condition_operator: string;
-  threshold_value: number;
-  check_frequency: string;
-  is_active: boolean;
-  data_source_id: string;
-  created_at: string;
-  updated_at: string;
-}
 
 interface AlertTrigger {
   id: string;
@@ -67,8 +56,7 @@ const OPERATORS: Record<string, string> = {
 
 export default function AlertsPage() {
   const t = useTranslations('alerts');
-  const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: alerts, loading, refetch, toggle, test: testAlert, remove } = useAlerts();
   const [showCreateWizard, setShowCreateWizard] = useState(false);
   const [showHistory, setShowHistory] = useState<string | null>(null);
   const [testingId, setTestingId] = useState<string | null>(null);
@@ -80,26 +68,12 @@ export default function AlertsPage() {
   } | null>(null);
   const [alertLimit, setAlertLimit] = useState<AlertLimit | null>(null);
 
-  const fetchAlerts = useCallback(async () => {
-    try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      const res = await apiClient<{ data: Alert[] }>(`/organizations/${orgId}/alerts`);
-      setAlerts(res.data);
-
-      // Calculate limit info
-      const activeCount = res.data.filter((a) => a.is_active).length;
-      setAlertLimit({ activeCount, limit: 3, tier: 'starter' }); // Will be updated from plan
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    fetchAlerts();
-  }, [fetchAlerts]);
+    if (!loading && alerts.length >= 0) {
+      const activeCount = alerts.filter((a) => a.is_active).length;
+      setAlertLimit({ activeCount, limit: 3, tier: 'starter' });
+    }
+  }, [alerts, loading]);
 
   // Real-time: refetch when an alert triggers
   const { on } = useSocketEvent();
@@ -120,13 +94,7 @@ export default function AlertsPage() {
 
   const handleToggle = async (alertId: string, isActive: boolean) => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/alerts/${alertId}/toggle`, {
-        method: 'PATCH',
-        body: JSON.stringify({ isActive }),
-      });
-      setAlerts((prev) => prev.map((a) => (a.id === alertId ? { ...a, is_active: isActive } : a)));
+      await toggle(alertId, isActive);
     } catch (error) {
       const msg = error instanceof Error ? error.message : '';
       if (msg.includes('ALERT_LIMIT_REACHED') || msg.includes('402')) {
@@ -138,12 +106,8 @@ export default function AlertsPage() {
   const handleTest = async (alertId: string) => {
     try {
       setTestingId(alertId);
-      const orgId = getOrgId();
-      if (!orgId) return;
-      const res = await apiClient<{
-        data: { wouldTrigger: boolean; currentValue: number; threshold: number };
-      }>(`/organizations/${orgId}/alerts/${alertId}/test`, { method: 'POST' });
-      setTestResult({ alertId, ...res.data });
+      const result = await testAlert(alertId);
+      setTestResult({ alertId, ...result });
     } catch {
       // ignore
     } finally {
@@ -154,10 +118,7 @@ export default function AlertsPage() {
   const handleDelete = async (alertId: string) => {
     if (!confirm(t('deleteConfirm'))) return;
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/alerts/${alertId}`, { method: 'DELETE' });
-      setAlerts((prev) => prev.filter((a) => a.id !== alertId));
+      await remove(alertId);
     } catch {
       // ignore
     }
@@ -352,7 +313,7 @@ export default function AlertsPage() {
           onClose={() => setShowCreateWizard(false)}
           onCreated={() => {
             setShowCreateWizard(false);
-            fetchAlerts();
+            refetch();
           }}
         />
       )}
@@ -368,6 +329,8 @@ export default function AlertsPage() {
 function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const t = useTranslations('alerts.wizard');
   const tAlerts = useTranslations('alerts');
+  const { currentOrgId } = useOrgStore();
+  const { create } = useAlerts();
   const [step, setStep] = useState(1);
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
@@ -382,33 +345,29 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
   useEffect(() => {
     const fetchSources = async () => {
       try {
-        const orgId = getOrgId();
-        if (!orgId) return;
-        const res = await apiClient<{ data: DataSource[] }>(`/organizations/${orgId}/data-sources`);
+        if (!currentOrgId) return;
+        const res = await apiClient<{ data: DataSource[] }>(
+          `/organizations/${currentOrgId}/data-sources`,
+        );
         setDataSources(res.data);
       } catch {
         // ignore
       }
     };
     fetchSources();
-  }, []);
+  }, [currentOrgId]);
 
   const handleSave = async () => {
     setError('');
     setSaving(true);
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/alerts`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name,
-          dataSourceId: selectedSource,
-          metricQuery,
-          conditionOperator: operator,
-          thresholdValue: parseFloat(threshold),
-          checkFrequency: frequency,
-        }),
+      await create({
+        name,
+        dataSourceId: selectedSource,
+        metricQuery,
+        conditionOperator: operator,
+        thresholdValue: parseFloat(threshold),
+        checkFrequency: frequency,
       });
       onCreated();
     } catch (err) {
@@ -583,18 +542,15 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
 
 function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () => void }) {
   const t = useTranslations('alerts.history');
+  const { getTriggers } = useAlerts();
   const [triggers, setTriggers] = useState<AlertTrigger[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTriggers = async () => {
       try {
-        const orgId = getOrgId();
-        if (!orgId) return;
-        const res = await apiClient<{ data: AlertTrigger[] }>(
-          `/organizations/${orgId}/alerts/${alertId}/triggers`,
-        );
-        setTriggers(res.data);
+        const data = await getTriggers(alertId);
+        setTriggers(data);
       } catch {
         // ignore
       } finally {
@@ -602,7 +558,7 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
       }
     };
     fetchTriggers();
-  }, [alertId]);
+  }, [alertId, getTriggers]);
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -649,18 +605,4 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
       </div>
     </div>
   );
-}
-
-function getOrgId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem('clarixbi-org-store');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed?.state?.currentOrgId || null;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
 }

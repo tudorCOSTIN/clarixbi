@@ -22,13 +22,28 @@ interface Report {
   updated_at: string;
 }
 
+interface CreateReportDto {
+  name: string;
+  dashboardId: string;
+  widgetIds: string[];
+  description?: string;
+}
+
+interface ScheduleDto {
+  frequency: string;
+  recipients: string[];
+  timezone: string;
+}
+
 interface UseReportsReturn {
   data: Report[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
+  create: (dto: CreateReportDto) => Promise<void>;
   generate: (id: string) => Promise<void>;
   download: (id: string) => Promise<string | null>;
+  schedule: (reportId: string, dto: ScheduleDto) => Promise<void>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -59,6 +74,18 @@ export function useReports(): UseReportsReturn {
     fetch();
   }, [fetch]);
 
+  const create = useCallback(
+    async (dto: CreateReportDto) => {
+      if (!currentOrgId) return;
+      await apiClient(`/organizations/${currentOrgId}/reports`, {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      });
+      await fetch();
+    },
+    [currentOrgId, fetch],
+  );
+
   const generate = useCallback(
     async (id: string) => {
       if (!currentOrgId) return;
@@ -78,6 +105,18 @@ export function useReports(): UseReportsReturn {
     [currentOrgId],
   );
 
+  const schedule = useCallback(
+    async (reportId: string, dto: ScheduleDto) => {
+      if (!currentOrgId) return;
+      await apiClient(`/organizations/${currentOrgId}/reports/${reportId}/schedule`, {
+        method: 'POST',
+        body: JSON.stringify(dto),
+      });
+      await fetch();
+    },
+    [currentOrgId, fetch],
+  );
+
   const remove = useCallback(
     async (id: string) => {
       if (!currentOrgId) return;
@@ -87,5 +126,5 @@ export function useReports(): UseReportsReturn {
     [currentOrgId],
   );
 
-  return { data, loading, error, refetch: fetch, generate, download, remove };
+  return { data, loading, error, refetch: fetch, create, generate, download, schedule, remove };
 }

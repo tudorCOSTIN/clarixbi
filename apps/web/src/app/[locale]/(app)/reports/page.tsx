@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { FileText, Plus, Download, Clock, Calendar, Loader2, Trash2, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useReports } from '@/hooks/useReports';
 import { apiClient } from '@/lib/api-client';
+import { useOrgStore } from '@/stores/org-store';
 
 interface Report {
   id: string;
@@ -34,38 +36,26 @@ interface Dashboard {
 
 export default function ReportsPage() {
   const t = useTranslations('reports');
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: reports,
+    loading,
+    refetch,
+    generate,
+    download,
+    remove,
+    create,
+    schedule,
+  } = useReports();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState<string | null>(null);
   const [generating, setGenerating] = useState<string | null>(null);
 
-  const fetchReports = useCallback(async () => {
-    try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      const res = await apiClient<{ data: Report[] }>(`/organizations/${orgId}/reports`);
-      setReports(res.data);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchReports();
-  }, [fetchReports]);
-
   const handleGenerate = async (reportId: string) => {
     try {
       setGenerating(reportId);
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/reports/${reportId}/generate`, { method: 'POST' });
-      // Wait briefly then refresh
+      await generate(reportId);
       setTimeout(() => {
-        fetchReports();
+        refetch();
         setGenerating(null);
       }, 3000);
     } catch {
@@ -76,10 +66,7 @@ export default function ReportsPage() {
   const handleDelete = async (reportId: string) => {
     if (!confirm(t('deleteConfirm'))) return;
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/reports/${reportId}`, { method: 'DELETE' });
-      setReports((prev) => prev.filter((r) => r.id !== reportId));
+      await remove(reportId);
     } catch {
       // ignore
     }
@@ -87,13 +74,9 @@ export default function ReportsPage() {
 
   const handleDownload = async (reportId: string) => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      const res = await apiClient<{ data: { url: string } }>(
-        `/organizations/${orgId}/reports/${reportId}/download`,
-      );
-      if (res.data?.url) {
-        window.open(res.data.url, '_blank');
+      const url = await download(reportId);
+      if (url) {
+        window.open(url, '_blank');
       }
     } catch {
       alert(t('noPdf'));
@@ -152,9 +135,9 @@ export default function ReportsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reports.map((report) => {
+          {(reports as Report[]).map((report) => {
             const lastGenerated = getLastGenerated(report);
-            const schedule = report.schedules?.[0];
+            const reportSchedule = report.schedules?.[0];
             return (
               <Card key={report.id} className="relative group">
                 <CardHeader className="pb-2">
@@ -186,14 +169,14 @@ export default function ReportsPage() {
                     </div>
                   )}
 
-                  {schedule && (
+                  {reportSchedule && (
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 text-gray-500" />
                       <Badge variant="secondary" className="text-[10px]">
-                        {getScheduleLabel(schedule.cron_expression)}
+                        {getScheduleLabel(reportSchedule.cron_expression)}
                       </Badge>
                       <span className="text-xs text-gray-400">
-                        → {t('destinations', { count: schedule.recipients.length })}
+                        → {t('destinations', { count: reportSchedule.recipients.length })}
                       </span>
                     </div>
                   )}
@@ -241,9 +224,9 @@ export default function ReportsPage() {
       {showCreateModal && (
         <CreateReportModal
           onClose={() => setShowCreateModal(false)}
-          onCreated={() => {
+          onCreated={async (dto) => {
+            await create(dto);
             setShowCreateModal(false);
-            fetchReports();
           }}
         />
       )}
@@ -251,11 +234,10 @@ export default function ReportsPage() {
       {/* Schedule Modal */}
       {showScheduleModal && (
         <ScheduleModal
-          reportId={showScheduleModal}
           onClose={() => setShowScheduleModal(null)}
-          onSaved={() => {
+          onSaved={async (dto) => {
+            await schedule(showScheduleModal, dto);
             setShowScheduleModal(null);
-            fetchReports();
           }}
         />
       )}
@@ -263,7 +245,18 @@ export default function ReportsPage() {
   );
 }
 
-function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function CreateReportModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: (dto: {
+    name: string;
+    dashboardId: string;
+    widgetIds: string[];
+    description?: string;
+  }) => Promise<void>;
+}) {
   const t = useTranslations('reports.modal');
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [selectedDashboard, setSelectedDashboard] = useState('');
@@ -273,59 +266,53 @@ function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCrea
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
+  const { currentOrgId } = useOrgStore();
+
   useEffect(() => {
     const fetchDashboards = async () => {
       try {
-        const orgId = getOrgId();
-        if (!orgId) return;
-        const res = await apiClient<{ data: Dashboard[] }>(`/organizations/${orgId}/dashboards`);
+        if (!currentOrgId) return;
+        const res = await apiClient<{ data: Dashboard[] }>(
+          `/organizations/${currentOrgId}/dashboards`,
+        );
         setDashboards(res.data);
       } catch {
         // ignore
       }
     };
     fetchDashboards();
-  }, []);
+  }, [currentOrgId]);
 
-  useEffect(() => {
-    if (!selectedDashboard) {
+  const handleDashboardChange = async (dashId: string) => {
+    setSelectedDashboard(dashId);
+    if (!dashId) {
       setWidgets([]);
       setSelectedWidgets([]);
       return;
     }
-    const fetchWidgets = async () => {
-      try {
-        const orgId = getOrgId();
-        if (!orgId) return;
-        const res = await apiClient<{ data: { widgets: { id: string; title: string }[] } }>(
-          `/organizations/${orgId}/dashboards/${selectedDashboard}`,
-        );
-        const w = res.data?.widgets || [];
-        setWidgets(w);
-        setSelectedWidgets(w.map((wi) => wi.id));
-      } catch {
-        // ignore
-      }
-    };
-    fetchWidgets();
-  }, [selectedDashboard]);
+    try {
+      if (!currentOrgId) return;
+      const res = await apiClient<{ data: { widgets: { id: string; title: string }[] } }>(
+        `/organizations/${currentOrgId}/dashboards/${dashId}`,
+      );
+      const w = res.data?.widgets || [];
+      setWidgets(w);
+      setSelectedWidgets(w.map((wi: { id: string }) => wi.id));
+    } catch {
+      // ignore
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim() || !selectedDashboard || selectedWidgets.length === 0) return;
     setSaving(true);
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/reports`, {
-        method: 'POST',
-        body: JSON.stringify({
-          name,
-          dashboardId: selectedDashboard,
-          widgetIds: selectedWidgets,
-          description: description || undefined,
-        }),
+      await onCreated({
+        name,
+        dashboardId: selectedDashboard,
+        widgetIds: selectedWidgets,
+        description: description || undefined,
       });
-      onCreated();
     } catch {
       // ignore
     } finally {
@@ -377,7 +364,7 @@ function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCrea
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard')}</label>
             <select
               value={selectedDashboard}
-              onChange={(e) => setSelectedDashboard(e.target.value)}
+              onChange={(e) => handleDashboardChange(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
             >
               <option value="">{t('selectDashboard')}</option>
@@ -430,13 +417,11 @@ function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCrea
 }
 
 function ScheduleModal({
-  reportId,
   onClose,
   onSaved,
 }: {
-  reportId: string;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (dto: { frequency: string; recipients: string[]; timezone: string }) => Promise<void>;
 }) {
   const t = useTranslations('reports.scheduleModal');
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
@@ -453,13 +438,7 @@ function ScheduleModal({
 
     setSaving(true);
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/reports/${reportId}/schedule`, {
-        method: 'POST',
-        body: JSON.stringify({ frequency, recipients, timezone }),
-      });
-      onSaved();
+      await onSaved({ frequency, recipients, timezone });
     } catch {
       // ignore
     } finally {
@@ -527,18 +506,4 @@ function ScheduleModal({
       </div>
     </div>
   );
-}
-
-function getOrgId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem('clarixbi-org-store');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed?.state?.currentOrgId || null;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
 }

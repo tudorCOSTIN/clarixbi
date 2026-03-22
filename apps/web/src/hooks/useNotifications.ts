@@ -30,6 +30,7 @@ interface UseNotificationsReturn {
   refetch: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  remove: (id: string) => Promise<void>;
 }
 
 export function useNotifications(page = 1): UseNotificationsReturn {
@@ -86,7 +87,17 @@ export function useNotifications(page = 1): UseNotificationsReturn {
     setMeta((prev) => (prev ? { ...prev, unreadCount: 0 } : prev));
   }, [currentOrgId]);
 
+  const remove = useCallback(
+    async (id: string) => {
+      if (!currentOrgId) return;
+      await apiClient(`/organizations/${currentOrgId}/notifications/${id}`, { method: 'DELETE' });
+      setData((prev) => prev.filter((n) => n.id !== id));
+      setMeta((prev) => (prev ? { ...prev, total: prev.total - 1 } : prev));
+    },
+    [currentOrgId],
+  );
+
   const unreadCount = useMemo(() => meta?.unreadCount ?? 0, [meta]);
 
-  return { data, meta, loading, error, unreadCount, refetch: fetch, markRead, markAllRead };
+  return { data, meta, loading, error, unreadCount, refetch: fetch, markRead, markAllRead, remove };
 }

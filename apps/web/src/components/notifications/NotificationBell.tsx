@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useOrgStore } from '@/stores/org-store';
 import { useSocketEvent } from '@/hooks/useWebSocket';
 
 interface NotificationItem {
@@ -19,6 +20,7 @@ interface NotificationItem {
 
 export function NotificationBell() {
   const t = useTranslations('notifications.bell');
+  const { currentOrgId } = useOrgStore();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -27,16 +29,15 @@ export function NotificationBell() {
 
   const fetchUnreadCount = useCallback(async () => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
+      if (!currentOrgId) return;
       const res = await apiClient<{ count: number }>(
-        `/organizations/${orgId}/notifications/unread-count`,
+        `/organizations/${currentOrgId}/notifications/unread-count`,
       );
       setUnreadCount(res.count);
     } catch {
       // silent fail
     }
-  }, []);
+  }, [currentOrgId]);
 
   useEffect(() => {
     fetchUnreadCount();
@@ -67,10 +68,9 @@ export function NotificationBell() {
   const fetchRecent = async () => {
     setLoading(true);
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
+      if (!currentOrgId) return;
       const res = await apiClient<{ data: NotificationItem[] }>(
-        `/organizations/${orgId}/notifications?limit=5`,
+        `/organizations/${currentOrgId}/notifications?limit=5`,
       );
       setNotifications(res.data);
     } catch {
@@ -89,9 +89,8 @@ export function NotificationBell() {
 
   const handleMarkRead = async (id: string) => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/notifications/${id}/read`, {
+      if (!currentOrgId) return;
+      await apiClient(`/organizations/${currentOrgId}/notifications/${id}/read`, {
         method: 'PATCH',
       });
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
@@ -103,9 +102,8 @@ export function NotificationBell() {
 
   const handleMarkAllRead = async () => {
     try {
-      const orgId = getOrgId();
-      if (!orgId) return;
-      await apiClient(`/organizations/${orgId}/notifications/mark-all-read`, {
+      if (!currentOrgId) return;
+      await apiClient(`/organizations/${currentOrgId}/notifications/mark-all-read`, {
         method: 'POST',
       });
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
@@ -206,18 +204,4 @@ export function NotificationBell() {
       )}
     </div>
   );
-}
-
-function getOrgId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const stored = localStorage.getItem('clarixbi-org-store');
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      return parsed?.state?.currentOrgId || null;
-    }
-  } catch {
-    // ignore
-  }
-  return null;
 }

@@ -18,6 +18,7 @@ interface UseDashboardsReturn {
   error: string | null;
   refetch: () => Promise<void>;
   create: (dto: { name: string; description?: string }) => Promise<Dashboard>;
+  clone: (id: string) => Promise<Dashboard>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -52,10 +53,19 @@ export function useDashboards(): UseDashboardsReturn {
     return res.data;
   }, []);
 
+  const clone = useCallback(async (id: string) => {
+    const res = await apiClient<{ data: Dashboard }>(
+      `/organizations/current/dashboards/${id}/duplicate`,
+      { method: 'POST' },
+    );
+    setData((prev) => [res.data, ...prev]);
+    return res.data;
+  }, []);
+
   const remove = useCallback(async (id: string) => {
     await apiClient(`/organizations/current/dashboards/${id}`, { method: 'DELETE' });
     setData((prev) => prev.filter((d) => d.id !== id));
   }, []);
 
-  return { data, loading, error, refetch: fetch, create, remove };
+  return { data, loading, error, refetch: fetch, create, clone, remove };
 }
