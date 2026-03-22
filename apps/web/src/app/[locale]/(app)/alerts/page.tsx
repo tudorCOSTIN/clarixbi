@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Bell,
   Plus,
@@ -19,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api-client';
+import { useSocketEvent } from '@/hooks/useWebSocket';
 import Link from 'next/link';
 
 interface Alert {
@@ -63,13 +65,8 @@ const OPERATORS: Record<string, string> = {
   change_pct: '% change >',
 };
 
-const FREQUENCIES: Record<string, string> = {
-  realtime: 'Real-time (5 min)',
-  hourly: 'La fiecare ora',
-  daily: 'Zilnic',
-};
-
 export default function AlertsPage() {
+  const t = useTranslations('alerts');
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateWizard, setShowCreateWizard] = useState(false);
@@ -104,6 +101,23 @@ export default function AlertsPage() {
     fetchAlerts();
   }, [fetchAlerts]);
 
+  // Real-time: refetch when an alert triggers
+  const { on } = useSocketEvent();
+  useEffect(() => {
+    const off = on(
+      'alert:triggered',
+      (data: { alertId: string; value: number; threshold: number }) => {
+        setTestResult({
+          alertId: data.alertId,
+          wouldTrigger: true,
+          currentValue: data.value,
+          threshold: data.threshold,
+        });
+      },
+    );
+    return () => off();
+  }, [on]);
+
   const handleToggle = async (alertId: string, isActive: boolean) => {
     try {
       const orgId = getOrgId();
@@ -116,7 +130,7 @@ export default function AlertsPage() {
     } catch (error) {
       const msg = error instanceof Error ? error.message : '';
       if (msg.includes('ALERT_LIMIT_REACHED') || msg.includes('402')) {
-        alert('Ai atins limita de alerte active. Upgradeaza planul.');
+        alert(t('limitReached'));
       }
     }
   };
@@ -138,7 +152,7 @@ export default function AlertsPage() {
   };
 
   const handleDelete = async (alertId: string) => {
-    if (!confirm('Stergi alerta?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       const orgId = getOrgId();
       if (!orgId) return;
@@ -163,23 +177,26 @@ export default function AlertsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Alerte</h1>
-          <p className="text-sm text-gray-500 mt-1">Monitorizeaza metrici si primeste notificari</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           {alertLimit && (
             <span className="text-xs text-gray-500">
-              {activeCount}/{alertLimit.limit === -1 ? '∞' : alertLimit.limit} alerte active
+              {t('activeCount', {
+                count: activeCount,
+                limit: alertLimit.limit === -1 ? '∞' : alertLimit.limit,
+              })}
               {alertLimit.limit !== -1 && (
                 <Link href="/settings/billing" className="text-primary-blue ml-1 hover:underline">
-                  Upgrade
+                  {t('upgrade')}
                 </Link>
               )}
             </span>
           )}
           <Button onClick={() => setShowCreateWizard(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Creeaza alerta
+            {t('create')}
           </Button>
         </div>
       </div>
@@ -188,17 +205,15 @@ export default function AlertsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <Bell className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-500">Nicio alerta</h3>
-            <p className="text-sm text-gray-400 mt-1">
-              Creeaza prima alerta pentru a monitoriza datele
-            </p>
+            <h3 className="text-lg font-medium text-gray-500">{t('empty')}</h3>
+            <p className="text-sm text-gray-400 mt-1">{t('emptySubtitle')}</p>
             <Button
               onClick={() => setShowCreateWizard(true)}
               className="mt-4 gap-2"
               variant="outline"
             >
               <Plus className="h-4 w-4" />
-              Creeaza alerta
+              {t('create')}
             </Button>
           </CardContent>
         </Card>
@@ -208,19 +223,19 @@ export default function AlertsPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
-                  Nume
+                  {t('table.name')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
-                  Conditie
+                  {t('table.condition')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
-                  Frecventa
+                  {t('table.frequency')}
                 </th>
                 <th className="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">
-                  Status
+                  {t('table.status')}
                 </th>
                 <th className="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">
-                  Actiuni
+                  {t('table.actions')}
                 </th>
               </tr>
             </thead>
@@ -243,11 +258,11 @@ export default function AlertsPage() {
                     </code>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">
-                    {FREQUENCIES[alert.check_frequency] || alert.check_frequency}
+                    {t(`frequencies.${alert.check_frequency}`)}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={alert.is_active ? 'default' : 'secondary'}>
-                      {alert.is_active ? 'Activa' : 'Pauzata'}
+                      {alert.is_active ? t('active') : t('paused')}
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
@@ -255,7 +270,7 @@ export default function AlertsPage() {
                       <button
                         onClick={() => handleToggle(alert.id, !alert.is_active)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-                        title={alert.is_active ? 'Pauza' : 'Activeaza'}
+                        title={alert.is_active ? t('pause') : t('activate')}
                       >
                         {alert.is_active ? (
                           <Pause className="h-4 w-4 text-amber-500" />
@@ -266,7 +281,7 @@ export default function AlertsPage() {
                       <button
                         onClick={() => handleTest(alert.id)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-                        title="Test (dry-run)"
+                        title={t('testDryRun')}
                         disabled={testingId === alert.id}
                       >
                         {testingId === alert.id ? (
@@ -278,14 +293,14 @@ export default function AlertsPage() {
                       <button
                         onClick={() => setShowHistory(alert.id)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-                        title="Istoric triggers"
+                        title={t('triggerHistory')}
                       >
                         <History className="h-4 w-4 text-gray-500" />
                       </button>
                       <button
                         onClick={() => handleDelete(alert.id)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-                        title="Sterge"
+                        title={t('delete')}
                       >
                         <Trash2 className="h-4 w-4 text-red-400" />
                       </button>
@@ -309,12 +324,16 @@ export default function AlertsPage() {
             )}
             <div>
               <p className="text-sm font-medium">
-                {testResult.wouldTrigger ? 'Alerta s-ar activa!' : 'Alerta NU s-ar activa'}
+                {testResult.wouldTrigger
+                  ? t('testResult.wouldTrigger')
+                  : t('testResult.wouldNotTrigger')}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Valoare curenta: <span className="font-mono">{testResult.currentValue}</span>
+                {t('testResult.currentValue')}:{' '}
+                <span className="font-mono">{testResult.currentValue}</span>
                 {' / '}
-                Prag: <span className="font-mono">{testResult.threshold}</span>
+                {t('testResult.threshold')}:{' '}
+                <span className="font-mono">{testResult.threshold}</span>
               </p>
             </div>
             <button
@@ -347,6 +366,8 @@ export default function AlertsPage() {
 }
 
 function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const t = useTranslations('alerts.wizard');
+  const tAlerts = useTranslations('alerts');
   const [step, setStep] = useState(1);
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [selectedSource, setSelectedSource] = useState('');
@@ -391,9 +412,9 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
       });
       onCreated();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Eroare la salvare';
+      const msg = err instanceof Error ? err.message : t('saveError');
       if (msg.includes('ALERT_LIMIT_REACHED') || msg.includes('402')) {
-        setError('Ai atins limita de alerte active. Upgradeaza planul.');
+        setError(tAlerts('limitReached'));
       } else {
         setError(msg);
       }
@@ -407,7 +428,7 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold">Creeaza alerta</h2>
+            <h2 className="text-lg font-semibold">{t('title')}</h2>
             <div className="flex items-center gap-1">
               {[1, 2, 3].map((s) => (
                 <div
@@ -426,13 +447,15 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
           {step === 1 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data source</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('dataSource')}
+                </label>
                 <select
                   value={selectedSource}
                   onChange={(e) => setSelectedSource(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 >
-                  <option value="">Selecteaza sursa de date...</option>
+                  <option value="">{t('selectSource')}</option>
                   {dataSources.map((ds) => (
                     <option key={ds.id} value={ds.id}>
                       {ds.name} ({ds.type})
@@ -442,7 +465,7 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Interogare metric (SQL)
+                  {t('metricQuery')}
                 </label>
                 <textarea
                   value={metricQuery}
@@ -458,22 +481,26 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
           {step === 2 && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Operator</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('operator')}
+                </label>
                 <select
                   value={operator}
                   onChange={(e) => setOperator(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 >
-                  <option value="gt">Mai mare decat (&gt;)</option>
-                  <option value="lt">Mai mic decat (&lt;)</option>
-                  <option value="eq">Egal cu (=)</option>
-                  <option value="gte">Mai mare sau egal (&gt;=)</option>
-                  <option value="lte">Mai mic sau egal (&lt;=)</option>
-                  <option value="change_pct">Schimbare procentuala (&gt;%)</option>
+                  <option value="gt">{t('operators.gt')}</option>
+                  <option value="lt">{t('operators.lt')}</option>
+                  <option value="eq">{t('operators.eq')}</option>
+                  <option value="gte">{t('operators.gte')}</option>
+                  <option value="lte">{t('operators.lte')}</option>
+                  <option value="change_pct">{t('operators.change_pct')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Valoare prag</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('thresholdValue')}
+                </label>
                 <input
                   type="number"
                   value={threshold}
@@ -489,25 +516,27 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
             <>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Frecventa verificare
+                  {t('checkFrequency')}
                 </label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 >
-                  <option value="realtime">Real-time (la fiecare 5 min)</option>
-                  <option value="hourly">La fiecare ora</option>
-                  <option value="daily">Zilnic</option>
+                  <option value="realtime">{t('frequencyOptions.realtime')}</option>
+                  <option value="hourly">{t('frequencyOptions.hourly')}</option>
+                  <option value="daily">{t('frequencyOptions.daily')}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nume alerta</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('alertName')}
+                </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Facturi neachitate > 10000 RON"
+                  placeholder={t('alertNamePlaceholder')}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
                 />
               </div>
@@ -528,7 +557,7 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
 
         <div className="flex justify-between p-4 border-t">
           <Button variant="outline" onClick={step > 1 ? () => setStep(step - 1) : onClose}>
-            {step > 1 ? 'Inapoi' : 'Anuleaza'}
+            {step > 1 ? t('back') : t('cancel')}
           </Button>
           {step < 3 ? (
             <Button
@@ -538,12 +567,12 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
                 (step === 2 && !threshold)
               }
             >
-              Urmatorul
+              {t('next')}
             </Button>
           ) : (
             <Button onClick={handleSave} disabled={!name.trim() || saving}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Salveaza
+              {t('save')}
             </Button>
           )}
         </div>
@@ -553,6 +582,7 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
 }
 
 function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () => void }) {
+  const t = useTranslations('alerts.history');
   const [triggers, setTriggers] = useState<AlertTrigger[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -578,7 +608,7 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Istoric triggers</h2>
+          <h2 className="text-lg font-semibold">{t('title')}</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
             <X className="h-5 w-5" />
           </button>
@@ -589,7 +619,7 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
               <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto" />
             </div>
           ) : triggers.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-400">Niciun trigger inregistrat</div>
+            <div className="text-center py-8 text-sm text-gray-400">{t('empty')}</div>
           ) : (
             <div className="space-y-2">
               {triggers.map((trigger) => (
@@ -607,9 +637,9 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Valoare: <span className="font-mono">{trigger.metric_value}</span>
+                    {t('value')}: <span className="font-mono">{trigger.metric_value}</span>
                     {' / '}
-                    Prag: <span className="font-mono">{trigger.threshold_value}</span>
+                    {t('threshold')}: <span className="font-mono">{trigger.threshold_value}</span>
                   </p>
                 </div>
               ))}

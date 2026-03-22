@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   ArrowLeft,
   RefreshCw,
@@ -55,14 +56,15 @@ const statusColors: Record<string, string> = {
 };
 
 const intervalOptions = [
-  { label: '15 min', value: 15 },
-  { label: '30 min', value: 30 },
-  { label: '1 ora', value: 60 },
-  { label: '2 ore', value: 120 },
-  { label: '3 ore', value: 180 },
+  { labelKey: '15min', value: 15 },
+  { labelKey: '30min', value: 30 },
+  { labelKey: '1h', value: 60 },
+  { labelKey: '2h', value: 120 },
+  { labelKey: '3h', value: 180 },
 ];
 
 export default function DataSourceDetailPage() {
+  const t = useTranslations('dataSources.detail');
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -136,7 +138,7 @@ export default function DataSourceDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Sigur vrei sa stergi aceasta sursa de date?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       await apiClient(`/organizations/current/data-sources/${id}`, { method: 'DELETE' });
       router.push('/data-sources');
@@ -149,7 +151,7 @@ export default function DataSourceDetailPage() {
     <div>
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="sm" onClick={() => router.push('/data-sources')}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Inapoi
+          <ArrowLeft className="h-4 w-4 mr-1" /> {t('back')}
         </Button>
       </div>
 
@@ -170,23 +172,23 @@ export default function DataSourceDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Informatii</CardTitle>
+            <CardTitle className="text-base">{t('info')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Tip conexiune</span>
+              <span className="text-gray-500">{t('connectionType')}</span>
               <span className="text-gray-900 capitalize">{ds.type}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Interval sincronizare</span>
+              <span className="text-gray-500">{t('syncInterval')}</span>
               <span className="text-gray-900">{ds.sync_interval_minutes} min</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Total randuri</span>
+              <span className="text-gray-500">{t('totalRows')}</span>
               <span className="text-gray-900">{ds.total_rows.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Ultima sincronizare</span>
+              <span className="text-gray-500">{t('lastSync')}</span>
               <span className="text-gray-900">
                 {ds.last_sync_at ? new Date(ds.last_sync_at).toLocaleString() : '-'}
               </span>
@@ -196,16 +198,16 @@ export default function DataSourceDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Editeaza</CardTitle>
+            <CardTitle className="text-base">{t('edit')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700 mb-1 block">Nume</label>
+              <label className="text-sm font-medium text-gray-700 mb-1 block">{t('name')}</label>
               <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Interval sincronizare
+                {t('syncInterval')}
               </label>
               <select
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -214,7 +216,7 @@ export default function DataSourceDetailPage() {
               >
                 {intervalOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                    {t(`intervals.${opt.labelKey}`)}
                   </option>
                 ))}
               </select>
@@ -225,7 +227,7 @@ export default function DataSourceDetailPage() {
               ) : (
                 <Save className="h-4 w-4 mr-2" />
               )}
-              Salveaza
+              {t('save')}
             </Button>
           </CardContent>
         </Card>
@@ -238,31 +240,29 @@ export default function DataSourceDetailPage() {
           ) : (
             <RefreshCw className="h-4 w-4 mr-2" />
           )}
-          Sync acum
+          {t('syncNow')}
         </Button>
         <Button variant="outline" className="text-red-500" onClick={handleDelete}>
-          <Trash2 className="h-4 w-4 mr-2" /> Sterge sursa
+          <Trash2 className="h-4 w-4 mr-2" /> {t('deleteSource')}
         </Button>
       </div>
 
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle className="text-base">Istoric sincronizari</CardTitle>
+          <CardTitle className="text-base">{t('syncHistory')}</CardTitle>
         </CardHeader>
         <CardContent>
           {logs.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">
-              Nicio sincronizare inregistrata
-            </p>
+            <p className="text-sm text-gray-500 text-center py-4">{t('noSyncHistory')}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b text-left text-gray-500">
-                    <th className="pb-2 font-medium">Data</th>
-                    <th className="pb-2 font-medium">Status</th>
-                    <th className="pb-2 font-medium">Randuri</th>
-                    <th className="pb-2 font-medium">Eroare</th>
+                    <th className="pb-2 font-medium">{t('date')}</th>
+                    <th className="pb-2 font-medium">{t('status')}</th>
+                    <th className="pb-2 font-medium">{t('rows')}</th>
+                    <th className="pb-2 font-medium">{t('error')}</th>
                   </tr>
                 </thead>
                 <tbody>

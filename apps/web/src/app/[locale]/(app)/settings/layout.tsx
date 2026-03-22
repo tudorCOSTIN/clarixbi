@@ -2,17 +2,19 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { User, CreditCard, Users, Building2 } from 'lucide-react';
 
 const settingsNav = [
-  { href: '/settings', label: 'Profile', icon: User },
-  { href: '/settings/billing', label: 'Billing', icon: CreditCard },
-  { href: '/settings/team', label: 'Team', icon: Users },
-  { href: '/settings/organization', label: 'Organization', icon: Building2 },
+  { href: '/settings', labelKey: 'profile', icon: User },
+  { href: '/settings/billing', labelKey: 'billing', icon: CreditCard },
+  { href: '/settings/team', labelKey: 'team', icon: Users },
+  { href: '/settings/organization', labelKey: 'organization', icon: Building2 },
 ];
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const t = useTranslations('settings.nav');
 
   // Strip locale prefix for matching
   const pathWithoutLocale = pathname.replace(/^\/(ro|en)/, '');
@@ -37,7 +39,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                   }`}
                 >
                   <item.icon className="h-4 w-4" />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               </li>
             );

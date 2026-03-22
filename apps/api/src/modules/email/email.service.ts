@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { Resend } from 'resend';
+import { User } from '../users/entities/user.entity';
+
+type EmailType = 'marketing' | 'notification' | 'critical';
 
 @Injectable()
 export class EmailService {
@@ -8,7 +13,11 @@ export class EmailService {
   private resend: Resend | null = null;
   private readonly appUrl: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {
     const apiKey = this.configService.get<string>('RESEND_API_KEY');
     if (apiKey) {
       this.resend = new Resend(apiKey);
@@ -27,7 +36,7 @@ export class EmailService {
         from: 'ClarixBI <noreply@clarixbi.com>',
         to,
         subject,
-        html,
+        html: html + this.getEmailFooter(),
       });
       this.logger.log(`Email sent to ${to}: ${subject}`);
     } catch (error) {
@@ -40,7 +49,10 @@ export class EmailService {
     orgName: string,
     inviterName: string,
     inviteUrl: string,
+    userId?: string,
   ): Promise<void> {
+    if (userId && !(await this.shouldSendEmail(userId, 'notification'))) return;
+
     await this.sendEmail(
       email,
       `Ai fost invitat in ${orgName} pe ClarixBI`,
@@ -78,7 +90,10 @@ export class EmailService {
     alertName: string,
     value: number,
     threshold: number,
+    userId?: string,
   ): Promise<void> {
+    if (userId && !(await this.shouldSendEmail(userId, 'notification'))) return;
+
     await this.sendEmail(
       email,
       `Alert ClarixBI: ${alertName}`,
@@ -86,5 +101,35 @@ export class EmailService {
        <p>Valoare curenta: <strong>${value}</strong> (prag: ${threshold})</p>
        <p><a href="${this.appUrl}/alerts" style="background:#2563eb;color:white;padding:12px 24px;text-decoration:none;border-radius:6px;display:inline-block">Vezi alerte</a></p>`,
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  private getEmailFooter(): string {
+    return `<hr style="margin-top:32px;border:none;border-top:1px solid #e5e7eb">
+<p style="font-size:11px;color:#9ca3af;margin-top:16px;text-align:center;">
+  Primesti acest email pentru ca ai un cont ClarixBI.<br>
+  <a href="${this.appUrl}/settings" style="color:#6b7280;text-decoration:underline;">Gestioneaza preferintele de notificare</a>
+</p>`;
+  }
+
+  private async shouldSendEmail(userId: string, emailType: EmailType): Promise<boolean> {
+    if (emailType === 'critical') return true;
+
+    try {
+      const user = await this.userRepo.findOne({ where: { id: userId } });
+      if (!user) return false;
+
+      if (user.notifications_enabled === false) {
+        this.logger.warn(`Email skipped: notifications disabled for user ${userId}`);
+        return false;
+      }
+      return true;
+    } catch {
+      // If we can't check preferences, send the email anyway
+      return true;
+    }
   }
 }

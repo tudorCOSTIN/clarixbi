@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
+import { useSocketEvent } from '@/hooks/useWebSocket';
 
 interface NotificationItem {
   id: string;
@@ -16,6 +18,7 @@ interface NotificationItem {
 }
 
 export function NotificationBell() {
+  const t = useTranslations('notifications.bell');
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -40,6 +43,16 @@ export function NotificationBell() {
     const interval = setInterval(fetchUnreadCount, 30000);
     return () => clearInterval(interval);
   }, [fetchUnreadCount]);
+
+  // Real-time WebSocket listener for new notifications
+  const { on } = useSocketEvent();
+  useEffect(() => {
+    const off = on('notification:new', (data: NotificationItem) => {
+      setUnreadCount((prev) => prev + 1);
+      setNotifications((prev) => [data, ...prev].slice(0, 5));
+    });
+    return () => off();
+  }, [on]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -107,7 +120,7 @@ export function NotificationBell() {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin < 1) return 'acum';
+    if (diffMin < 1) return t('now');
     if (diffMin < 60) return `${diffMin}m`;
     const diffH = Math.floor(diffMin / 60);
     if (diffH < 24) return `${diffH}h`;
@@ -133,24 +146,24 @@ export function NotificationBell() {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 w-80 rounded-lg border border-gray-200 bg-white shadow-lg z-50">
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <span className="text-sm font-semibold text-gray-900">Notificari</span>
+            <span className="text-sm font-semibold text-gray-900">{t('title')}</span>
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllRead}
                 className="text-xs text-primary-blue hover:underline"
               >
-                Marcheaza toate ca citite
+                {t('markAllRead')}
               </button>
             )}
           </div>
 
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">Se incarca...</div>
+              <div className="px-4 py-8 text-center text-sm text-gray-400">{t('loading')}</div>
             ) : notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <Bell className="mx-auto h-8 w-8 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-400">Nicio notificare</p>
+                <p className="mt-2 text-sm text-gray-400">{t('empty')}</p>
               </div>
             ) : (
               notifications.map((n) => (
@@ -186,7 +199,7 @@ export function NotificationBell() {
               onClick={() => setIsOpen(false)}
               className="block text-center text-xs text-primary-blue hover:underline"
             >
-              Vezi toate notificarile
+              {t('viewAll')}
             </Link>
           </div>
         </div>

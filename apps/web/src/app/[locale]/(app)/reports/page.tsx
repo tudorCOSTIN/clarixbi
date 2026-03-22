@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { FileText, Plus, Download, Clock, Calendar, Loader2, Trash2, Play, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,6 +33,7 @@ interface Dashboard {
 }
 
 export default function ReportsPage() {
+  const t = useTranslations('reports');
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -72,7 +74,7 @@ export default function ReportsPage() {
   };
 
   const handleDelete = async (reportId: string) => {
-    if (!confirm('Stergi raportul?')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       const orgId = getOrgId();
       if (!orgId) return;
@@ -94,7 +96,7 @@ export default function ReportsPage() {
         window.open(res.data.url, '_blank');
       }
     } catch {
-      alert('Nu exista PDF generat. Apasa "Genereaza acum" mai intai.');
+      alert(t('noPdf'));
     }
   };
 
@@ -105,9 +107,9 @@ export default function ReportsPage() {
   };
 
   const getScheduleLabel = (cron: string): string => {
-    if (cron === '0 8 * * *') return 'Zilnic';
-    if (cron === '0 8 * * 1') return 'Saptamanal';
-    if (cron === '0 8 1 * *') return 'Lunar';
+    if (cron === '0 8 * * *') return t('schedule.daily');
+    if (cron === '0 8 * * 1') return t('schedule.weekly');
+    if (cron === '0 8 1 * *') return t('schedule.monthly');
     return cron;
   };
 
@@ -123,14 +125,12 @@ export default function ReportsPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Rapoarte</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Genereaza si programeaza rapoarte PDF din dashboard-uri
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+          <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
         </div>
         <Button onClick={() => setShowCreateModal(true)} className="gap-2">
           <Plus className="h-4 w-4" />
-          Creeaza raport
+          {t('create')}
         </Button>
       </div>
 
@@ -138,15 +138,15 @@ export default function ReportsPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-500">Niciun raport</h3>
-            <p className="text-sm text-gray-400 mt-1">Creeaza primul raport din dashboard</p>
+            <h3 className="text-lg font-medium text-gray-500">{t('empty')}</h3>
+            <p className="text-sm text-gray-400 mt-1">{t('emptySubtitle')}</p>
             <Button
               onClick={() => setShowCreateModal(true)}
               className="mt-4 gap-2"
               variant="outline"
             >
               <Plus className="h-4 w-4" />
-              Creeaza raport
+              {t('create')}
             </Button>
           </CardContent>
         </Card>
@@ -180,7 +180,9 @@ export default function ReportsPage() {
                   {lastGenerated && (
                     <div className="flex items-center gap-2 text-xs text-gray-500">
                       <Clock className="h-3.5 w-3.5" />
-                      <span>Generat: {new Date(lastGenerated).toLocaleDateString('ro-RO')}</span>
+                      <span>
+                        {t('generated', { date: new Date(lastGenerated).toLocaleDateString() })}
+                      </span>
                     </div>
                   )}
 
@@ -191,7 +193,7 @@ export default function ReportsPage() {
                         {getScheduleLabel(schedule.cron_expression)}
                       </Badge>
                       <span className="text-xs text-gray-400">
-                        → {schedule.recipients.length} dest.
+                        → {t('destinations', { count: schedule.recipients.length })}
                       </span>
                     </div>
                   )}
@@ -209,7 +211,7 @@ export default function ReportsPage() {
                       ) : (
                         <Play className="h-3.5 w-3.5" />
                       )}
-                      Genereaza acum
+                      {t('generateNow')}
                     </Button>
                     <Button
                       size="sm"
@@ -262,6 +264,7 @@ export default function ReportsPage() {
 }
 
 function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+  const t = useTranslations('reports.modal');
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [selectedDashboard, setSelectedDashboard] = useState('');
   const [widgets, setWidgets] = useState<{ id: string; title: string }[]>([]);
@@ -340,42 +343,44 @@ function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCrea
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Creeaza raport</h2>
+          <h2 className="text-lg font-semibold">{t('createTitle')}</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nume raport</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('reportName')}
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Raport vanzari lunar"
+              placeholder={t('reportNamePlaceholder')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descriere (optional)
+              {t('description')}
             </label>
             <input
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Raport cu datele de vanzari..."
+              placeholder={t('descriptionPlaceholder')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dashboard</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard')}</label>
             <select
               value={selectedDashboard}
               onChange={(e) => setSelectedDashboard(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
             >
-              <option value="">Selecteaza dashboard...</option>
+              <option value="">{t('selectDashboard')}</option>
               {dashboards.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -386,7 +391,7 @@ function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCrea
           {widgets.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Widget-uri ({selectedWidgets.length}/{widgets.length} selectate)
+                {t('widgets', { selected: selectedWidgets.length, total: widgets.length })}
               </label>
               <div className="space-y-1 max-h-40 overflow-y-auto border rounded-lg p-2">
                 {widgets.map((w) => (
@@ -409,14 +414,14 @@ function CreateReportModal({ onClose, onCreated }: { onClose: () => void; onCrea
         </div>
         <div className="flex justify-end gap-2 p-4 border-t">
           <Button variant="outline" onClick={onClose}>
-            Anuleaza
+            {t('cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={!name.trim() || !selectedDashboard || selectedWidgets.length === 0 || saving}
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Creeaza
+            {t('create')}
           </Button>
         </div>
       </div>
@@ -433,6 +438,7 @@ function ScheduleModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  const t = useTranslations('reports.scheduleModal');
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [recipientsText, setRecipientsText] = useState('');
   const [timezone, setTimezone] = useState('Europe/Bucharest');
@@ -465,27 +471,27 @@ function ScheduleModal({
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Programeaza raport</h2>
+          <h2 className="text-lg font-semibold">{t('title')}</h2>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
             <X className="h-5 w-5" />
           </button>
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Frecventa</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('frequency')}</label>
             <select
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
             >
-              <option value="daily">Zilnic</option>
-              <option value="weekly">Saptamanal (Luni)</option>
-              <option value="monthly">Lunar (1a zi)</option>
+              <option value="daily">{t('frequencyOptions.daily')}</option>
+              <option value="weekly">{t('frequencyOptions.weekly')}</option>
+              <option value="monthly">{t('frequencyOptions.monthly')}</option>
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Destinatari (email-uri, separate prin virgula)
+              {t('recipients')}
             </label>
             <textarea
               value={recipientsText}
@@ -496,7 +502,7 @@ function ScheduleModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('timezone')}</label>
             <select
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
@@ -511,11 +517,11 @@ function ScheduleModal({
         </div>
         <div className="flex justify-end gap-2 p-4 border-t">
           <Button variant="outline" onClick={onClose}>
-            Anuleaza
+            {t('cancel')}
           </Button>
           <Button onClick={handleSave} disabled={!recipientsText.trim() || saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Salveaza
+            {t('save')}
           </Button>
         </div>
       </div>

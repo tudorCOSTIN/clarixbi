@@ -2,22 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Home, LayoutDashboard, Database, Sparkles, FileText, Bell, Settings } from 'lucide-react';
 import { AiUsageBadge } from '@/components/ai/AiUsageBadge';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const navLinks = [
-  { href: '/', label: 'Home', icon: Home },
-  { href: '/dashboards', label: 'Dashboards', icon: LayoutDashboard },
-  { href: '/data-sources', label: 'Data Sources', icon: Database },
-  { href: '/reports', label: 'Reports', icon: FileText },
-  { href: '/alerts', label: 'Alerts', icon: Bell },
-  { href: '/ai', label: 'AI Assistant', icon: Sparkles },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/', labelKey: 'home', icon: Home },
+  { href: '/dashboards', labelKey: 'dashboards', icon: LayoutDashboard },
+  { href: '/data-sources', labelKey: 'dataSources', icon: Database },
+  { href: '/reports', labelKey: 'reports', icon: FileText },
+  { href: '/alerts', labelKey: 'alerts', icon: Bell },
+  { href: '/ai', labelKey: 'aiAssistant', icon: Sparkles },
+  { href: '/settings', labelKey: 'settings', icon: Settings },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const t = useTranslations('nav');
   // Strip locale prefix for comparison
   const currentPath = pathname.replace(/^\/[a-z]{2}/, '') || '/';
 
@@ -45,13 +47,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {link.label === 'AI Assistant' ? (
+                  {link.labelKey === 'aiAssistant' ? (
                     <>
-                      <span>AI Assistant</span>
+                      <span>{t('aiAssistant')}</span>
                       <AiUsageBadge />
                     </>
                   ) : (
-                    link.label
+                    t(link.labelKey)
                   )}
                 </Link>
               );
@@ -67,19 +69,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             href="/legal/terms"
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
-            Terms
+            {t('terms')}
           </Link>
           <Link
             href="/legal/privacy"
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
-            Privacy
+            {t('privacy')}
           </Link>
           <Link
             href="/legal/cookies"
             className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
           >
-            Cookies
+            {t('cookies')}
           </Link>
         </div>
       </footer>

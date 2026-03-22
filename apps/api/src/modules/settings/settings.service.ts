@@ -24,7 +24,7 @@ export class SettingsService {
     return {
       language: user.preferred_language,
       timezone: user.preferred_timezone,
-      notifications_enabled: user.is_active,
+      notifications_enabled: user.notifications_enabled,
     };
   }
 
@@ -40,13 +40,16 @@ export class SettingsService {
     if (dto.timezone !== undefined) {
       user.preferred_timezone = dto.timezone;
     }
+    if (dto.notifications_enabled !== undefined) {
+      user.notifications_enabled = dto.notifications_enabled;
+    }
 
     await this.userRepo.save(user);
 
     return {
       language: user.preferred_language,
       timezone: user.preferred_timezone,
-      notifications_enabled: user.is_active,
+      notifications_enabled: user.notifications_enabled,
     };
   }
 

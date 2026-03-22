@@ -85,7 +85,7 @@ export default function SettingsPage() {
       await apiClient('/users/me/gdpr/export', { method: 'POST' });
       setExportMessage(t('exportRequested'));
     } catch {
-      setExportMessage('Error requesting export.');
+      setExportMessage(t('exportError'));
     } finally {
       setExportLoading(false);
     }
@@ -104,7 +104,7 @@ export default function SettingsPage() {
       });
       router.push('/');
     } catch {
-      setDeleteError('Error deleting account. Please try again.');
+      setDeleteError(t('deleteError'));
       setDeleteLoading(false);
     }
   };

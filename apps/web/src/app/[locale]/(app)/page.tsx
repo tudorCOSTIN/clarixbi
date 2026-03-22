@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   Database,
@@ -41,6 +42,7 @@ interface OverviewData {
 }
 
 export default function HomePage() {
+  const t = useTranslations('overview');
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEmpty, setIsEmpty] = useState(false);
@@ -70,14 +72,12 @@ export default function HomePage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
         <Database className="h-16 w-16 text-gray-300" />
-        <h2 className="text-xl font-semibold text-gray-700">Bine ai venit in ClarixBI!</h2>
-        <p className="text-gray-500 text-center max-w-md">
-          Conecteaza prima sursa de date pentru a vedea statistici si dashboard-uri.
-        </p>
+        <h2 className="text-xl font-semibold text-gray-700">{t('welcome')}</h2>
+        <p className="text-gray-500 text-center max-w-md">{t('welcomeSubtitle')}</p>
         <Link href="/data-sources">
           <Button>
             <Plus className="h-4 w-4 mr-2" />
-            Conecteaza sursa de date
+            {t('connectDataSource')}
           </Button>
         </Link>
       </div>
@@ -91,8 +91,10 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Overview</h1>
-        <p className="text-sm text-gray-500">Last updated: {new Date().toLocaleTimeString()}</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
+        <p className="text-sm text-gray-500">
+          {t('lastUpdated', { time: new Date().toLocaleTimeString() })}
+        </p>
       </div>
 
       {isEmpty && (
@@ -100,9 +102,9 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <Database className="h-5 w-5 text-blue-500" />
             <p className="text-sm text-blue-700">
-              Conecteaza prima sursa de date pentru a vedea statistici reale.{' '}
+              {t('connectPrompt')}{' '}
               <Link href="/data-sources" className="font-medium underline">
-                Adauga sursa
+                {t('addSource')}
               </Link>
             </p>
           </div>
@@ -115,7 +117,7 @@ export default function HomePage() {
           <KPICard
             value={data.totalRevenue}
             previousValue={data.previousRevenue}
-            label="Total Revenue 30d"
+            label={t('totalRevenue')}
             prefix="RON "
             colorScheme="primary"
             sparklineData={data.revenueTrend.map((d) => ({ value: d.revenue }))}
@@ -125,15 +127,19 @@ export default function HomePage() {
           <KPICard
             value={data.totalOrders}
             previousValue={data.previousOrders}
-            label="Total Orders 30d"
+            label={t('totalOrders')}
             colorScheme="warm"
           />
         </Card>
         <Card className="p-4">
-          <KPICard value={data.activeDataSources} label="Active Data Sources" colorScheme="cool" />
+          <KPICard
+            value={data.activeDataSources}
+            label={t('activeDataSources')}
+            colorScheme="cool"
+          />
         </Card>
         <Card className="p-4">
-          <KPICard value={data.activeAlerts} label="Active Alerts" colorScheme="warm" />
+          <KPICard value={data.activeAlerts} label={t('activeAlerts')} colorScheme="warm" />
         </Card>
       </div>
 
@@ -143,7 +149,7 @@ export default function HomePage() {
           {data.revenueTrend.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Revenue Trend (7 days)</CardTitle>
+                <CardTitle className="text-base">{t('revenueTrend')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <LineChartWidget
@@ -159,7 +165,7 @@ export default function HomePage() {
           {data.topProducts.length > 0 && (
             <Card>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">Top 5 Products</CardTitle>
+                <CardTitle className="text-base">{t('topProducts')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <BarChartWidget
@@ -180,12 +186,12 @@ export default function HomePage() {
         {/* Recent Sync Jobs */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Recent Sync Jobs</CardTitle>
+            <CardTitle className="text-base">{t('recentSyncJobs')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {data.recentSyncJobs.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">No recent sync jobs</p>
+                <p className="text-sm text-gray-400 text-center py-4">{t('noRecentSyncs')}</p>
               ) : (
                 data.recentSyncJobs.map((job) => (
                   <div
@@ -201,7 +207,9 @@ export default function HomePage() {
                       <span className="text-sm font-medium text-gray-700">{job.source_name}</span>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span>{job.rows_imported} rows</span>
+                      <span>
+                        {job.rows_imported} {t('rows')}
+                      </span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {job.duration}s
@@ -218,12 +226,12 @@ export default function HomePage() {
         {/* Recent Alert Triggers */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Recent Alert Triggers</CardTitle>
+            <CardTitle className="text-base">{t('recentAlertTriggers')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {data.recentAlertTriggers.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">No recent alerts</p>
+                <p className="text-sm text-gray-400 text-center py-4">{t('noRecentAlerts')}</p>
               ) : (
                 data.recentAlertTriggers.map((trigger) => (
                   <div
@@ -258,17 +266,17 @@ export default function HomePage() {
       <div className="flex flex-wrap gap-3">
         <Link href="/dashboards/new">
           <Button variant="outline" size="sm">
-            <Plus className="h-4 w-4 mr-1" /> Create Dashboard
+            <Plus className="h-4 w-4 mr-1" /> {t('createDashboard')}
           </Button>
         </Link>
         <Link href="/data-sources">
           <Button variant="outline" size="sm">
-            <Database className="h-4 w-4 mr-1" /> Add Data Source
+            <Database className="h-4 w-4 mr-1" /> {t('addDataSource')}
           </Button>
         </Link>
         <Link href="/dashboards">
           <Button variant="outline" size="sm">
-            <LayoutDashboard className="h-4 w-4 mr-1" /> View Dashboards
+            <LayoutDashboard className="h-4 w-4 mr-1" /> {t('viewDashboards')}
           </Button>
         </Link>
       </div>

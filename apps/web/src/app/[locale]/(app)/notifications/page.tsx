@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { Bell, Check, CheckCheck, Trash2 } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 
@@ -36,6 +37,8 @@ function getOrgId(): string | null {
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations('notifications');
+  const tc = useTranslations('common');
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [meta, setMeta] = useState<NotificationsMeta | null>(null);
   const [page, setPage] = useState(1);
@@ -115,10 +118,10 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notificari</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('title')}</h1>
           {meta && (
             <p className="mt-1 text-sm text-gray-500">
-              {meta.total} notificari, {meta.unreadCount} necitite
+              {t('count', { total: meta.total, unread: meta.unreadCount })}
             </p>
           )}
         </div>
@@ -128,7 +131,7 @@ export default function NotificationsPage() {
             className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             <CheckCheck className="h-4 w-4" />
-            Marcheaza toate ca citite
+            {t('markAllRead')}
           </button>
         )}
       </div>
@@ -145,10 +148,8 @@ export default function NotificationsPage() {
       ) : notifications.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white py-16 text-center">
           <Bell className="mx-auto h-12 w-12 text-gray-300" />
-          <h3 className="mt-4 text-lg font-medium text-gray-900">Nicio notificare</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            Vei primi notificari cand apar evenimente importante.
-          </p>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">{t('empty')}</h3>
+          <p className="mt-1 text-sm text-gray-500">{t('emptySubtitle')}</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -187,7 +188,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={() => handleMarkRead(n.id)}
                     className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                    title="Marcheaza ca citita"
+                    title={t('markRead')}
                   >
                     <Check className="h-4 w-4" />
                   </button>
@@ -195,7 +196,7 @@ export default function NotificationsPage() {
                 <button
                   onClick={() => handleDelete(n.id)}
                   className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
-                  title="Sterge"
+                  title={t('delete')}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -212,17 +213,15 @@ export default function NotificationsPage() {
             disabled={page === 1}
             className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Anterior
+            {tc('previous')}
           </button>
-          <span className="text-sm text-gray-500">
-            Pagina {page} din {totalPages}
-          </span>
+          <span className="text-sm text-gray-500">{tc('pageOf', { page, total: totalPages })}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
             className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Urmator
+            {tc('next')}
           </button>
         </div>
       )}

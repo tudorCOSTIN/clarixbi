@@ -267,7 +267,7 @@ export default function DataSourcesPage() {
                     className="w-full text-red-500 mt-2"
                     onClick={async (e) => {
                       e.stopPropagation();
-                      if (!confirm('Sterge sursa de date?')) return;
+                      if (!confirm(t('deleteConfirm'))) return;
                       try {
                         await apiClient(`/organizations/current/data-sources/${ds.id}`, {
                           method: 'DELETE',
@@ -279,7 +279,7 @@ export default function DataSourcesPage() {
                     }}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Sterge
+                    {t('delete')}
                   </Button>
                 </CardContent>
               </Card>
