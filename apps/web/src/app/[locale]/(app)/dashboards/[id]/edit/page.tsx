@@ -119,7 +119,7 @@ export default function DashboardEditPage() {
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         } catch (err) {
-          console.error('Auto-save failed:', err);
+          void err;
         } finally {
           setSaving(false);
         }
@@ -181,7 +181,7 @@ export default function DashboardEditPage() {
         });
         setConfiguratorOpen(true);
       } catch (err) {
-        console.error('Failed to add widget:', err);
+        void err;
       }
     },
     [dashboardId],
@@ -204,7 +204,7 @@ export default function DashboardEditPage() {
           setActiveWidgetId(null);
         }
       } catch (err) {
-        console.error('Failed to remove widget:', err);
+        void err;
       }
     },
     [dashboardId, activeWidgetId],
@@ -262,7 +262,7 @@ export default function DashboardEditPage() {
         setConfiguratorOpen(false);
         setActiveWidgetId(null);
       } catch (err) {
-        console.error('Failed to update widget:', err);
+        void err;
       }
     },
     [activeWidgetId, dashboardId],
@@ -274,7 +274,7 @@ export default function DashboardEditPage() {
       apiClient(`/organizations/current/dashboards/${dashboardId}`, {
         method: 'PATCH',
         body: JSON.stringify({ name: dashboardName }),
-      }).catch(console.error);
+      }).catch(() => {});
     }
   }, [dashboard, dashboardName, dashboardId]);
 

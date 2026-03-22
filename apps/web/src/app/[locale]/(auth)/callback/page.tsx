@@ -25,8 +25,7 @@ export default function CallbackPage() {
         });
 
         if (response.data.is_new_user) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          router.push('/onboarding' as any);
+          router.push('/onboarding');
         } else {
           router.push('/');
         }

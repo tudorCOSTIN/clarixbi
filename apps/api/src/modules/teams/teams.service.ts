@@ -60,7 +60,8 @@ export class TeamsService {
     const saved = await this.teamMemberRepo.save(member);
 
     // Send invite email
-    const appUrl = process.env['NEXT_PUBLIC_APP_URL'] || 'http://localhost:3000';
+    const appUrl =
+      process.env['NEXT_PUBLIC_APP_URL'] || process.env['CORS_ORIGIN']?.split(',')[0] || '';
     const inviteUrl = `${appUrl}/invites/${inviteToken}/accept`;
     await this.emailService.sendTeamInvite(email, orgId, 'Team Admin', inviteUrl);
 

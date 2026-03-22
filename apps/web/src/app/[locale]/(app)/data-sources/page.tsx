@@ -138,12 +138,7 @@ export default function DataSourcesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-gray-900">{t('title')}</h2>
-        <Button
-          onClick={() =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            router.push('/connect' as any)
-          }
-        >
+        <Button onClick={() => router.push('/connect')}>
           <Plus className="mr-2 h-4 w-4" />
           {t('addSource')}
         </Button>
@@ -176,8 +171,7 @@ export default function DataSourcesPage() {
               <Card
                 key={ds.id}
                 className="transition-shadow hover:shadow-md cursor-pointer"
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                onClick={() => router.push(`/data-sources/${ds.id}` as any)}
+                onClick={() => router.push(`/data-sources/${ds.id}`)}
               >
                 <CardHeader className="flex flex-row items-center gap-3">
                   <div

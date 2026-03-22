@@ -120,8 +120,7 @@ export default function ConnectPage() {
           credentials: { email, token },
         }),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      router.push('/sync' as any);
+      router.push('/sync');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : t('connectionFailed'));
       setConnecting(false);
@@ -166,8 +165,7 @@ export default function ConnectPage() {
           credentials: { storeUrl, consumerKey, consumerSecret },
         }),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      router.push('/sync' as any);
+      router.push('/sync');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : t('connectionFailed'));
       setConnecting(false);
@@ -242,7 +240,7 @@ export default function ConnectPage() {
         } catch {
           // Preview might not be ready yet, redirect to sync
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          router.push('/sync' as any);
+          router.push('/sync');
         }
       }
     } catch (err) {
@@ -262,8 +260,7 @@ export default function ConnectPage() {
         method: 'PATCH',
         body: JSON.stringify({ schema: csvPreview.schema }),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      router.push('/sync' as any);
+      router.push('/sync');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Schema update failed');
       setConnecting(false);
@@ -289,8 +286,7 @@ export default function ConnectPage() {
         method: 'POST',
         body: JSON.stringify({}),
       });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      router.push('/sync' as any);
+      router.push('/sync');
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : 'Demo data loading failed');
       setConnecting(false);

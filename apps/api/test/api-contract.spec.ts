@@ -176,9 +176,11 @@ import { PassportModule } from '@nestjs/passport';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { SyncJob } from '../src/modules/sync/entities/sync-job.entity';
 import { TeamMember } from '../src/modules/teams/entities/team-member.entity';
+import { ClickHouseService } from '../src/modules/clickhouse/clickhouse.service';
 
 const JWT_SECRET = 'test-secret-for-contract-tests';
 
@@ -258,6 +260,14 @@ describe('ClarixBI API Contract Tests', () => {
               role: 'owner',
             }),
           },
+        },
+        {
+          provide: DataSource,
+          useValue: { query: jest.fn().mockResolvedValue([{ '?column?': 1 }]) },
+        },
+        {
+          provide: ClickHouseService,
+          useValue: { healthCheck: jest.fn().mockResolvedValue({ ok: true }) },
         },
         TestJwtStrategy,
         JwtAuthGuard,

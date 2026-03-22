@@ -24,7 +24,10 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Handle Auth0 redirect — exchange code, set cookies, redirect to app' })
   async callbackGet(@Query('code') code: string, @Res() res: Response) {
-    const appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
+    const appUrl =
+      this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+      process.env['CORS_ORIGIN']?.split(',')[0] ||
+      '';
     const defaultLocale = 'ro';
 
     if (!code) {

@@ -40,7 +40,10 @@ export class BillingService {
     private emailService: EmailService,
   ) {
     this.stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || '';
-    this.appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
+    this.appUrl =
+      this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+      process.env['CORS_ORIGIN']?.split(',')[0] ||
+      '';
 
     const nodeEnv = this.configService.get<string>('NODE_ENV');
     if (nodeEnv === 'production' && !this.stripeSecretKey) {

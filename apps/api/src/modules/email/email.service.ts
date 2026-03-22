@@ -22,7 +22,10 @@ export class EmailService {
     if (apiKey) {
       this.resend = new Resend(apiKey);
     }
-    this.appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
+    this.appUrl =
+      this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+      process.env['CORS_ORIGIN']?.split(',')[0] ||
+      '';
   }
 
   async sendEmail(to: string, subject: string, html: string): Promise<void> {

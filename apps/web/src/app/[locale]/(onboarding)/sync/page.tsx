@@ -42,8 +42,7 @@ export default function SyncPage() {
   });
 
   const handleGoToDashboard = () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    router.push('/data-sources' as any);
+    router.push('/data-sources');
   };
 
   const handleRetry = () => {
@@ -51,8 +50,7 @@ export default function SyncPage() {
     setRowsImported(0);
     setStatus('syncing');
     setErrorMessage('');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    router.push('/connect' as any);
+    router.push('/connect');
   };
 
   return (
