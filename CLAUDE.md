@@ -485,3 +485,63 @@ Dupa ce rezolvi ORICE eroare, adauga o intrare cu formatul:
 **Cauza:** `app/not-found.tsx` folosea `bg-blue-600` generic in loc de culorile brand-ului. Nu avea numele ClarixBI si nu importa `globals.css`.
 **Fix:** Adaugat import `globals.css`, brand name "ClarixBI", culori din tema (`bg-primary-blue`, `text-dark-navy`), mesaj descriptiv.
 **Regula:** Paginile de eroare (404, 500) TREBUIE sa fie branded: logo/nume, culori din tema, mesaj helpful, link de navigare.
+
+### [2026-03-23] CR04 — recharts + react-grid-layout importate static (~550KB in initial bundle)
+
+**Cauza:** `WidgetCard.tsx` importa static 5 chart components (recharts ~400KB), iar dashboard view/edit importau static `react-grid-layout` (~150KB). Tot bundle-ul se incarca la prima pagina.
+**Fix:** Inlocuit cu `dynamic(() => import(...), { ssr: false })` din `next/dynamic`. AiChat lazy-loaded similar.
+**Regula:** Componente heavy (charts, editors, grid layouts) TREBUIE importate cu `dynamic()` si `{ ssr: false }`. Pragul: orice dependenta > 50KB.
+
+### [2026-03-23] CR04 — text-gray-400 pe fundal alb — contrast ratio ~2.9:1 (WCAG fail)
+
+**Cauza:** 70+ instante de `text-gray-400` pe fundal alb/deschis. Contrast ratio ~2.9:1 vs minim 4.5:1 cerut de WCAG 2.1 AA. Afecta timestamps, subtitles, metadata, footer links, helper text.
+**Fix:** Inlocuit `text-gray-400` cu `text-gray-500` (~4.6:1 contrast) in 22+ fisiere. `text-gray-300` inlocuit cu `text-gray-400` pentru iconite decorative.
+**Regula:** NICIODATA `text-gray-400` sau mai deschis pe fundal alb pentru text informativ. Minim `text-gray-500` pentru WCAG AA compliance. Verifica contrast cu https://webaim.org/resources/contrastchecker/.
+
+### [2026-03-23] CR04 — 18 labels fara htmlFor + inputs fara aria-label
+
+**Cauza:** Labels din CreateReportModal, ScheduleModal, CreateAlertWizard, WidgetConfigurator nu aveau `htmlFor`. Textarea din AiChat, select din FilterBar, input din TableWidget nu aveau label sau `aria-label`.
+**Fix:** Adaugat `htmlFor` + `id` pairs pe toate labels. Adaugat `aria-label` pe inputs standalone.
+**Regula:** FIECARE `<label>` TREBUIE sa aiba `htmlFor` corespunzator unui `id` pe input. FIECARE input fara label vizibil TREBUIE sa aiba `aria-label`.
+
+### [2026-03-23] CR04 — 3 dialog-uri fara role="dialog" (settings delete, org delete, WidgetConfigurator)
+
+**Cauza:** Confirmation dialogs din settings si organization, plus side panel-ul WidgetConfigurator nu aveau `role="dialog"`, `aria-modal="true"`, `aria-label`.
+**Fix:** Adaugat atributele ARIA pe fiecare dialog/panel.
+**Regula:** FIECARE overlay/modal/panel TREBUIE sa aiba `role="dialog"` + `aria-modal="true"` + `aria-label` descriptiv.
+
+### [2026-03-23] CR04 — Skip-to-content link lipsa
+
+**Cauza:** Keyboard users trebuiau sa treaca prin tot navbar-ul pe fiecare pagina. Violeaza WCAG 2.4.1 (Bypass Blocks).
+**Fix:** Adaugat skip link `sr-only focus:not-sr-only` ca prim child in `(app)/layout.tsx`. Adaugat `id="main-content"` pe `<main>`.
+**Regula:** FIECARE layout cu navigatie TREBUIE sa aiba skip-to-content link. Pattern: `<a href="#main-content" className="sr-only focus:not-sr-only ...">`.
+
+### [2026-03-23] CR04 — Zero @ApiResponse pe toate controllerele API
+
+**Cauza:** Niciun controller NestJS nu avea `@ApiResponse` decorators. Swagger UI nu documenta status codes (200, 400, 401, 404).
+**Fix:** Adaugat `@ApiResponse`, `@ApiOperation`, `@ApiTags` pe toate 15 controllerele care lipseau.
+**Regula:** FIECARE endpoint API TREBUIE sa aiba `@ApiResponse` cu status codes relevante. GET: 200. POST: 201. PUT/PATCH: 200. DELETE: 200. Toate: 401.
+
+### [2026-03-23] CR04 — 7 endpoints cu @Body() inline (fara DTO, fara validare)
+
+**Cauza:** Onboarding (3), alerts (1), AI (1), data-sources (1), auth (1) aveau `@Body() body: { field: type }` inline. class-validator nu valida aceste inputs.
+**Fix:** Creat DTOs dedicate: StartConnectionDto, ValidateCredentialsDto, StartSyncDto, ToggleAlertDto, UpdateDataSourceDto, RefreshTokenDto. Fiecare cu decoratori class-validator.
+**Regula:** NICIODATA `@Body()` cu tip inline. INTOTDEAUNA creeaza un DTO in `dto/` cu decoratori class-validator.
+
+### [2026-03-23] CR04 — @Param() fara ParseUUIDPipe (5 instante)
+
+**Cauza:** `organizations.controller.ts` (3x orgId) si `gdpr.controller.ts` (2x requestId) acceptau string-uri arbitrare ca parametri UUID fara validare.
+**Fix:** Adaugat `ParseUUIDPipe` pe fiecare `@Param()`.
+**Regula:** FIECARE `@Param()` care asteapta UUID TREBUIE sa aiba `ParseUUIDPipe`. Previne queries cu valori invalide.
+
+### [2026-03-23] CR04 — onboarding.controller.ts fara JwtAuthGuard
+
+**Cauza:** Controller-ul folosea doar `OrgMemberGuard` fara `JwtAuthGuard`. Potentiale requests neautentificate puteau ajunge la endpoints de onboarding.
+**Fix:** Adaugat `JwtAuthGuard` in `@UseGuards(JwtAuthGuard, OrgMemberGuard)`.
+**Regula:** `OrgMemberGuard` TREBUIE precedat de `JwtAuthGuard`. Guard-urile se executa in ordine — autentificarea vine PRIMA.
+
+### [2026-03-23] CR04 — Commitlint rejecta "review" ca type
+
+**Cauza:** Commit type "review" nu e in lista commitlint: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test.
+**Fix:** Inlocuit cu "chore" pentru review commits.
+**Regula:** Foloseste doar tipurile standard commitlint. Review/audit commits → `chore(scope): description`.
