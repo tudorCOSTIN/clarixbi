@@ -63,8 +63,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   });
 
+  const tA11y = useTranslations('a11y');
+
   return (
     <div className="min-h-screen bg-gray-50">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-white focus:px-4 focus:py-2 focus:text-primary-blue focus:underline focus:rounded"
+      >
+        {tA11y('skipToContent')}
+      </a>
       <header className="border-b border-gray-200 bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-4">
           <Link href="/" className="text-lg font-bold text-dark-navy mr-8">
@@ -86,28 +94,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <nav className="md:hidden border-t border-gray-100 px-4 py-2 space-y-1">{navContent}</nav>
         )}
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-8">{children}</main>
+      <main id="main-content" className="mx-auto max-w-7xl px-4 py-8">
+        {children}
+      </main>
       <footer className="border-t border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-4 sm:flex-row sm:justify-between">
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-500">
             &copy; {new Date().getFullYear()} ClarixBI SRL
           </span>
           <div className="flex items-center gap-6">
             <Link
               href="/legal/terms"
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-gray-500 hover:text-gray-600 transition-colors"
             >
               {t('terms')}
             </Link>
             <Link
               href="/legal/privacy"
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-gray-500 hover:text-gray-600 transition-colors"
             >
               {t('privacy')}
             </Link>
             <Link
               href="/legal/cookies"
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-gray-500 hover:text-gray-600 transition-colors"
             >
               {t('cookies')}
             </Link>

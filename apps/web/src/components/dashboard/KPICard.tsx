@@ -28,12 +28,12 @@ export function KPICard({
 
   const trendColor =
     change === null
-      ? 'text-gray-400'
+      ? 'text-gray-500'
       : change > 0
         ? 'text-green-600'
         : change < 0
           ? 'text-red-600'
-          : 'text-gray-400';
+          : 'text-gray-500';
   const TrendIcon =
     change === null || change === 0 ? Minus : change > 0 ? TrendingUp : TrendingDown;
 
@@ -54,7 +54,7 @@ export function KPICard({
             <div className={`flex items-center gap-1 mt-0.5 ${trendColor}`}>
               <TrendIcon className="h-3.5 w-3.5" />
               <span className="text-xs font-medium">{Math.abs(change).toFixed(1)}%</span>
-              <span className="text-xs text-gray-400">vs prev</span>
+              <span className="text-xs text-gray-500">vs prev</span>
             </div>
           )}
         </div>

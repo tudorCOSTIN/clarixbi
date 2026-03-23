@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { apiClient } from '@/lib/api-client';
 
 interface UserProfile {
@@ -127,9 +128,11 @@ export default function SettingsPage() {
         <div className="flex items-start gap-6">
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-xl font-bold text-blue-600">
             {user?.avatar_url ? (
-              <img
+              <Image
                 src={user.avatar_url}
                 alt={user.name}
+                width={64}
+                height={64}
                 className="h-16 w-16 rounded-full object-cover"
               />
             ) : (
@@ -153,10 +156,14 @@ export default function SettingsPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="profile-email"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 {t('emailLabel')}
               </label>
               <input
+                id="profile-email"
                 type="email"
                 value={user?.email || ''}
                 disabled
@@ -251,7 +258,12 @@ export default function SettingsPage() {
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('deleteConfirmTitle')}
+        >
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
             <p className="mt-2 text-sm text-gray-600">{t('deleteConfirmMessage')}</p>

@@ -1,5 +1,15 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../auth/guards/org-member.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -20,6 +30,9 @@ export class OrganizationsController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new organization (user becomes owner)' })
+  @ApiResponse({ status: 201, description: 'Created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@CurrentUser() user: JwtUser, @Body() dto: CreateOrganizationDto) {
     const org = await this.orgsService.create(dto, user.id);
     return { data: org };
@@ -28,7 +41,9 @@ export class OrganizationsController {
   @Get(':orgId')
   @UseGuards(OrgMemberGuard)
   @ApiOperation({ summary: 'Get organization details (members only)' })
-  async findOne(@Param('orgId') orgId: string) {
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async findOne(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const org = await this.orgsService.findById(orgId);
     return { data: org };
   }
@@ -37,7 +52,10 @@ export class OrganizationsController {
   @UseGuards(OrgMemberGuard, RolesGuard)
   @Roles(TeamRole.ADMIN)
   @ApiOperation({ summary: 'Update organization (admin+ only)' })
-  async update(@Param('orgId') orgId: string, @Body() dto: UpdateOrganizationDto) {
+  @ApiResponse({ status: 200, description: 'Updated' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async update(@Param('orgId', ParseUUIDPipe) orgId: string, @Body() dto: UpdateOrganizationDto) {
     const org = await this.orgsService.update(orgId, dto);
     return { data: org };
   }
@@ -46,7 +64,9 @@ export class OrganizationsController {
   @UseGuards(OrgMemberGuard, RolesGuard)
   @Roles(TeamRole.OWNER)
   @ApiOperation({ summary: 'Soft delete organization (owner only)' })
-  async remove(@Param('orgId') orgId: string) {
+  @ApiResponse({ status: 200, description: 'Deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async remove(@Param('orgId', ParseUUIDPipe) orgId: string) {
     await this.orgsService.softDelete(orgId);
     return { data: { message: 'Organization deleted successfully' } };
   }

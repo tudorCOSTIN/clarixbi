@@ -64,7 +64,7 @@ export default function NotificationsPage() {
         </div>
       ) : notifications.length === 0 ? (
         <div className="rounded-lg border border-gray-200 bg-white py-16 text-center">
-          <Bell className="mx-auto h-12 w-12 text-gray-300" />
+          <Bell className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-4 text-lg font-medium text-gray-900">{t('empty')}</h3>
           <p className="mt-1 text-sm text-gray-500">{t('emptySubtitle')}</p>
         </div>
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
                   >
                     {n.title}
                   </p>
-                  <span className="shrink-0 text-xs text-gray-400">{formatDate(n.created_at)}</span>
+                  <span className="shrink-0 text-xs text-gray-500">{formatDate(n.created_at)}</span>
                 </div>
                 <p className="mt-1 text-sm text-gray-500">{n.message}</p>
                 <div className="mt-2 flex items-center gap-2">
@@ -104,16 +104,18 @@ export default function NotificationsPage() {
                 {!n.is_read && (
                   <button
                     onClick={() => markRead(n.id)}
-                    className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                    className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-600"
                     title={t('markRead')}
+                    aria-label={t('markRead')}
                   >
                     <Check className="h-4 w-4" />
                   </button>
                 )}
                 <button
                   onClick={() => remove(n.id)}
-                  className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-500"
+                  className="rounded p-1 text-gray-500 hover:bg-red-50 hover:text-red-500"
                   title={t('delete')}
+                  aria-label={t('delete')}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

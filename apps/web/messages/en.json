@@ -650,6 +650,15 @@
     "deleteItem": "Delete",
     "editItem": "Edit",
     "cloneItem": "Clone",
-    "dismissNotification": "Dismiss"
+    "dismissNotification": "Dismiss",
+    "skipToContent": "Skip to main content",
+    "configureWidget": "Configure widget",
+    "removeWidget": "Remove widget",
+    "deleteAccountConfirmation": "Delete account confirmation",
+    "deleteOrganizationConfirmation": "Delete organization confirmation",
+    "widgetConfigurator": "Widget configurator",
+    "chatInput": "Type your message",
+    "filterDataSource": "Filter by data source",
+    "searchTable": "Search table"
   }
 }

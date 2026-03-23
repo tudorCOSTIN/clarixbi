@@ -650,6 +650,15 @@
     "deleteItem": "Sterge",
     "editItem": "Editeaza",
     "cloneItem": "Cloneaza",
-    "dismissNotification": "Inchide notificarea"
+    "dismissNotification": "Inchide notificarea",
+    "skipToContent": "Salt la continutul principal",
+    "configureWidget": "Configureaza widget",
+    "removeWidget": "Sterge widget",
+    "deleteAccountConfirmation": "Confirmare stergere cont",
+    "deleteOrganizationConfirmation": "Confirmare stergere organizatie",
+    "widgetConfigurator": "Configurator widget",
+    "chatInput": "Scrie mesajul tau",
+    "filterDataSource": "Filtreaza dupa sursa de date",
+    "searchTable": "Cauta in tabel"
   }
 }

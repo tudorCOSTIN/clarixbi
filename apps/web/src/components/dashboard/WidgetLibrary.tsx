@@ -74,7 +74,7 @@ export function WidgetLibrary({ onAddWidget }: WidgetLibraryProps) {
       </div>
       {!collapsed && (
         <div className="p-3 border-t border-gray-100">
-          <p className="text-xs text-gray-400">Drag or click to add</p>
+          <p className="text-xs text-gray-500">Drag or click to add</p>
         </div>
       )}
     </div>

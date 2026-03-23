@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthCallbackDto } from './dto/auth-callback.dto';
 import { MagicLinkDto } from './dto/magic-link.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -23,6 +24,7 @@ export class AuthController {
   @Get('callback')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Handle Auth0 redirect — exchange code, set cookies, redirect to app' })
+  @ApiResponse({ status: 302, description: 'Redirect to app' })
   async callbackGet(@Query('code') code: string, @Res() res: Response) {
     const appUrl =
       this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
@@ -66,6 +68,8 @@ export class AuthController {
   @Post('callback')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Exchange Auth0 authorization code for JWT tokens (API)' })
+  @ApiResponse({ status: 201, description: 'Tokens issued' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   async callback(@Body() dto: AuthCallbackDto, @Res({ passthrough: true }) res: Response) {
     const auth0Profile = await this.authService.validateAuth0Token(dto.code);
     const { user, isNew } = await this.authService.findOrCreateUser(auth0Profile);
@@ -103,6 +107,8 @@ export class AuthController {
   @Post('magic-link')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Send magic link email via Auth0 Passwordless' })
+  @ApiResponse({ status: 201, description: 'Magic link sent' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   async magicLink(@Body() dto: MagicLinkDto) {
     await this.authService.sendMagicLink(dto.email);
     return {
@@ -114,6 +120,8 @@ export class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current authenticated user with organizations' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async me(@CurrentUser() user: JwtUser) {
     const userData = await this.authService.getUserWithOrgs(user.id);
     return { data: userData };
@@ -123,6 +131,8 @@ export class AuthController {
   @Post('logout')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout and invalidate refresh token' })
+  @ApiResponse({ status: 201, description: 'Logged out' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(@CurrentUser() user: JwtUser, @Res({ passthrough: true }) res: Response) {
     await this.authService.revokeRefreshToken(user.id);
 
@@ -136,11 +146,10 @@ export class AuthController {
   @Post('refresh')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Refresh JWT access token using refresh token' })
-  async refresh(
-    @Body() body: { refresh_token: string },
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    const tokens = await this.authService.refreshAccessToken(body.refresh_token);
+  @ApiResponse({ status: 201, description: 'Tokens refreshed' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  async refresh(@Body() dto: RefreshTokenDto, @Res({ passthrough: true }) res: Response) {
+    const tokens = await this.authService.refreshAccessToken(dto.refresh_token);
 
     res.cookie('access_token', tokens.access_token, {
       httpOnly: true,

@@ -112,7 +112,12 @@ export function WidgetConfigurator({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-[350px] bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200">
+    <div
+      className="fixed inset-y-0 right-0 w-[350px] bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('configure')}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
         <h3 className="font-semibold text-gray-900">{t('configure')}</h3>
@@ -131,8 +136,9 @@ export function WidgetConfigurator({
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
         {/* Title */}
         <div className="space-y-1.5">
-          <Label>{t('widgetTitle')}</Label>
+          <Label htmlFor="widget-title">{t('widgetTitle')}</Label>
           <Input
+            id="widget-title"
             value={config.title}
             onChange={(e) => update({ title: e.target.value })}
             placeholder="Titlu widget"
@@ -153,6 +159,8 @@ export function WidgetConfigurator({
                     : 'border-gray-200 text-gray-500 hover:border-gray-300',
                 )}
                 onClick={() => update({ type })}
+                aria-label={`${t('chartType')}: ${label}`}
+                aria-pressed={config.type === type}
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -163,8 +171,9 @@ export function WidgetConfigurator({
 
         {/* Data Source */}
         <div className="space-y-1.5">
-          <Label>{t('dataSource')}</Label>
+          <Label htmlFor="widget-data-source">{t('dataSource')}</Label>
           <select
+            id="widget-data-source"
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.dataSourceId || ''}
             onChange={(e) =>
@@ -182,8 +191,9 @@ export function WidgetConfigurator({
 
         {/* Metric / Column */}
         <div className="space-y-1.5">
-          <Label>{t('metric')}</Label>
+          <Label htmlFor="widget-metric">{t('metric')}</Label>
           <select
+            id="widget-metric"
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.metric}
             onChange={(e) => update({ metric: e.target.value })}
@@ -200,8 +210,9 @@ export function WidgetConfigurator({
 
         {/* Aggregation */}
         <div className="space-y-1.5">
-          <Label>{t('aggregation')}</Label>
+          <Label htmlFor="widget-aggregation">{t('aggregation')}</Label>
           <select
+            id="widget-aggregation"
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.aggregation}
             onChange={(e) => update({ aggregation: e.target.value })}
@@ -216,8 +227,9 @@ export function WidgetConfigurator({
 
         {/* Group By */}
         <div className="space-y-1.5">
-          <Label>{t('groupBy')}</Label>
+          <Label htmlFor="widget-group-by">{t('groupBy')}</Label>
           <select
+            id="widget-group-by"
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.groupBy}
             onChange={(e) => update({ groupBy: e.target.value })}
@@ -235,8 +247,9 @@ export function WidgetConfigurator({
         {/* Sort + Limit */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>{t('sort')}</Label>
+            <Label htmlFor="widget-sort">{t('sort')}</Label>
             <select
+              id="widget-sort"
               className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
               value={config.sort}
               onChange={(e) => update({ sort: e.target.value as 'ASC' | 'DESC' })}
@@ -246,8 +259,9 @@ export function WidgetConfigurator({
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label>{t('limit')}</Label>
+            <Label htmlFor="widget-limit">{t('limit')}</Label>
             <Input
+              id="widget-limit"
               type="number"
               min={1}
               max={100}
@@ -273,6 +287,8 @@ export function WidgetConfigurator({
                     : 'border-gray-200 text-gray-500 hover:border-gray-300',
                 )}
                 onClick={() => update({ dateRange: value })}
+                aria-label={`${t('dateRange')}: ${label}`}
+                aria-pressed={config.dateRange === value}
               >
                 {label}
               </button>
@@ -294,6 +310,8 @@ export function WidgetConfigurator({
                     : 'border-gray-200 hover:border-gray-300',
                 )}
                 onClick={() => update({ colorScheme: id })}
+                aria-label={`${t('colorScheme')}: ${label}`}
+                aria-pressed={config.colorScheme === id}
               >
                 <div className="flex gap-0.5">
                   {colors.map((c) => (

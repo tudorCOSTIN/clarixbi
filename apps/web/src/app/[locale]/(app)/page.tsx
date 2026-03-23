@@ -71,7 +71,7 @@ export default function HomePage() {
   if (isEmpty && !data) {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-4">
-        <Database className="h-16 w-16 text-gray-300" />
+        <Database className="h-16 w-16 text-gray-400" />
         <h2 className="text-xl font-semibold text-gray-700">{t('welcome')}</h2>
         <p className="text-gray-500 text-center max-w-md">{t('welcomeSubtitle')}</p>
         <Link href="/data-sources">
@@ -191,7 +191,7 @@ export default function HomePage() {
           <CardContent>
             <div className="space-y-3">
               {data.recentSyncJobs.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">{t('noRecentSyncs')}</p>
+                <p className="text-sm text-gray-500 text-center py-4">{t('noRecentSyncs')}</p>
               ) : (
                 data.recentSyncJobs.map((job) => (
                   <div
@@ -231,7 +231,7 @@ export default function HomePage() {
           <CardContent>
             <div className="space-y-3">
               {data.recentAlertTriggers.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-4">{t('noRecentAlerts')}</p>
+                <p className="text-sm text-gray-500 text-center py-4">{t('noRecentAlerts')}</p>
               ) : (
                 data.recentAlertTriggers.map((trigger) => (
                   <div

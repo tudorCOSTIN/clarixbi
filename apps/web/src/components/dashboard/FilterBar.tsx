@@ -74,6 +74,7 @@ export function FilterBar({ dataSources = [], onFiltersChange }: FilterBarProps)
         className="rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-600 focus:outline-none focus:ring-1 focus:ring-primary-blue"
         value={source}
         onChange={(e) => handleSourceChange(e.target.value)}
+        aria-label="Filter by data source"
       >
         <option value="all">All Sources</option>
         {dataSources.map((ds) => (

@@ -152,7 +152,7 @@ export default function DataSourcesPage() {
       {dataSources.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Database className="mb-4 h-12 w-12 text-gray-300" />
+            <Database className="mb-4 h-12 w-12 text-gray-400" />
             <p className="text-sm text-gray-500">{t('empty')}</p>
             <Button
               className="mt-4"

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import dynamic from 'next/dynamic';
+import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { useParams, useRouter } from 'next/navigation';
@@ -15,7 +16,14 @@ import { WidgetCard } from '@/components/dashboard/WidgetCard';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { apiClient } from '@/lib/api-client';
 
-const ResponsiveGrid = WidthProvider(Responsive);
+const ResponsiveGrid = dynamic(
+  () =>
+    import('react-grid-layout').then((mod) => {
+      const { Responsive, WidthProvider } = mod;
+      return { default: WidthProvider(Responsive) };
+    }),
+  { ssr: false },
+);
 
 interface Widget {
   id: string;
@@ -315,7 +323,7 @@ export default function DashboardEditPage() {
         />
         <div className="flex items-center gap-2 ml-auto">
           {saving && (
-            <span className="text-xs text-gray-400 flex items-center gap-1">
+            <span className="text-xs text-gray-500 flex items-center gap-1">
               <Loader2 className="h-3 w-3 animate-spin" /> {t('saving')}
             </span>
           )}
@@ -342,7 +350,7 @@ export default function DashboardEditPage() {
         {/* Grid area */}
         <div className="flex-1 overflow-auto p-4">
           {widgets.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="flex flex-col items-center justify-center h-full text-gray-500">
               <p className="text-lg mb-2">{t('noWidgets')}</p>
               <p className="text-sm">{t('noWidgetsHint')}</p>
             </div>

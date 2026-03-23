@@ -27,7 +27,7 @@ export function PieChartWidget({
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center text-gray-400" style={{ height }}>
+      <div className="flex items-center justify-center text-gray-500" style={{ height }}>
         No data available
       </div>
     );

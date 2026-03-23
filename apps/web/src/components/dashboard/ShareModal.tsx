@@ -132,7 +132,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
 
           {loading ? (
             <div className="flex justify-center py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
             </div>
           ) : shares.length === 0 ? (
             <p className="text-sm text-gray-500 text-center py-4">{t('noLinks')}</p>
@@ -147,7 +147,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
                     <p className="truncate text-gray-700 font-mono text-xs">
                       {getShareUrl(share.share_token)}
                     </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
+                    <p className="text-xs text-gray-500 mt-0.5">
                       {new Date(share.created_at).toLocaleDateString()} &middot; {share.view_count}{' '}
                       {t('views')}
                     </p>

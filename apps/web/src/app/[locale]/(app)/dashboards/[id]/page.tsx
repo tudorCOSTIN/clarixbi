@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
+import dynamic from 'next/dynamic';
+import type { Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { ArrowLeft, Pencil, Loader2, Share2, Download, Copy, Trash2 } from 'lucide-react';
@@ -13,7 +14,14 @@ import { FilterBar } from '@/components/dashboard/FilterBar';
 import { apiClient, API_URL } from '@/lib/api-client';
 import { ShareModal } from '@/components/dashboard/ShareModal';
 
-const ResponsiveGrid = WidthProvider(Responsive);
+const ResponsiveGrid = dynamic(
+  () =>
+    import('react-grid-layout').then((mod) => {
+      const { Responsive, WidthProvider } = mod;
+      return { default: WidthProvider(Responsive) };
+    }),
+  { ssr: false },
+);
 
 interface Widget {
   id: string;
@@ -172,7 +180,7 @@ export default function DashboardViewPage() {
 
       <div className="mt-4">
         {dashboard.widgets.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-500">
             <p>{t('noWidgets')}</p>
             <Button
               variant="outline"

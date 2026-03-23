@@ -475,9 +475,9 @@ export default function ConnectPage() {
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
             >
-              <FileUp className="mb-3 h-10 w-10 text-gray-400" />
+              <FileUp className="mb-3 h-10 w-10 text-gray-500" />
               <p className="text-sm text-gray-600">{t('csvForm.dropzone')}</p>
-              <p className="mt-1 text-xs text-gray-400">{t('csvForm.formats')}</p>
+              <p className="mt-1 text-xs text-gray-500">{t('csvForm.formats')}</p>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -495,7 +495,7 @@ export default function ConnectPage() {
                 <div className="flex items-center gap-2">
                   <Upload className="h-4 w-4 text-gray-500" />
                   <span className="text-sm font-medium">{csvFile.name}</span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-500">
                     ({(csvFile.size / 1024).toFixed(1)} KB)
                   </span>
                 </div>
@@ -548,7 +548,7 @@ export default function ConnectPage() {
                 </tbody>
               </table>
             </div>
-            <p className="text-xs text-gray-400">{t('csvForm.previewNote')}</p>
+            <p className="text-xs text-gray-500">{t('csvForm.previewNote')}</p>
             {renderConnectionStatus()}
             <Button onClick={handleConfirmCsvSchema} disabled={connecting} className="w-full">
               {connecting ? (

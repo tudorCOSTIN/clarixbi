@@ -15,6 +15,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtUser } from '../auth/interfaces/jwt-user.interface';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TeamRole } from './entities/team-member.entity';
 import { TeamsService } from './teams.service';
 import { CheckPlanLimit } from '../billing/decorators/requires-plan.decorator';
@@ -34,6 +35,8 @@ class ChangeRoleDto {
   role: TeamRole;
 }
 
+@ApiTags('Teams')
+@ApiBearerAuth()
 @Controller('organizations/:orgId/team')
 @UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class TeamsController {
@@ -41,6 +44,9 @@ export class TeamsController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'List team members and pending invites' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async listMembers(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const [members, pendingInvites] = await Promise.all([
       this.teamsService.listMembers(orgId),
@@ -53,6 +59,10 @@ export class TeamsController {
   @Roles(TeamRole.ADMIN)
   @UseGuards(PlanLimitGuard)
   @CheckPlanLimit('team_members')
+  @ApiOperation({ summary: 'Invite a new team member' })
+  @ApiResponse({ status: 201, description: 'Invite sent' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async invite(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @CurrentUser() user: JwtUser,
@@ -64,6 +74,10 @@ export class TeamsController {
 
   @Patch(':memberId')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Change team member role' })
+  @ApiResponse({ status: 200, description: 'Role updated' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async changeRole(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('memberId', ParseUUIDPipe) memberId: string,
@@ -75,6 +89,9 @@ export class TeamsController {
 
   @Delete(':memberId')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Remove a team member' })
+  @ApiResponse({ status: 200, description: 'Member removed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeMember(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('memberId', ParseUUIDPipe) memberId: string,
@@ -85,6 +102,9 @@ export class TeamsController {
 
   @Post(':inviteId/resend')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Resend an invite' })
+  @ApiResponse({ status: 201, description: 'Invite resent' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async resendInvite(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('inviteId', ParseUUIDPipe) inviteId: string,
@@ -95,6 +115,9 @@ export class TeamsController {
 
   @Delete(':inviteId/revoke')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Revoke a pending invite' })
+  @ApiResponse({ status: 200, description: 'Invite revoked' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async revokeInvite(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('inviteId', ParseUUIDPipe) inviteId: string,
@@ -107,12 +130,17 @@ export class TeamsController {
 /**
  * Separate controller for public invite acceptance (requires auth but not org membership).
  */
+@ApiTags('Invites')
+@ApiBearerAuth()
 @Controller('invites')
 @UseGuards(JwtAuthGuard)
 export class InviteAcceptController {
   constructor(private readonly teamsService: TeamsService) {}
 
   @Post(':token/accept')
+  @ApiOperation({ summary: 'Accept an invite by token' })
+  @ApiResponse({ status: 201, description: 'Invite accepted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async acceptInvite(@Param('token') token: string, @CurrentUser() user: JwtUser) {
     const member = await this.teamsService.acceptInviteByToken(token, user.id);
     return { data: member };

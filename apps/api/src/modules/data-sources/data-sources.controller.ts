@@ -14,6 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -25,11 +26,14 @@ import { PlanLimitGuard } from '../billing/guards/plan-limit.guard';
 import { CheckPlanLimit } from '../billing/decorators/requires-plan.decorator';
 import { DataSourcesService } from './data-sources.service';
 import { CreateDataSourceDto } from './dto/create-data-source.dto';
+import { UpdateDataSourceDto } from './dto/update-data-source.dto';
 import { SyncJob } from '../sync/entities/sync-job.entity';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls'];
 
+@ApiTags('Data Sources')
+@ApiBearerAuth()
 @Controller('organizations/:orgId/data-sources')
 @UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class DataSourcesController {
@@ -43,6 +47,10 @@ export class DataSourcesController {
   @Roles(TeamRole.EDITOR)
   @UseGuards(PlanLimitGuard)
   @CheckPlanLimit('data_sources')
+  @ApiOperation({ summary: 'Create a new data source' })
+  @ApiResponse({ status: 201, description: 'Created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Param('orgId', ParseUUIDPipe) orgId: string, @Body() dto: CreateDataSourceDto) {
     const ds = await this.dataSourcesService.addDataSource(orgId, dto);
     return { data: ds };
@@ -52,6 +60,10 @@ export class DataSourcesController {
   @Roles(TeamRole.EDITOR)
   @UseGuards(PlanLimitGuard)
   @CheckPlanLimit('data_sources')
+  @ApiOperation({ summary: 'Upload a CSV/Excel file as data source' })
+  @ApiResponse({ status: 201, description: 'File uploaded' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: MAX_FILE_SIZE },
@@ -85,6 +97,9 @@ export class DataSourcesController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'List all data sources' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const dataSources = await this.dataSourcesService.findAll(orgId);
     return { data: dataSources };
@@ -92,6 +107,9 @@ export class DataSourcesController {
 
   @Get(':id')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get data source by ID' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findOne(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -102,6 +120,9 @@ export class DataSourcesController {
 
   @Get(':id/preview')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Preview data source content' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async preview(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -112,6 +133,10 @@ export class DataSourcesController {
 
   @Patch(':id/schema')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Update data source schema' })
+  @ApiResponse({ status: 200, description: 'Schema updated' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateSchema(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -124,6 +149,9 @@ export class DataSourcesController {
 
   @Post(':id/test')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Test data source connection' })
+  @ApiResponse({ status: 201, description: 'Connection tested' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async testConnection(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -134,6 +162,9 @@ export class DataSourcesController {
 
   @Post(':id/sync')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Trigger data source sync' })
+  @ApiResponse({ status: 201, description: 'Sync started' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async triggerSync(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -144,6 +175,9 @@ export class DataSourcesController {
 
   @Get(':id/columns')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get data source columns' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getColumns(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -154,6 +188,9 @@ export class DataSourcesController {
 
   @Get(':id/logs')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get sync job logs' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getSyncLogs(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -171,10 +208,14 @@ export class DataSourcesController {
 
   @Patch(':id')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Update data source name or sync interval' })
+  @ApiResponse({ status: 200, description: 'Updated' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateDataSource(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: { name?: string; sync_interval_minutes?: number },
+    @Body() dto: UpdateDataSourceDto,
   ) {
     const ds = await this.dataSourcesService.updateDataSource(orgId, id, dto);
     return { data: ds };
@@ -182,6 +223,9 @@ export class DataSourcesController {
 
   @Delete(':id')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Delete a data source' })
+  @ApiResponse({ status: 200, description: 'Deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteDataSource(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,

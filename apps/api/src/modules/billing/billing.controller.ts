@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Body, Param, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../auth/guards/org-member.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -9,6 +10,8 @@ import { TeamRole } from '../teams/entities/team-member.entity';
 import { BillingService } from './billing.service';
 import { SubscribeDto, ChangePlanDto } from './dto/subscribe.dto';
 
+@ApiTags('Billing')
+@ApiBearerAuth()
 @Controller('organizations/:orgId/billing')
 @UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class BillingController {
@@ -16,6 +19,9 @@ export class BillingController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get billing info and usage' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getBilling(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const [subscription, usage] = await Promise.all([
       this.billingService.getCurrentSubscription(orgId),
@@ -32,6 +38,9 @@ export class BillingController {
 
   @Get('plans')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'List available plans' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPlans() {
     const plans = await this.billingService.getPlans();
     return { data: plans };
@@ -39,6 +48,10 @@ export class BillingController {
 
   @Post('subscribe')
   @Roles(TeamRole.OWNER)
+  @ApiOperation({ summary: 'Create checkout session for subscription' })
+  @ApiResponse({ status: 201, description: 'Checkout session created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async subscribe(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @CurrentUser() user: JwtUser,
@@ -55,6 +68,10 @@ export class BillingController {
 
   @Post('change-plan')
   @Roles(TeamRole.OWNER)
+  @ApiOperation({ summary: 'Change subscription plan' })
+  @ApiResponse({ status: 201, description: 'Plan changed' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async changePlan(@Param('orgId', ParseUUIDPipe) orgId: string, @Body() dto: ChangePlanDto) {
     const subscription = await this.billingService.changePlan(orgId, dto.planId);
     return { data: subscription };
@@ -62,6 +79,9 @@ export class BillingController {
 
   @Post('cancel')
   @Roles(TeamRole.OWNER)
+  @ApiOperation({ summary: 'Cancel subscription' })
+  @ApiResponse({ status: 201, description: 'Subscription cancelled' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async cancel(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const subscription = await this.billingService.cancelSubscription(orgId);
     return { data: subscription };
@@ -69,6 +89,9 @@ export class BillingController {
 
   @Get('invoices')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'List invoices' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getInvoices(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const invoices = await this.billingService.getInvoices(orgId);
     return { data: invoices };
@@ -76,6 +99,9 @@ export class BillingController {
 
   @Get('portal')
   @Roles(TeamRole.OWNER)
+  @ApiOperation({ summary: 'Get Stripe customer portal URL' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getPortal(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const url = await this.billingService.createPortalSession(orgId);
     return { data: { url } };

@@ -99,7 +99,7 @@ export default function ReportsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
       </div>
     );
   }
@@ -120,9 +120,9 @@ export default function ReportsPage() {
       {reports.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
             <h3 className="text-lg font-medium text-gray-500">{t('empty')}</h3>
-            <p className="text-sm text-gray-400 mt-1">{t('emptySubtitle')}</p>
+            <p className="text-sm text-gray-500 mt-1">{t('emptySubtitle')}</p>
             <Button
               onClick={() => setShowCreateModal(true)}
               className="mt-4 gap-2"
@@ -148,7 +148,7 @@ export default function ReportsPage() {
                       className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
                       aria-label={t('deleteConfirm')}
                     >
-                      <Trash2 className="h-4 w-4 text-gray-400" />
+                      <Trash2 className="h-4 w-4 text-gray-500" />
                     </button>
                   </div>
                   {report.description && (
@@ -176,7 +176,7 @@ export default function ReportsPage() {
                       <Badge variant="secondary" className="text-[10px]">
                         {getScheduleLabel(reportSchedule.cron_expression)}
                       </Badge>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-500">
                         → {t('destinations', { count: reportSchedule.recipients.length })}
                       </span>
                     </div>
@@ -343,10 +343,11 @@ function CreateReportModal({
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="report-name" className="block text-sm font-medium text-gray-700 mb-1">
               {t('reportName')}
             </label>
             <input
+              id="report-name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -355,10 +356,14 @@ function CreateReportModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="report-description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               {t('description')}
             </label>
             <input
+              id="report-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -367,8 +372,14 @@ function CreateReportModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('dashboard')}</label>
+            <label
+              htmlFor="report-dashboard"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t('dashboard')}
+            </label>
             <select
+              id="report-dashboard"
               value={selectedDashboard}
               onChange={(e) => handleDashboardChange(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
@@ -468,8 +479,14 @@ function ScheduleModal({
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('frequency')}</label>
+            <label
+              htmlFor="schedule-frequency"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t('frequency')}
+            </label>
             <select
+              id="schedule-frequency"
               value={frequency}
               onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
@@ -480,10 +497,14 @@ function ScheduleModal({
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="schedule-recipients"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               {t('recipients')}
             </label>
             <textarea
+              id="schedule-recipients"
               value={recipientsText}
               onChange={(e) => setRecipientsText(e.target.value)}
               placeholder="john@company.com, maria@company.com"
@@ -492,8 +513,14 @@ function ScheduleModal({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('timezone')}</label>
+            <label
+              htmlFor="schedule-timezone"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {t('timezone')}
+            </label>
             <select
+              id="schedule-timezone"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"

@@ -1,4 +1,5 @@
 import { Controller, Get, Param, Query, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../auth/guards/org-member.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -7,6 +8,8 @@ import { TeamRole } from '../teams/entities/team-member.entity';
 import { AdminService } from './admin.service';
 import { QueryAuditLogsDto } from './dto/query-audit-logs.dto';
 
+@ApiTags('Admin')
+@ApiBearerAuth()
 @Controller('organizations/:orgId/admin')
 @UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 @Roles(TeamRole.OWNER)
@@ -14,6 +17,9 @@ export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
   @Get('audit-logs')
+  @ApiOperation({ summary: 'List audit logs' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async listAuditLogs(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Query() query: QueryAuditLogsDto,
@@ -22,6 +28,9 @@ export class AdminController {
   }
 
   @Get('audit-logs/:id')
+  @ApiOperation({ summary: 'Get audit log by ID' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getAuditLog(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -31,6 +40,9 @@ export class AdminController {
   }
 
   @Get('stats')
+  @ApiOperation({ summary: 'Get organization stats' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getOrgStats(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const stats = await this.adminService.getOrgStats(orgId);
     return { data: stats };

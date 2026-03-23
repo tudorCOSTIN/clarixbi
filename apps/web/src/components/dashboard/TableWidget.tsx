@@ -92,7 +92,7 @@ export function TableWidget({
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center text-gray-400" style={{ height }}>
+      <div className="flex items-center justify-center text-gray-500" style={{ height }}>
         No data available
       </div>
     );
@@ -103,9 +103,10 @@ export function TableWidget({
       <div className="flex items-center gap-2 mb-2 px-1">
         {searchable && (
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search..."
+              aria-label="Search table"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -132,7 +133,7 @@ export function TableWidget({
                 >
                   <span className="flex items-center gap-1">
                     {col}
-                    <ArrowUpDown className="h-3 w-3 text-gray-400" />
+                    <ArrowUpDown className="h-3 w-3 text-gray-500" />
                   </span>
                 </th>
               ))}

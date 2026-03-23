@@ -1,4 +1,5 @@
 import { Controller, Post, Req, Res, Headers, Logger, RawBodyRequest } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
@@ -6,6 +7,7 @@ import { createHmac, timingSafeEqual } from 'crypto';
 import { Public } from '../auth/decorators/public.decorator';
 import { BillingService } from './billing.service';
 
+@ApiTags('Webhooks')
 @Controller('webhooks')
 @SkipThrottle()
 export class StripeWebhookController {
@@ -21,6 +23,9 @@ export class StripeWebhookController {
 
   @Post('stripe')
   @Public()
+  @ApiOperation({ summary: 'Handle Stripe webhook events' })
+  @ApiResponse({ status: 200, description: 'Webhook processed' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,
     @Res() res: Response,

@@ -6,7 +6,11 @@ import { Plus, MessageSquare, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { apiClient } from '@/lib/api-client';
 import { useOrgStore } from '@/stores/org-store';
-import { AiChat } from '@/components/ai/AiChat';
+import dynamic from 'next/dynamic';
+
+const AiChat = dynamic(() => import('@/components/ai/AiChat').then((mod) => mod.AiChat), {
+  ssr: false,
+});
 
 interface Conversation {
   id: string;
@@ -84,9 +88,9 @@ export default function AiPage() {
         </div>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-4 text-center text-sm text-gray-400">{t('loading')}</div>
+            <div className="p-4 text-center text-sm text-gray-500">{t('loading')}</div>
           ) : conversations.length === 0 ? (
-            <div className="p-4 text-center text-sm text-gray-400">{t('noConversations')}</div>
+            <div className="p-4 text-center text-sm text-gray-500">{t('noConversations')}</div>
           ) : (
             conversations.map((conv) => (
               <button
@@ -98,12 +102,12 @@ export default function AiPage() {
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-2 min-w-0">
-                    <MessageSquare className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <MessageSquare className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-gray-700 truncate">
                         {conv.title || t('untitled')}
                       </p>
-                      <p className="text-xs text-gray-400 mt-0.5">
+                      <p className="text-xs text-gray-500 mt-0.5">
                         {new Date(conv.updated_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -112,7 +116,7 @@ export default function AiPage() {
                     onClick={(e) => handleDeleteConversation(conv.id, e)}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded transition-opacity"
                   >
-                    <Trash2 className="h-3.5 w-3.5 text-gray-400" />
+                    <Trash2 className="h-3.5 w-3.5 text-gray-500" />
                   </button>
                 </div>
               </button>
@@ -128,9 +132,9 @@ export default function AiPage() {
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
-              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+              <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <h3 className="text-lg font-medium text-gray-500">{t('welcomeTitle')}</h3>
-              <p className="text-sm text-gray-400 mt-1 max-w-md">{t('welcomeSubtitle')}</p>
+              <p className="text-sm text-gray-500 mt-1 max-w-md">{t('welcomeSubtitle')}</p>
               <Button onClick={handleNewConversation} className="mt-4 gap-2" variant="outline">
                 <Plus className="h-4 w-4" />
                 {t('startConversation')}

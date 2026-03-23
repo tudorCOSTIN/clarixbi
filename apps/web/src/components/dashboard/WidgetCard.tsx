@@ -3,11 +3,21 @@
 import { X, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LineChartWidget } from './LineChart';
-import { BarChartWidget } from './BarChart';
-import { PieChartWidget } from './PieChart';
-import { TableWidget } from './TableWidget';
-import { KPICard } from './KPICard';
+import dynamic from 'next/dynamic';
+
+const LineChartWidget = dynamic(() => import('./LineChart').then((mod) => mod.LineChartWidget), {
+  ssr: false,
+});
+const BarChartWidget = dynamic(() => import('./BarChart').then((mod) => mod.BarChartWidget), {
+  ssr: false,
+});
+const PieChartWidget = dynamic(() => import('./PieChart').then((mod) => mod.PieChartWidget), {
+  ssr: false,
+});
+const TableWidget = dynamic(() => import('./TableWidget').then((mod) => mod.TableWidget), {
+  ssr: false,
+});
+const KPICard = dynamic(() => import('./KPICard').then((mod) => mod.KPICard), { ssr: false });
 
 interface WidgetData {
   id: string;
@@ -98,7 +108,7 @@ export function WidgetCard({
         );
       default:
         return (
-          <div className="flex items-center justify-center text-gray-400 text-sm h-full">
+          <div className="flex items-center justify-center text-gray-500 text-sm h-full">
             Unknown widget type
           </div>
         );
@@ -113,11 +123,23 @@ export function WidgetCard({
         </CardTitle>
         {isEditing && (
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onConfigure}>
-              <Settings className="h-3.5 w-3.5 text-gray-400" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onConfigure}
+              aria-label="Configure widget"
+            >
+              <Settings className="h-3.5 w-3.5 text-gray-500" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onRemove}>
-              <X className="h-3.5 w-3.5 text-gray-400 hover:text-red-500" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={onRemove}
+              aria-label="Remove widget"
+            >
+              <X className="h-3.5 w-3.5 text-gray-500 hover:text-red-500" />
             </Button>
           </div>
         )}

@@ -211,7 +211,7 @@ export default function BillingPage() {
                   ? subscription.plan?.price_annual_eur
                   : subscription.plan?.price_monthly_eur}
               </p>
-              <p className="text-xs text-gray-400">/{isAnnual ? t('year') : t('month')}</p>
+              <p className="text-xs text-gray-500">/{isAnnual ? t('year') : t('month')}</p>
             </div>
           </div>
           <div className="mt-4 flex gap-3">
@@ -304,7 +304,7 @@ export default function BillingPage() {
                 <h3 className="text-lg font-bold text-dark-navy">{plan.display_name}</h3>
                 <p className="mt-2">
                   <span className="text-3xl font-bold text-dark-navy">&euro;{price}</span>
-                  <span className="text-sm text-gray-400">
+                  <span className="text-sm text-gray-500">
                     /{isAnnual ? t('year') : t('month')}
                   </span>
                 </p>

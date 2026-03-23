@@ -57,7 +57,7 @@ export default function SharedDashboardPage() {
   if (error || !data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
-        <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
+        <AlertCircle className="h-12 w-12 text-gray-500 mb-4" />
         <h1 className="text-xl font-semibold text-gray-700 mb-2">
           This dashboard is no longer available
         </h1>
@@ -79,7 +79,7 @@ export default function SharedDashboardPage() {
         </div>
 
         {dashboard.widgets.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-gray-500">
             <p>This dashboard has no widgets.</p>
           </div>
         ) : (
@@ -104,7 +104,7 @@ export default function SharedDashboardPage() {
       </div>
 
       <footer className="mt-12 py-6 border-t bg-white text-center">
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-500">
           Powered by <span className="font-semibold text-gray-600">ClarixBI</span> &mdash;
           clarixbi.com
         </p>

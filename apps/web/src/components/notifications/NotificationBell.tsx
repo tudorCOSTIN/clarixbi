@@ -157,11 +157,11 @@ export function NotificationBell() {
 
           <div className="max-h-80 overflow-y-auto">
             {loading ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">{t('loading')}</div>
+              <div className="px-4 py-8 text-center text-sm text-gray-500">{t('loading')}</div>
             ) : notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
-                <Bell className="mx-auto h-8 w-8 text-gray-300" />
-                <p className="mt-2 text-sm text-gray-400">{t('empty')}</p>
+                <Bell className="mx-auto h-8 w-8 text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">{t('empty')}</p>
               </div>
             ) : (
               notifications.map((n) => (
@@ -182,7 +182,7 @@ export function NotificationBell() {
                       <p className="mt-0.5 text-xs text-gray-500 line-clamp-2">{n.message}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[10px] text-gray-400">{formatTime(n.created_at)}</span>
+                      <span className="text-[10px] text-gray-500">{formatTime(n.created_at)}</span>
                       {!n.is_read && <span className="h-2 w-2 rounded-full bg-primary-blue" />}
                     </div>
                   </div>

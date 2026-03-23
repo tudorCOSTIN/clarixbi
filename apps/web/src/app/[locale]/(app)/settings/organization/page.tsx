@@ -182,7 +182,12 @@ export default function OrganizationPage() {
 
       {/* Delete Confirmation Dialog */}
       {showDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('deleteConfirmTitle')}
+        >
           <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
             <p className="mt-2 text-sm text-gray-600">{t('deleteConfirmMessage')}</p>

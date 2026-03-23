@@ -66,7 +66,7 @@ export default function DashboardsPage() {
       {dashboards.length === 0 ? (
         <Card className="text-center py-12">
           <CardContent>
-            <LayoutDashboard className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+            <LayoutDashboard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-700 mb-2">{t('empty')}</h3>
             <p className="text-sm text-gray-500 mb-4">{t('emptySubtitle')}</p>
             <Button onClick={() => router.push('/dashboards/new')}>
@@ -123,7 +123,7 @@ export default function DashboardsPage() {
                 <p className="text-sm text-gray-500 mb-3 line-clamp-2">
                   {d.description || t('noDescription')}
                 </p>
-                <div className="flex items-center justify-between text-xs text-gray-400">
+                <div className="flex items-center justify-between text-xs text-gray-500">
                   <span className="flex items-center gap-1">
                     <LayoutDashboard className="h-3 w-3" />
                     {t('widgets', { count: d.widgets?.length || 0 })}

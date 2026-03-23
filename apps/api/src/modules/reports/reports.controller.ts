@@ -11,6 +11,7 @@ import {
   NotFoundException,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../auth/guards/org-member.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -23,6 +24,8 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { UpdateReportDto } from './dto/update-report.dto';
 import { ScheduleReportDto } from './dto/schedule-report.dto';
 
+@ApiTags('Reports')
+@ApiBearerAuth()
 @Controller('organizations/:orgId/reports')
 @UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class ReportsController {
@@ -30,6 +33,10 @@ export class ReportsController {
 
   @Post()
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Create a new report' })
+  @ApiResponse({ status: 201, description: 'Created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Body() dto: CreateReportDto,
@@ -41,6 +48,9 @@ export class ReportsController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'List reports' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async list(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Query('page') page?: string,
@@ -56,6 +66,9 @@ export class ReportsController {
 
   @Get(':id')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get report by ID' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findOne(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -66,6 +79,10 @@ export class ReportsController {
 
   @Patch(':id')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Update a report' })
+  @ApiResponse({ status: 200, description: 'Updated' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async update(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -77,6 +94,9 @@ export class ReportsController {
 
   @Delete(':id')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Delete a report' })
+  @ApiResponse({ status: 200, description: 'Deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async remove(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -87,6 +107,9 @@ export class ReportsController {
 
   @Post(':id/generate')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Generate report PDF' })
+  @ApiResponse({ status: 201, description: 'Report generated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async generate(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -97,6 +120,9 @@ export class ReportsController {
 
   @Get(':id/download')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get latest report download URL' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async download(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -108,6 +134,9 @@ export class ReportsController {
 
   @Get(':id/history')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get report generation history' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async history(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -118,6 +147,10 @@ export class ReportsController {
 
   @Post(':id/schedule')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Create report schedule' })
+  @ApiResponse({ status: 201, description: 'Schedule created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createSchedule(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -129,6 +162,9 @@ export class ReportsController {
 
   @Delete(':id/schedule')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Remove report schedule' })
+  @ApiResponse({ status: 200, description: 'Schedule removed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async removeSchedule(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,

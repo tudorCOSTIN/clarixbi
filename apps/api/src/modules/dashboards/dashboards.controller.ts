@@ -13,6 +13,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../auth/guards/org-member.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -26,6 +27,8 @@ import { DashboardsService } from './dashboards.service';
 import { CreateDashboardDto } from './dto/create-dashboard.dto';
 import { UpdateDashboardDto } from './dto/update-dashboard.dto';
 
+@ApiTags('Dashboards')
+@ApiBearerAuth()
 @Controller('organizations/:orgId/dashboards')
 @UseGuards(JwtAuthGuard, OrgMemberGuard, RolesGuard)
 export class DashboardsController {
@@ -35,6 +38,10 @@ export class DashboardsController {
   @Roles(TeamRole.EDITOR)
   @UseGuards(PlanLimitGuard)
   @CheckPlanLimit('dashboards')
+  @ApiOperation({ summary: 'Create a new dashboard' })
+  @ApiResponse({ status: 201, description: 'Created' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @CurrentUser() user: JwtUser,
@@ -46,6 +53,9 @@ export class DashboardsController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'List all dashboards' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findAll(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const dashboards = await this.dashboardsService.findAll(orgId);
     return { data: dashboards };
@@ -53,6 +63,9 @@ export class DashboardsController {
 
   @Get(':id')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Get dashboard by ID' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findOne(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -63,6 +76,10 @@ export class DashboardsController {
 
   @Patch(':id')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Update a dashboard' })
+  @ApiResponse({ status: 200, description: 'Updated' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async update(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -74,6 +91,9 @@ export class DashboardsController {
 
   @Delete(':id')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Delete a dashboard' })
+  @ApiResponse({ status: 200, description: 'Deleted' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async remove(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -86,6 +106,9 @@ export class DashboardsController {
 
   @Post(':id/share')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Create a share link for dashboard' })
+  @ApiResponse({ status: 201, description: 'Share created' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createShare(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -97,6 +120,9 @@ export class DashboardsController {
 
   @Get(':id/shares')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'List shares for a dashboard' })
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getShares(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -107,6 +133,9 @@ export class DashboardsController {
 
   @Delete(':id/shares/:shareId')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Revoke a specific share' })
+  @ApiResponse({ status: 200, description: 'Share revoked' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async revokeShare(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -118,6 +147,10 @@ export class DashboardsController {
 
   @Delete(':id/shares')
   @Roles(TeamRole.ADMIN)
+  @ApiOperation({ summary: 'Revoke all shares for a dashboard' })
+  @ApiResponse({ status: 200, description: 'All shares revoked' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async revokeAllShares(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -134,6 +167,10 @@ export class DashboardsController {
 
   @Post(':id/export')
   @Roles(TeamRole.VIEWER)
+  @ApiOperation({ summary: 'Export dashboard as PDF' })
+  @ApiResponse({ status: 200, description: 'PDF exported' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async exportDashboard(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -161,6 +198,9 @@ export class DashboardsController {
   @Roles(TeamRole.EDITOR)
   @UseGuards(PlanLimitGuard)
   @CheckPlanLimit('dashboards')
+  @ApiOperation({ summary: 'Duplicate a dashboard' })
+  @ApiResponse({ status: 201, description: 'Dashboard duplicated' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async duplicate(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
@@ -174,6 +214,9 @@ export class DashboardsController {
 
   @Patch(':id/restore')
   @Roles(TeamRole.EDITOR)
+  @ApiOperation({ summary: 'Restore a soft-deleted dashboard' })
+  @ApiResponse({ status: 200, description: 'Restored' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async restore(
     @Param('orgId', ParseUUIDPipe) orgId: string,
     @Param('id', ParseUUIDPipe) id: string,
