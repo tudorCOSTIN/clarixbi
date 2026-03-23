@@ -329,6 +329,48 @@ jest.mock('stripe', () => {
 **Fix:** Wrapped in `if (NODE_ENV !== 'production')` check.
 **Regula:** Swagger/docs endpoints DEZACTIVATE in production.
 
+### [2026-03-23] S06 SEO — Pagini publice fara meta tags (title, description, OG)
+
+**Cauza:** Layout-urile `(auth)/layout.tsx` si `legal/layout.tsx` nu exportau `metadata`. Paginile de login, signup, legal nu aveau title, description, sau Open Graph tags → SEO slab, social sharing fara preview.
+**Fix:** Adaugat `export const metadata: Metadata` cu title, description, openGraph in fiecare layout public. Root `[locale]/layout.tsx` extins cu `metadataBase`, `title.template`, `robots`.
+**Regula:** FIECARE layout public trebuie sa exporte Metadata cu cel putin: title, description, openGraph. Foloseste `title: { template: '%s — ClarixBI' }` in root layout.
+
+### [2026-03-23] S06 SEO — robots.txt si sitemap.xml lipsa
+
+**Cauza:** Nu existau `public/robots.txt` si `app/sitemap.ts`. Motoarele de cautare nu stiau ce sa indexeze si ce sa ignore.
+**Fix:** Creat `robots.txt` cu Disallow pe toate rutele autentificate (/en/dashboards/, /ro/alerts/, etc.) si Sitemap pointer. Creat `app/sitemap.ts` cu `MetadataRoute.Sitemap` pentru paginile publice.
+**Regula:** Orice aplicatie web publica TREBUIE sa aiba robots.txt (cu Disallow pe rutele private) si sitemap.xml (generat dinamic sau static).
+
+### [2026-03-23] S06 SEO — not-found.tsx lipsa → 404 default fara branding
+
+**Cauza:** Nu exista `app/not-found.tsx`. Next.js afisa pagina 404 default fara branding sau link de navigare.
+**Fix:** Creat `app/not-found.tsx` cu HTML wrapper (`<html><body>`) si link "Go Home". Creat `app/layout.tsx` minimal (passthrough) necesar de Next.js 14 pentru not-found.tsx la nivel root.
+**Regula:** Next.js 14 App Router necesita `app/layout.tsx` root daca ai `app/not-found.tsx`. Layout-ul root trebuie sa fie passthrough (`return children`) cand ai deja `[locale]/layout.tsx`.
+
+### [2026-03-23] S06 SEO — 42+ string-uri hardcodate in componente (fara i18n)
+
+**Cauza:** Componente si pagini (ShareModal, WidgetConfigurator, dashboard view, callback, alerts, reports) aveau string-uri in romana/engleza hardcodate direct in JSX, fara `useTranslations()`.
+**Fix:** Inlocuit toate string-urile cu `useTranslations('namespace')` — `t('key')`. Adaugat cheile in `messages/en.json` si `messages/ro.json`. Namespace-uri noi: `dashboard.view`, `dashboard.shareModal`, `widget`, `a11y`, `shared`.
+**Regula:** ZERO string-uri hardcodate in UI. FIECARE text vizibil utilizatorului foloseste `useTranslations()`. La fiecare componenta noua, adauga cheile in AMBELE fisiere de mesaje (en.json + ro.json) SIMULTAN.
+
+### [2026-03-23] S06 SEO — aria-label si role="dialog" lipsa pe modale si butoane icon-only
+
+**Cauza:** Modale (ShareModal, WidgetConfigurator, CreateAlertWizard, AlertHistoryModal, CreateReportModal, ScheduleModal) nu aveau `role="dialog"`, `aria-modal="true"`, `aria-label`. Butoane icon-only (clone, edit, delete, close) nu aveau `aria-label` → screen readers nu puteau identifica actiunea.
+**Fix:** Adaugat `role="dialog"` + `aria-modal="true"` + `aria-label` pe fiecare modal overlay. Adaugat `aria-label` pe FIECARE buton icon-only. Creat namespace `a11y` in messages pentru label-uri reutilizabile (close, copyLink, deleteItem, editItem).
+**Regula:** FIECARE modal: `role="dialog"` + `aria-modal="true"` + `aria-label`. FIECARE buton fara text vizibil: `aria-label` descriptiv. Foloseste namespace `a11y` din i18n pentru label-uri comune.
+
+### [2026-03-23] S06 SEO — Teste frontend crapa dupa adaugare useTranslations()
+
+**Cauza:** Dupa inlocuirea string-urilor hardcodate cu `useTranslations()`, testele (WidgetConfigurator.test.tsx, DashboardGrid.test.tsx) crashau cu "context from NextIntlClientProvider was not found".
+**Fix:** In teste, wrapeaza renderul cu `NextIntlClientProvider` si furnizeaza un obiect `messages` minimal cu cheile necesare. Alternativ, mock-uieste `next-intl` cu `jest.mock('next-intl', () => ({ useTranslations: () => (key: string) => key }))`.
+**Regula:** Cand adaugi `useTranslations()` intr-o componenta, ACTUALIZEAZA si testele: fie wrapeaza cu `NextIntlClientProvider` + messages, fie mock-uieste `next-intl`. Verifica testele IMEDIAT dupa i18n changes.
+
+### [2026-03-23] Commitlint rejecta "SEO" in subject — start-case detection
+
+**Cauza:** Commit message `fix(web): S06 SEO fixes — meta, robots, sitemap, a11y, i18n` era rejectat de commitlint. Cuvantul "SEO" (toate majuscule) triggera regula `subject-case` care interzice start-case/sentence-case/pascal-case/upper-case.
+**Fix:** Reformulat: `fix(web): resolve S06 seo issues across frontend` (lowercase "seo").
+**Regula:** In commit subject, evita cuvinte full-uppercase (SEO, API, URL, etc.). Scrie-le lowercase (seo, api, url) sau reformuleaza. Commitlint `subject-case` nu permite start-case.
+
 ---
 
 ## CAND ADAUGI O NOUA INTRARE IN ERROR LOG
