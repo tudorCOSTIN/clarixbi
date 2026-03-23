@@ -43,6 +43,73 @@
 - NEVER push directly to main — always feature branch → PR → merge
 - Commitlint enforces max 100 char header
 
+### Git Workflow — Branch Strategy
+
+feature-branch → develop → main
+
+1. Creeaza branch de feature din main: `git checkout -b feat/feature-name`
+2. Lucreaza pe feature branch. Commit-uri Conventional Commits.
+3. Push feature branch: `git push origin feat/feature-name`
+4. Merge in develop: `git checkout develop && git merge feat/feature-name && git push origin develop`
+5. Merge in main: `git checkout main && git merge develop && git push origin main`
+6. NICIODATA push direct pe main sau develop fara merge din feature branch.
+
+### Git Workflow — Commit & Push Complet
+
+Dupa ce termini ORICE task, urmeaza EXACT aceasta secventa:
+
+```bash
+# 1. Commit pe feature branch
+cd /Users/mugurel/Documents/clarixbi
+git add -A
+git commit -m "type(scope): descriere scurta sub 100 chars"
+
+# 2. Push feature branch
+git push origin <branch-name>
+
+# 3. Merge in develop
+git checkout develop
+git merge <branch-name>
+git push origin develop
+
+# 4. Merge in main
+git checkout main
+git merge develop
+git push origin main
+
+# 5. Sync repo agentie (FastCoding Agency)
+cd /tmp && rm -rf projects-sync
+git clone https://github.com/fastcodingagency/projects.git projects-sync
+rsync -av --delete \
+  --exclude='.git' \
+  --exclude='node_modules' \
+  --exclude='.next' \
+  --exclude='dist' \
+  --exclude='.env' \
+  --exclude='.env.local' \
+  /Users/mugurel/Documents/clarixbi/ /tmp/projects-sync/ClarixBI/
+cd /tmp/projects-sync
+git add ClarixBI/
+git commit -m "type(scope): aceeasi descriere ca la commit-ul original"
+git push origin main
+rm -rf /tmp/projects-sync
+
+# 6. Intoarce-te pe feature branch sau main
+cd /Users/mugurel/Documents/clarixbi
+git checkout main
+```
+
+### Git Workflow — Reguli STRICTE
+
+- NICIODATA nu face push pe main fara merge din develop
+- NICIODATA nu face push pe develop fara merge din feature branch
+- NICIODATA nu uita sync-ul repo agentie — FIECARE push pe main triggereaza sync
+- NICIODATA nu include node_modules, .next, dist, .env in sync
+- Daca commit-ul esueaza (pre-commit hook: lint/prettier) → fix problemele, RE-STAGE fisierele, commit NOU (nu --amend)
+- Commitlint header max 100 caractere. Detalii in body, nu in titlu.
+- Dupa editari, verifica `npm run lint` INAINTE de commit.
+- Ruleaza `npx prettier --write <file>` dupa editari lungi, inainte de commit.
+
 ### Backend (NestJS)
 
 - Module pattern: module.ts + controller.ts + service.ts + dto/ + entities/
@@ -55,6 +122,7 @@
 - Environment variables: access via ConfigService or process.env['VAR_NAME'] (bracket notation)
 - Redis: NEVER use localhost fallback in processors/services — require REDIS_URL or throw
 - Stripe: in production, REQUIRE STRIPE_SECRET_KEY — no mock fallbacks
+- Health check: verifica TOATE serviciile critice (PostgreSQL, ClickHouse, Redis), nu doar Redis
 
 ### Frontend (Next.js)
 
