@@ -15,6 +15,7 @@ export class AuditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   user_id: string | null;
 

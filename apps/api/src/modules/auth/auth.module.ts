@@ -24,7 +24,7 @@ import { OrgContextMiddleware } from './middleware/org-context.middleware';
         secret: configService.get<string>('auth.jwtSecret'),
         signOptions: {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          expiresIn: (configService.get<string>('auth.jwtExpiresIn') || '1h') as unknown as number,
+          expiresIn: (configService.get<string>('auth.jwtExpiresIn') || '15m') as unknown as number,
         },
       }),
       inject: [ConfigService],

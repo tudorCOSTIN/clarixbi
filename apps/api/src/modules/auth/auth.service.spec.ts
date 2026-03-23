@@ -14,6 +14,7 @@ const mockRedis = {
   get: jest.fn(),
   set: jest.fn(),
   keys: jest.fn(),
+  scan: jest.fn(),
   del: jest.fn(),
   expire: jest.fn(),
 };
@@ -110,6 +111,7 @@ describe('AuthService', () => {
     mockRedis.get.mockReset();
     mockRedis.set.mockReset();
     mockRedis.keys.mockReset();
+    mockRedis.scan.mockReset();
     mockRedis.del.mockReset();
     mockRedis.expire.mockReset();
   });
@@ -284,7 +286,7 @@ describe('AuthService', () => {
     it('should rotate to a new token pair for a valid refresh token', async () => {
       const oldToken = 'old-refresh-token';
       const redisKey = `refresh:${mockUser.id}:${oldToken}`;
-      mockRedis.keys.mockResolvedValue([redisKey]);
+      mockRedis.scan.mockResolvedValue(['0', [redisKey]]);
       mockRedis.get.mockResolvedValue(
         JSON.stringify({ userId: mockUser.id, createdAt: Date.now() }),
       );
@@ -302,7 +304,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when refresh token not found in Redis', async () => {
-      mockRedis.keys.mockResolvedValue([]);
+      mockRedis.scan.mockResolvedValue(['0', []]);
 
       await expect(service.refreshAccessToken('invalid-token')).rejects.toThrow(
         UnauthorizedException,
@@ -313,14 +315,14 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when Redis data is null (expired)', async () => {
-      mockRedis.keys.mockResolvedValue(['refresh:uid:tok']);
+      mockRedis.scan.mockResolvedValue(['0', ['refresh:uid:tok']]);
       mockRedis.get.mockResolvedValue(null);
 
       await expect(service.refreshAccessToken('tok')).rejects.toThrow('Refresh token expired');
     });
 
     it('should throw UnauthorizedException when user is not found', async () => {
-      mockRedis.keys.mockResolvedValue(['refresh:uid:tok']);
+      mockRedis.scan.mockResolvedValue(['0', ['refresh:uid:tok']]);
       mockRedis.get.mockResolvedValue(JSON.stringify({ userId: 'uid', createdAt: Date.now() }));
       userRepo.findOne!.mockResolvedValue(null);
 
@@ -328,7 +330,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when user is inactive', async () => {
-      mockRedis.keys.mockResolvedValue(['refresh:uid:tok']);
+      mockRedis.scan.mockResolvedValue(['0', ['refresh:uid:tok']]);
       mockRedis.get.mockResolvedValue(JSON.stringify({ userId: 'uid', createdAt: Date.now() }));
       userRepo.findOne!.mockResolvedValue({ ...mockUser, is_active: false });
 
@@ -342,21 +344,23 @@ describe('AuthService', () => {
   describe('revokeRefreshToken', () => {
     it('should delete all refresh tokens for user from Redis', async () => {
       const keys = ['refresh:user-uuid-1:t1', 'refresh:user-uuid-1:t2'];
-      mockRedis.keys.mockResolvedValue(keys);
+      mockRedis.scan
+        .mockResolvedValueOnce(['1', [keys[0]]])
+        .mockResolvedValueOnce(['0', [keys[1]]]);
       mockRedis.del.mockResolvedValue(2);
 
       await service.revokeRefreshToken('user-uuid-1');
 
-      expect(mockRedis.keys).toHaveBeenCalledWith('refresh:user-uuid-1:*');
+      expect(mockRedis.scan).toHaveBeenCalled();
       expect(mockRedis.del).toHaveBeenCalledWith(...keys);
     });
 
     it('should not call del when no refresh tokens exist', async () => {
-      mockRedis.keys.mockResolvedValue([]);
+      mockRedis.scan.mockResolvedValue(['0', []]);
 
       await service.revokeRefreshToken('user-uuid-1');
 
-      expect(mockRedis.keys).toHaveBeenCalledWith('refresh:user-uuid-1:*');
+      expect(mockRedis.scan).toHaveBeenCalled();
       expect(mockRedis.del).not.toHaveBeenCalled();
     });
   });

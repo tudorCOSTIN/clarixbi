@@ -192,6 +192,8 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { ClickHouseService } from '../src/modules/clickhouse/clickhouse.service';
 import { SyncJob } from '../src/modules/sync/entities/sync-job.entity';
 import { TeamMember } from '../src/modules/teams/entities/team-member.entity';
 
@@ -244,6 +246,14 @@ describe('ClarixBI API Contract Tests', () => {
         OrganizationsController,
       ],
       providers: [
+        {
+          provide: DataSource,
+          useValue: { query: jest.fn().mockResolvedValue([{ '?column?': 1 }]) },
+        },
+        {
+          provide: ClickHouseService,
+          useValue: { healthCheck: jest.fn().mockResolvedValue({ ok: true }) },
+        },
         { provide: AuthService, useValue: stubAuthService },
         { provide: DashboardsService, useValue: stubDashboardsService },
         { provide: WidgetsService, useValue: stubWidgetsService },

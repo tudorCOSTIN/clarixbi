@@ -34,6 +34,7 @@ export class Subscription {
   @Column({ type: 'uuid', unique: true })
   org_id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   plan_id: string;
 

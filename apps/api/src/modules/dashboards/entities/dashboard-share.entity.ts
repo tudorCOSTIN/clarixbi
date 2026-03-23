@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Dashboard } from './dashboard.entity';
 import { User } from '../../users/entities/user.entity';
@@ -14,12 +15,14 @@ export class DashboardShare {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   dashboard_id: string;
 
   @Column({ unique: true })
   share_token: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   created_by: string;
 

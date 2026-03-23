@@ -107,6 +107,12 @@ describe('Session Persistence — Token Refresh + Idle Timeout', () => {
       const regex = new RegExp(`^${escaped}$`);
       return Object.keys(redisStore).filter((k) => regex.test(k));
     }),
+    scan: jest.fn(async (_cursor: string, _matchKey: string, pattern: string) => {
+      const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*');
+      const regex = new RegExp(`^${escaped}$`);
+      const matched = Object.keys(redisStore).filter((k) => regex.test(k));
+      return ['0', matched];
+    }),
   };
 
   const mockUserRepo = {

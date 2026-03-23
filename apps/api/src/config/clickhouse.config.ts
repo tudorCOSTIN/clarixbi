@@ -13,5 +13,8 @@ export function createClickHouseClient() {
     username: clickhouseConfig.username,
     password: clickhouseConfig.password,
     database: clickhouseConfig.database,
+    request_timeout: 30000,
+    max_open_connections: 10,
+    keep_alive: { enabled: true },
   });
 }

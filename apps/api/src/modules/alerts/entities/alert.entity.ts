@@ -38,9 +38,11 @@ export class Alert {
   @Column({ type: 'uuid' })
   org_id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   created_by: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   data_source_id: string;
 

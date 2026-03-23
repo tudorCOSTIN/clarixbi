@@ -42,6 +42,7 @@ export class TeamMember {
   @Column({ type: 'enum', enum: TeamRole })
   role: TeamRole;
 
+  @Index()
   @Column({ type: 'uuid', nullable: true })
   invited_by: string | null;
 

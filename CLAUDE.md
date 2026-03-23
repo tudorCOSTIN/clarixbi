@@ -371,6 +371,54 @@ jest.mock('stripe', () => {
 **Fix:** Reformulat: `fix(web): resolve S06 seo issues across frontend` (lowercase "seo").
 **Regula:** In commit subject, evita cuvinte full-uppercase (SEO, API, URL, etc.). Scrie-le lowercase (seo, api, url) sau reformuleaza. Commitlint `subject-case` nu permite start-case.
 
+### [2026-03-23] CR01 — Health check inca verifica doar Redis (regresie)
+
+**Cauza:** Health check-ul din error log-ul anterior nu a fost implementat complet. HealthController inca verifica doar Redis ping, fara PostgreSQL si ClickHouse.
+**Fix:** Adaugat DataSource injection (SELECT 1 pentru PostgreSQL) si ClickHouseService injection (healthCheck()) in HealthController. Returneaza status per serviciu + overall 'ok'/'degraded'.
+**Regula:** Dupa ce notezi un fix in error log, VERIFICA ca fix-ul e realmente implementat in cod. Health check-ul trebuie sa verifice TOATE serviciile critice.
+
+### [2026-03-23] CR01 — Auth0 si Stripe fetch() fara timeout
+
+**Cauza:** auth.service.ts avea 4 fetch() calls la Auth0 si billing.service.ts avea 4 fetch() calls la Stripe fara AbortController/timeout. Un raspuns intarziat putea bloca request-ul indefinit.
+**Fix:** Adaugat `signal: AbortSignal.timeout(10000)` pe Auth0 calls si `signal: AbortSignal.timeout(15000)` pe Stripe calls.
+**Regula:** FIECARE fetch() call extern TREBUIE sa aiba timeout. Foloseste `AbortSignal.timeout(ms)` sau `AbortController`. Auth0: 10s, Stripe: 15s, general: 30s.
+
+### [2026-03-23] CR01 — redis.keys() blocheaza Redis in productie
+
+**Cauza:** auth.service.ts folosea `redis.keys()` (O(N) pe intreg keyspace-ul Redis) in refreshAccessToken si revokeRefreshToken. Cu multi utilizatori, comanda KEYS blocheaza Redis-ul.
+**Fix:** Inlocuit cu `redis.scan()` iterativ (non-blocking, cursor-based). SCAN proceseaza in batch-uri de 100.
+**Regula:** NICIODATA `redis.keys()` in cod de productie. Foloseste `redis.scan()` cu cursor. KEYS e acceptabil doar in dev/debug.
+
+### [2026-03-23] CR01 — SQL injection potential in billing.service.ts countResource
+
+**Cauza:** `countResource()` interpola numele tabelei in SQL query via string (`${table}`). Desi valoarea venea dintr-un switch, parametrul `resource` provine din input extern.
+**Fix:** Creat `RESOURCE_TABLE_MAP` static (allowlist) si validare stricta: daca resursa nu e in map, returneaza 0. Tabelul e acum quoted cu `"table"`.
+**Regula:** NICIODATA string interpolation in SQL, chiar daca valoarea pare controlata. Foloseste un allowlist static pentru table/column names.
+
+### [2026-03-23] CR01 — GDPR hard delete fara tranzactie (14+ operatii secventiale)
+
+**Cauza:** `gdpr.service.ts executeHardDelete()` facea 14+ DELETE-uri secventiale fara tranzactie. O eroare la mijloc lasa date orfane, incalcand GDPR compliance.
+**Fix:** Wrapped toate DELETE-urile PostgreSQL in `dataSource.transaction()`. ClickHouse deletes raman in afara tranzactiei (DB separat).
+**Regula:** Operatii multi-step de DELETE/UPDATE TREBUIE wrappate in tranzactie. Foloseste `dataSource.transaction(async (manager) => {...})`.
+
+### [2026-03-23] CR01 — Database connection pooling neconfigurat
+
+**Cauza:** database.config.ts folosea default-urile TypeORM (max 10 conexiuni). Sub load, cauzeaza connection exhaustion. CLAUDE.md specifica max:30, min:5 dar nu era implementat.
+**Fix:** Adaugat `extra: { max: 30, min: 5, idleTimeoutMillis: 30000, connectionTimeoutMillis: 5000 }`, `retryAttempts: 5`, `retryDelay: 3000`, si SSL config pentru productie.
+**Regula:** INTOTDEAUNA configureaza connection pooling explicit. Nu te baza pe default-uri. Adauga retry logic si SSL pentru productie.
+
+### [2026-03-23] CR01 — 18 FK columns fara @Index() (regresie partiala)
+
+**Cauza:** Desi error log-ul anterior documenta adaugarea @Index() pe FK columns, 18 coloane ramasesera fara index. Entitati afectate: AuditLog, AIConversation, AIMessage, AlertTrigger, Alert, Subscription, DashboardShare, Dashboard, Notification, ReportSchedule, Report, SyncJob, TeamMember, Widget.
+**Fix:** Adaugat @Index() pe FIECARE FK column identificat. Creat migratie `1774329600000-AddMissingFkIndexes.ts` cu CREATE INDEX IF NOT EXISTS.
+**Regula:** La FIECARE adaugare de FK column, verifica cu grep ca @Index() e prezent. Ruleaza un audit periodic: `grep -r 'ManyToOne\|@Column.*_id' | grep -v '@Index'`.
+
+### [2026-03-23] CR01 — NestJS websocket packages v11 cu core v10
+
+**Cauza:** @nestjs/platform-socket.io si @nestjs/websockets erau v11 (^11.1.17) in timp ce @nestjs/core era v10 (^10.3.0). Major version mismatch poate cauza runtime incompatibilitati.
+**Fix:** Downgradeat la ^10.3.0 pentru a se alinia cu core NestJS.
+**Regula:** TOATE pachetele @nestjs/\* trebuie sa fie pe aceeasi versiune major. Verifica la fiecare npm install.
+
 ---
 
 ## CAND ADAUGI O NOUA INTRARE IN ERROR LOG

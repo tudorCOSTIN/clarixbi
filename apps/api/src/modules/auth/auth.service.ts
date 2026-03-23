@@ -56,6 +56,7 @@ export class AuthService {
         code,
         redirect_uri: callbackUrl,
       }),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!tokenResponse.ok) {
@@ -69,6 +70,7 @@ export class AuthService {
     // Get user info from Auth0
     const userInfoResponse = await fetch(`https://${domain}/userinfo`, {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!userInfoResponse.ok) {
@@ -158,8 +160,21 @@ export class AuthService {
   }
 
   async refreshAccessToken(refreshToken: string): Promise<TokenPair> {
-    // Find the refresh token in Redis
-    const keys = await this.redis.keys(`refresh:*:${refreshToken}`);
+    // Find the refresh token in Redis using SCAN (non-blocking, unlike KEYS)
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const [nextCursor, batch] = await this.redis.scan(
+        cursor,
+        'MATCH',
+        `refresh:*:${refreshToken}`,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== '0' && keys.length === 0);
+
     if (!keys.length) {
       throw new UnauthorizedException('Invalid refresh token');
     }
@@ -193,7 +208,20 @@ export class AuthService {
   }
 
   async revokeRefreshToken(userId: string): Promise<void> {
-    const keys = await this.redis.keys(`refresh:${userId}:*`);
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const [nextCursor, batch] = await this.redis.scan(
+        cursor,
+        'MATCH',
+        `refresh:${userId}:*`,
+        'COUNT',
+        100,
+      );
+      cursor = nextCursor;
+      keys.push(...batch);
+    } while (cursor !== '0');
+
     if (keys.length) {
       await this.redis.del(...keys);
     }
@@ -214,6 +242,7 @@ export class AuthService {
         client_secret: clientSecret,
         audience: `https://${domain}/api/v2/`,
       }),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!tokenResponse.ok) {
@@ -237,6 +266,7 @@ export class AuthService {
         email,
         send: 'link',
       }),
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!magicLinkResponse.ok) {

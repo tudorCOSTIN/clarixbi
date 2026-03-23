@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Widget } from './entities/widget.entity';
@@ -16,6 +16,8 @@ const DEFAULT_CONFIGS: Record<string, Record<string, unknown>> = {
 
 @Injectable()
 export class WidgetsService {
+  private readonly logger = new Logger(WidgetsService.name);
+
   constructor(
     @InjectRepository(Widget)
     private readonly widgetRepo: Repository<Widget>,

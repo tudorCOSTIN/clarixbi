@@ -1,4 +1,10 @@
-import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -158,12 +164,13 @@ export class BillingService {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
+      signal: AbortSignal.timeout(15000),
     });
 
     const session = await response.json();
     if (!response.ok) {
       this.logger.error(`Stripe checkout error: ${JSON.stringify(session)}`);
-      throw new Error('Failed to create Stripe checkout session');
+      throw new BadGatewayException('Failed to create Stripe checkout session');
     }
 
     return session.url;
@@ -191,12 +198,13 @@ export class BillingService {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
+      signal: AbortSignal.timeout(15000),
     });
 
     const session = await response.json();
     if (!response.ok) {
       this.logger.error(`Stripe portal error: ${JSON.stringify(session)}`);
-      throw new Error('Failed to create Stripe portal session');
+      throw new BadGatewayException('Failed to create Stripe portal session');
     }
 
     return session.url;
@@ -218,6 +226,7 @@ export class BillingService {
 
     const response = await fetch(`https://api.stripe.com/v1/invoices?${params.toString()}`, {
       headers: { Authorization: `Bearer ${this.stripeSecretKey}` },
+      signal: AbortSignal.timeout(15000),
     });
 
     const data = await response.json();
@@ -662,19 +671,24 @@ export class BillingService {
     return subscription;
   }
 
+  private static readonly RESOURCE_TABLE_MAP: Record<string, string> = {
+    team_members: 'team_members',
+    data_sources: 'data_sources',
+    dashboards: 'dashboards',
+    alerts: 'alerts',
+    ai_queries: 'ai_conversations',
+  };
+
   private async countResource(orgId: string, resource: string): Promise<number> {
-    const table =
-      resource === 'team_members'
-        ? 'team_members'
-        : resource === 'data_sources'
-          ? 'data_sources'
-          : resource === 'ai_queries'
-            ? 'ai_conversations'
-            : resource;
+    const table = BillingService.RESOURCE_TABLE_MAP[resource];
+    if (!table) {
+      this.logger.warn(`Unknown resource type for counting: ${resource}`);
+      return 0;
+    }
 
     try {
       const result = await this.dataSource.query(
-        `SELECT COUNT(*) as count FROM ${table} WHERE org_id = $1 AND deleted_at IS NULL`,
+        `SELECT COUNT(*) as count FROM "${table}" WHERE org_id = $1 AND deleted_at IS NULL`,
         [orgId],
       );
       return parseInt(result?.[0]?.count || '0', 10);
@@ -682,7 +696,7 @@ export class BillingService {
       // Table might not have deleted_at
       try {
         const result = await this.dataSource.query(
-          `SELECT COUNT(*) as count FROM ${table} WHERE org_id = $1`,
+          `SELECT COUNT(*) as count FROM "${table}" WHERE org_id = $1`,
           [orgId],
         );
         return parseInt(result?.[0]?.count || '0', 10);
@@ -712,6 +726,7 @@ export class BillingService {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: params.toString(),
+      signal: AbortSignal.timeout(15000),
     });
 
     const data = await response.json();

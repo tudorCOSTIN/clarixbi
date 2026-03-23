@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
@@ -12,6 +12,8 @@ import { UpdateDashboardDto } from './dto/update-dashboard.dto';
 
 @Injectable()
 export class DashboardsService {
+  private readonly logger = new Logger(DashboardsService.name);
+
   constructor(
     @InjectRepository(Dashboard)
     private readonly dashboardRepo: Repository<Dashboard>,

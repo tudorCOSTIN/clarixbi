@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import * as Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 
@@ -53,7 +53,7 @@ export class CsvConnector {
     const workbook = XLSX.read(buffer, { type: 'buffer' });
     const firstSheet = workbook.SheetNames[0];
     if (!firstSheet) {
-      throw new Error('Excel file has no sheets');
+      throw new BadRequestException('Excel file has no sheets');
     }
 
     const sheet = workbook.Sheets[firstSheet]!;

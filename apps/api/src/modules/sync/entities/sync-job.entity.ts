@@ -28,6 +28,7 @@ export class SyncJob {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   data_source_id: string;
 

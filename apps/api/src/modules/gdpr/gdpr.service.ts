@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
@@ -82,6 +82,7 @@ export class GdprService {
     @InjectRepository(SyncJob)
     private readonly syncJobRepo: Repository<SyncJob>,
     private readonly clickhouse: ClickHouseService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async requestDeletion(userId: string): Promise<GdprRequest> {
@@ -168,7 +169,7 @@ export class GdprService {
       }
     }
 
-    // Delete ClickHouse data for sole-owner orgs
+    // Delete ClickHouse data for sole-owner orgs (outside transaction - separate DB)
     for (const orgId of soleOwnerOrgIds) {
       for (const table of CLICKHOUSE_TABLES) {
         try {
@@ -183,158 +184,181 @@ export class GdprService {
       }
     }
 
-    // Hard delete PostgreSQL data in dependency order
-    // 1. Widgets (depend on dashboards)
-    const dashboards = await this.dashboardRepo.find({
-      where: soleOwnerOrgIds.map((org_id) => ({ org_id })),
-      withDeleted: true,
-    });
-    const dashboardIds = dashboards.map((d) => d.id);
-
-    if (dashboardIds.length > 0) {
-      await this.widgetRepo
-        .createQueryBuilder()
-        .delete()
-        .where('dashboard_id IN (:...dashboardIds)', { dashboardIds })
-        .execute();
-
-      await this.dashboardShareRepo
-        .createQueryBuilder()
-        .delete()
-        .where('dashboard_id IN (:...dashboardIds)', { dashboardIds })
-        .execute();
-    }
-
-    // 2. AI messages (depend on conversations)
-    const conversations = await this.aiConversationRepo.find({
-      where: { user_id: userId },
-    });
-    const conversationIds = conversations.map((c) => c.id);
-
-    if (conversationIds.length > 0) {
-      await this.aiMessageRepo
-        .createQueryBuilder()
-        .delete()
-        .where('conversation_id IN (:...conversationIds)', { conversationIds })
-        .execute();
-    }
-
-    // 3. AI conversations
-    await this.aiConversationRepo
-      .createQueryBuilder()
-      .delete()
-      .where('user_id = :userId', { userId })
-      .execute();
-
-    // 4. Report schedules and reports for sole-owner orgs
-    if (soleOwnerOrgIds.length > 0) {
-      const reports = await this.reportRepo.find({
+    // Hard delete PostgreSQL data in a transaction for consistency
+    await this.dataSource.transaction(async (manager) => {
+      // 1. Widgets (depend on dashboards)
+      const dashboards = await manager.find(Dashboard, {
         where: soleOwnerOrgIds.map((org_id) => ({ org_id })),
+        withDeleted: true,
       });
-      const reportIds = reports.map((r) => r.id);
+      const dashboardIds = dashboards.map((d) => d.id);
 
-      if (reportIds.length > 0) {
-        await this.reportScheduleRepo
+      if (dashboardIds.length > 0) {
+        await manager
           .createQueryBuilder()
           .delete()
-          .where('report_id IN (:...reportIds)', { reportIds })
+          .from(Widget)
+          .where('dashboard_id IN (:...dashboardIds)', { dashboardIds })
+          .execute();
+
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(DashboardShare)
+          .where('dashboard_id IN (:...dashboardIds)', { dashboardIds })
           .execute();
       }
 
-      await this.reportRepo
-        .createQueryBuilder()
-        .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
-        .execute();
-
-      // 5. Alert triggers and alerts
-      const alerts = await this.alertRepo.find({
-        where: soleOwnerOrgIds.map((org_id) => ({ org_id })),
+      // 2. AI messages (depend on conversations)
+      const conversations = await manager.find(AIConversation, {
+        where: { user_id: userId },
       });
-      const alertIds = alerts.map((a) => a.id);
+      const conversationIds = conversations.map((c) => c.id);
 
-      if (alertIds.length > 0) {
-        await this.alertTriggerRepo
+      if (conversationIds.length > 0) {
+        await manager
           .createQueryBuilder()
           .delete()
-          .where('alert_id IN (:...alertIds)', { alertIds })
+          .from(AIMessage)
+          .where('conversation_id IN (:...conversationIds)', { conversationIds })
           .execute();
       }
 
-      await this.alertRepo
+      // 3. AI conversations
+      await manager
         .createQueryBuilder()
         .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+        .from(AIConversation)
+        .where('user_id = :userId', { userId })
         .execute();
 
-      // 6. Data sources and sync jobs
-      await this.syncJobRepo
+      // 4. Report schedules and reports for sole-owner orgs
+      if (soleOwnerOrgIds.length > 0) {
+        const reports = await manager.find(Report, {
+          where: soleOwnerOrgIds.map((org_id) => ({ org_id })),
+        });
+        const reportIds = reports.map((r) => r.id);
+
+        if (reportIds.length > 0) {
+          await manager
+            .createQueryBuilder()
+            .delete()
+            .from(ReportSchedule)
+            .where('report_id IN (:...reportIds)', { reportIds })
+            .execute();
+        }
+
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Report)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+
+        // 5. Alert triggers and alerts
+        const alerts = await manager.find(Alert, {
+          where: soleOwnerOrgIds.map((org_id) => ({ org_id })),
+        });
+        const alertIds = alerts.map((a) => a.id);
+
+        if (alertIds.length > 0) {
+          await manager
+            .createQueryBuilder()
+            .delete()
+            .from(AlertTrigger)
+            .where('alert_id IN (:...alertIds)', { alertIds })
+            .execute();
+        }
+
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Alert)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+
+        // 6. Data sources and sync jobs
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(SyncJob)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(DataSourceEntity)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+
+        // 7. Dashboards
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Dashboard)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+
+        // 8. Notifications
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Notification)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+
+        // 9. Subscriptions
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Subscription)
+          .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+      }
+
+      // 10. Team members for user
+      await manager
         .createQueryBuilder()
         .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+        .from(TeamMember)
+        .where('user_id = :userId', { userId })
         .execute();
 
-      await this.dataSourceRepo
+      // 11. Notifications for user (in non-sole-owner orgs)
+      await manager
         .createQueryBuilder()
         .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+        .from(Notification)
+        .where('user_id = :userId', { userId })
         .execute();
 
-      // 7. Dashboards
-      await this.dashboardRepo
+      // 12. Organizations where user was sole owner
+      if (soleOwnerOrgIds.length > 0) {
+        await manager
+          .createQueryBuilder()
+          .delete()
+          .from(Organization)
+          .where('id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+          .execute();
+      }
+
+      // 13. Hard delete user
+      await manager
         .createQueryBuilder()
         .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
+        .from(User)
+        .where('id = :userId', { userId })
         .execute();
 
-      // 8. Notifications
-      await this.notificationRepo
-        .createQueryBuilder()
-        .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
-        .execute();
-
-      // 9. Subscriptions
-      await this.subscriptionRepo
-        .createQueryBuilder()
-        .delete()
-        .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
-        .execute();
-    }
-
-    // 10. Team members for user
-    await this.teamMemberRepo
-      .createQueryBuilder()
-      .delete()
-      .where('user_id = :userId', { userId })
-      .execute();
-
-    // 11. Notifications for user (in non-sole-owner orgs)
-    await this.notificationRepo
-      .createQueryBuilder()
-      .delete()
-      .where('user_id = :userId', { userId })
-      .execute();
-
-    // 12. Organizations where user was sole owner
-    if (soleOwnerOrgIds.length > 0) {
-      await this.orgRepo
-        .createQueryBuilder()
-        .delete()
-        .where('id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
-        .execute();
-    }
-
-    // 13. Hard delete user
-    await this.userRepo.createQueryBuilder().delete().where('id = :userId', { userId }).execute();
-
-    // 14. Update GDPR request status
-    await this.gdprRequestRepo.update(requestId, {
-      status: GdprRequestStatus.COMPLETED,
-      completed_at: new Date(),
+      // 14. Update GDPR request status
+      await manager.update(GdprRequest, requestId, {
+        status: GdprRequestStatus.COMPLETED,
+        completed_at: new Date(),
+      });
     });
 
-    // Audit log (audit logs are RETAINED - never deleted)
+    // Audit log (audit logs are RETAINED - never deleted, outside transaction)
     await this.auditLogRepo.save(
       this.auditLogRepo.create({
         user_id: null,

@@ -32,6 +32,7 @@ export class Dashboard {
   @Column({ type: 'uuid' })
   org_id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   created_by: string;
 

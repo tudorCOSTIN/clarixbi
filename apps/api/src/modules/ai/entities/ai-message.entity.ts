@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { AIConversation } from './ai-conversation.entity';
 
@@ -18,6 +19,7 @@ export class AIMessage {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column({ type: 'uuid' })
   conversation_id: string;
 
