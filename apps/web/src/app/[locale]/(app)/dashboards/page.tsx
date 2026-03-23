@@ -1,6 +1,6 @@
-/* eslint-disable no-console */
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -13,21 +13,24 @@ export default function DashboardsPage() {
   const t = useTranslations('dashboard');
   const router = useRouter();
   const { data: dashboards, loading, clone, remove } = useDashboards();
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     if (!confirm(t('deleteConfirm'))) return;
+    setActionError(null);
     try {
       await remove(id);
     } catch (err) {
-      console.error('Delete failed:', err);
+      setActionError(err instanceof Error ? err.message : 'Delete failed');
     }
   };
 
   const handleClone = async (id: string) => {
+    setActionError(null);
     try {
       await clone(id);
     } catch (err) {
-      console.error('Clone failed:', err);
+      setActionError(err instanceof Error ? err.message : 'Clone failed');
     }
   };
 
@@ -50,6 +53,15 @@ export default function DashboardsPage() {
           <Plus className="h-4 w-4 mr-2" /> {t('createNew')}
         </Button>
       </div>
+
+      {actionError && (
+        <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {actionError}
+          <button className="ml-2 underline" onClick={() => setActionError(null)}>
+            {t('dismiss')}
+          </button>
+        </div>
+      )}
 
       {dashboards.length === 0 ? (
         <Card className="text-center py-12">

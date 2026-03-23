@@ -401,6 +401,18 @@ jest.mock('stripe', () => {
 **Fix:** Wrapped toate DELETE-urile PostgreSQL in `dataSource.transaction()`. ClickHouse deletes raman in afara tranzactiei (DB separat).
 **Regula:** Operatii multi-step de DELETE/UPDATE TREBUIE wrappate in tranzactie. Foloseste `dataSource.transaction(async (manager) => {...})`.
 
+### [2026-03-23] CR02 — console.error in frontend production code (7 instante)
+
+**Cauza:** `dashboards/page.tsx` si `dashboards/[id]/edit/page.tsx` aveau 7 `console.error()` calls in catch blocks, plus `/* eslint-disable no-console */` la nivel de fisier. Erorile din handleDelete, handleClone, autoSave, addWidget, removeWidget, updateWidget se pierdeau in consola.
+**Fix:** Inlocuit `console.error` cu state-based error display (`actionError`/`editError` state). Adaugat error banner UI cu buton de dismiss. Eliminat `/* eslint-disable no-console */`.
+**Regula:** NICIODATA `console.error` in frontend production code. Foloseste state-based error display (error state + UI banner/toast). Daca eroarea trebuie logata, foloseste un logging service, nu console.
+
+### [2026-03-23] CR02 — string-uri hardcodate in dashboard edit page (7 instante)
+
+**Cauza:** `dashboards/[id]/edit/page.tsx` avea 7 string-uri in engleza hardcodate direct in JSX: "Back", "Saving...", "Saved", "Edit", "Preview", "No widgets yet", "Click or drag a widget from the library to get started".
+**Fix:** Adaugat `useTranslations('dashboardEdit')` hook. Creat namespace `dashboardEdit` in `messages/en.json` si `messages/ro.json` cu 15 chei (inclusiv error messages).
+**Regula:** ZERO string-uri hardcodate in UI. FIECARE text vizibil utilizatorului foloseste `useTranslations()`. Cand adaugi o pagina noua, creeaza namespace-ul i18n SIMULTAN.
+
 ### [2026-03-23] CR01 — Database connection pooling neconfigurat
 
 **Cauza:** database.config.ts folosea default-urile TypeORM (max 10 conexiuni). Sub load, cauzeaza connection exhaustion. CLAUDE.md specifica max:30, min:5 dar nu era implementat.

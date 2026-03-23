@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -51,9 +51,11 @@ const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
 export default function DashboardEditPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useTranslations('dashboardEdit');
   const dashboardId = params.id as string;
 
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const [layouts, setLayouts] = useState<{ [key: string]: Layout[] }>({});
   const [preview, setPreview] = useState(false);
@@ -119,7 +121,7 @@ export default function DashboardEditPage() {
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         } catch (err) {
-          console.error('Auto-save failed:', err);
+          setEditError(err instanceof Error ? err.message : t('autoSaveFailed'));
         } finally {
           setSaving(false);
         }
@@ -181,7 +183,7 @@ export default function DashboardEditPage() {
         });
         setConfiguratorOpen(true);
       } catch (err) {
-        console.error('Failed to add widget:', err);
+        setEditError(err instanceof Error ? err.message : t('addWidgetFailed'));
       }
     },
     [dashboardId],
@@ -204,7 +206,7 @@ export default function DashboardEditPage() {
           setActiveWidgetId(null);
         }
       } catch (err) {
-        console.error('Failed to remove widget:', err);
+        setEditError(err instanceof Error ? err.message : t('removeWidgetFailed'));
       }
     },
     [dashboardId, activeWidgetId],
@@ -262,7 +264,7 @@ export default function DashboardEditPage() {
         setConfiguratorOpen(false);
         setActiveWidgetId(null);
       } catch (err) {
-        console.error('Failed to update widget:', err);
+        setEditError(err instanceof Error ? err.message : t('updateWidgetFailed'));
       }
     },
     [activeWidgetId, dashboardId],
@@ -274,7 +276,9 @@ export default function DashboardEditPage() {
       apiClient(`/organizations/current/dashboards/${dashboardId}`, {
         method: 'PATCH',
         body: JSON.stringify({ name: dashboardName }),
-      }).catch(console.error);
+      }).catch((err: unknown) => {
+        setEditError(err instanceof Error ? err.message : t('saveNameFailed'));
+      });
     }
   }, [dashboard, dashboardName, dashboardId]);
 
@@ -288,10 +292,20 @@ export default function DashboardEditPage() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
+      {/* Error banner */}
+      {editError && (
+        <div className="px-4 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700 flex items-center justify-between shrink-0">
+          <span>{editError}</span>
+          <button className="ml-2 underline text-red-600" onClick={() => setEditError(null)}>
+            {t('dismiss')}
+          </button>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex items-center gap-3 px-4 py-2 bg-white border-b border-gray-200 shrink-0">
         <Button variant="ghost" size="sm" onClick={() => router.push('/dashboards')}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back
+          <ArrowLeft className="h-4 w-4 mr-1" /> {t('back')}
         </Button>
         <Input
           value={dashboardName}
@@ -302,17 +316,17 @@ export default function DashboardEditPage() {
         <div className="flex items-center gap-2 ml-auto">
           {saving && (
             <span className="text-xs text-gray-400 flex items-center gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+              <Loader2 className="h-3 w-3 animate-spin" /> {t('saving')}
             </span>
           )}
           {saved && (
             <span className="text-xs text-green-600 flex items-center gap-1">
-              <Check className="h-3 w-3" /> Saved
+              <Check className="h-3 w-3" /> {t('saved')}
             </span>
           )}
           <Button variant="outline" size="sm" onClick={() => setPreview(!preview)}>
             {preview ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
-            {preview ? 'Edit' : 'Preview'}
+            {preview ? t('edit') : t('preview')}
           </Button>
         </div>
       </div>
@@ -329,8 +343,8 @@ export default function DashboardEditPage() {
         <div className="flex-1 overflow-auto p-4">
           {widgets.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <p className="text-lg mb-2">No widgets yet</p>
-              <p className="text-sm">Click or drag a widget from the library to get started</p>
+              <p className="text-lg mb-2">{t('noWidgets')}</p>
+              <p className="text-sm">{t('noWidgetsHint')}</p>
             </div>
           ) : (
             <ResponsiveGrid
