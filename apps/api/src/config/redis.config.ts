@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 
-const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
+const redisUrl = process.env['REDIS_URL']!;
 
 /**
  * Redis instance for caching (TTL default: 5 minutes)

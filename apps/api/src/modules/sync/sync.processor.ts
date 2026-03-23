@@ -39,10 +39,10 @@ export class SyncProcessor implements OnModuleInit {
   ) {}
 
   onModuleInit() {
-    const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
+    const redisUrl = process.env['REDIS_URL']!;
     const parsed = new URL(redisUrl);
     const connection = {
-      host: parsed.hostname || 'localhost',
+      host: parsed.hostname,
       port: parseInt(parsed.port || '6379', 10),
       password: parsed.password || undefined,
       maxRetriesPerRequest: null,

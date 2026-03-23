@@ -55,8 +55,12 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
+  const corsOrigin = process.env['CORS_ORIGIN']?.split(',');
+  if (!corsOrigin && process.env['NODE_ENV'] === 'production') {
+    throw new Error('CORS_ORIGIN is required in production');
+  }
   app.enableCors({
-    origin: process.env['CORS_ORIGIN']?.split(',') || 'http://localhost:3000',
+    origin: corsOrigin || 'http://localhost:3000',
     credentials: true,
   });
 
@@ -70,14 +74,16 @@ async function bootstrap() {
     }),
   );
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('ClarixBI API')
-    .setDescription('ClarixBI Business Intelligence API')
-    .setVersion('0.1.0')
-    .build();
+  if (process.env['NODE_ENV'] !== 'production') {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('ClarixBI API')
+      .setDescription('ClarixBI Business Intelligence API')
+      .setVersion('0.1.0')
+      .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, document);
+    const document = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, document);
+  }
 
   await app.listen(parseInt(process.env['PORT'] || '4000', 10));
 }

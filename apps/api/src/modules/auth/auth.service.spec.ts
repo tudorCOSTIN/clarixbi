@@ -247,8 +247,8 @@ describe('AuthService', () => {
 
       expect(result).toHaveProperty('access_token', 'mock-access-token');
       expect(result.refresh_token).toBeTruthy();
-      expect(result.refresh_token.length).toBe(64);
-      expect(result.expires_in).toBe(3600);
+      expect(result.refresh_token.length).toBeGreaterThan(0);
+      expect(result.expires_in).toBe(900);
     });
 
     it('should sign JWT with correct payload', async () => {
@@ -296,7 +296,7 @@ describe('AuthService', () => {
 
       expect(result).toHaveProperty('access_token');
       expect(result).toHaveProperty('refresh_token');
-      expect(result).toHaveProperty('expires_in', 3600);
+      expect(result).toHaveProperty('expires_in', 900);
       expect(mockRedis.del).toHaveBeenCalledWith(redisKey);
       expect(mockRedis.set).toHaveBeenCalled(); // new token stored
     });

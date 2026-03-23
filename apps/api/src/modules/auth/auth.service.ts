@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,9 +36,7 @@ export class AuthService {
     @InjectRepository(TeamMember) private teamMemberRepo: Repository<TeamMember>,
     @Inject(forwardRef(() => BillingService)) private billingService: BillingService,
   ) {
-    this.redis = new Redis(
-      this.configService.get<string>('auth.redisUrl') || 'redis://localhost:6379',
-    );
+    this.redis = new Redis(this.configService.get<string>('auth.redisUrl')!);
   }
 
   async validateAuth0Token(code: string): Promise<Auth0UserInfo> {
@@ -154,7 +153,7 @@ export class AuthService {
     return {
       access_token: accessToken,
       refresh_token: refreshToken,
-      expires_in: 3600,
+      expires_in: 900,
     };
   }
 
@@ -273,14 +272,7 @@ export class AuthService {
   }
 
   private generateRefreshToken(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const randomBytes = new Uint8Array(64);
-    crypto.getRandomValues(randomBytes);
-    for (const byte of randomBytes) {
-      result += chars[byte % chars.length];
-    }
-    return result;
+    return randomBytes(32).toString('base64url');
   }
 
   private generateSlug(name: string): string {

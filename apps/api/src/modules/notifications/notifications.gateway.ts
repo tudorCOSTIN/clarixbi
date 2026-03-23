@@ -46,7 +46,9 @@ export interface AlertTriggeredEvent {
 @WebSocketGateway({
   namespace: '/ws',
   cors: {
-    origin: process.env['CORS_ORIGIN']?.split(',') || 'http://localhost:3000',
+    origin:
+      process.env['CORS_ORIGIN']?.split(',') ||
+      (process.env['NODE_ENV'] !== 'production' ? 'http://localhost:3000' : []),
     credentials: true,
   },
 })

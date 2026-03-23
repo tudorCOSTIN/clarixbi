@@ -1,10 +1,10 @@
 import { Queue, QueueOptions } from 'bullmq';
 
-const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
+const redisUrl = process.env['REDIS_URL']!;
 const parsed = new URL(redisUrl);
 
 const bullConnection = {
-  host: parsed.hostname || 'localhost',
+  host: parsed.hostname,
   port: parseInt(parsed.port || '6379', 10),
   password: parsed.password || undefined,
   maxRetriesPerRequest: null,

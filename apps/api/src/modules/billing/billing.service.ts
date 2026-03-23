@@ -34,7 +34,10 @@ export class BillingService {
     private emailService: EmailService,
   ) {
     this.stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || '';
-    this.appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
+    this.appUrl =
+      this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+      this.configService.get<string>('CORS_ORIGIN') ||
+      '';
   }
 
   /**

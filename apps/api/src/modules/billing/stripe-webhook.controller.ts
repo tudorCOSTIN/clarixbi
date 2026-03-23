@@ -34,7 +34,11 @@ export class StripeWebhookController {
     }
 
     if (!this.webhookSecret) {
-      this.logger.warn('STRIPE_WEBHOOK_SECRET not configured, skipping verification');
+      if (process.env['NODE_ENV'] === 'production') {
+        this.logger.error('STRIPE_WEBHOOK_SECRET not configured in production');
+        return res.status(500).json({ error: 'Webhook verification not configured' });
+      }
+      this.logger.warn('STRIPE_WEBHOOK_SECRET not configured, skipping verification in dev');
     } else if (!this.verifySignature(rawBody, signature, this.webhookSecret)) {
       this.logger.warn('Invalid Stripe webhook signature');
       return res.status(400).json({ error: 'Invalid signature' });

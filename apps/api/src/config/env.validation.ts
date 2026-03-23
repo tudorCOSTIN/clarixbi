@@ -62,6 +62,16 @@ export function validateEnvironment(): void {
     missing.push('  - JWT_SECRET: using default dev secret in production!');
   }
 
+  // Validate CORS_ORIGIN is set in production
+  if (process.env['NODE_ENV'] === 'production' && !process.env['CORS_ORIGIN']) {
+    missing.push('  - CORS_ORIGIN: required in production for CORS and URL generation');
+  }
+
+  // Validate STRIPE_WEBHOOK_SECRET is set in production
+  if (process.env['NODE_ENV'] === 'production' && !process.env['STRIPE_WEBHOOK_SECRET']) {
+    warnings.push('  - STRIPE_WEBHOOK_SECRET: required for webhook signature verification');
+  }
+
   if (warnings.length > 0) {
     logger.warn(`Optional env vars missing (features disabled):\n${warnings.join('\n')}`);
   }

@@ -5,9 +5,11 @@ export const authConfig = registerAs('auth', () => ({
   auth0ClientId: process.env['AUTH0_CLIENT_ID'] || '',
   auth0ClientSecret: process.env['AUTH0_CLIENT_SECRET'] || '',
   auth0Audience: process.env['AUTH0_AUDIENCE'] || '',
-  auth0CallbackUrl: process.env['AUTH0_CALLBACK_URL'] || 'http://localhost:3000/api/auth/callback',
+  auth0CallbackUrl:
+    process.env['AUTH0_CALLBACK_URL'] ||
+    `${process.env['NEXT_PUBLIC_APP_URL'] || process.env['CORS_ORIGIN']}/api/auth/callback`,
   jwtSecret: process.env['JWT_SECRET'] || 'clarixbi-jwt-secret-dev',
-  jwtExpiresIn: '1h',
-  refreshTokenExpiresIn: 30 * 24 * 60 * 60, // 30 days in seconds
-  redisUrl: process.env['REDIS_URL'] || 'redis://localhost:6379',
+  jwtExpiresIn: '15m',
+  refreshTokenExpiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
+  redisUrl: process.env['REDIS_URL'],
 }));

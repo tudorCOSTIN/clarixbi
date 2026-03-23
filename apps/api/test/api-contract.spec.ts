@@ -20,6 +20,21 @@ jest.mock('../src/config/redis.config', () => ({
   CACHE_TTL_DEFAULT: 300,
 }));
 
+// Mock queues config (uses process.env['REDIS_URL'] at module level)
+const mockQueue = { add: jest.fn(), close: jest.fn() };
+jest.mock('../src/modules/sync/queues.config', () => ({
+  QUEUE_CONFIGS: [],
+  queues: {},
+  syncSmartbillQueue: mockQueue,
+  syncWoocommerceQueue: mockQueue,
+  syncCsvQueue: mockQueue,
+  reportsGenerateQueue: mockQueue,
+  reportsEmailQueue: mockQueue,
+  alertsCheckQueue: mockQueue,
+  gdprHardDeleteQueue: mockQueue,
+  gdprExportQueue: mockQueue,
+}));
+
 // Mock Sentry
 jest.mock('../src/config/sentry.config', () => ({}));
 jest.mock('@sentry/nestjs/setup', () => ({

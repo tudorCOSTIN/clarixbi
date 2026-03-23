@@ -17,6 +17,7 @@ export class UpdateWidgetDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(10000)
   query_sql?: string;
 
   @IsOptional()

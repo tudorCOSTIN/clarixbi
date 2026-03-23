@@ -24,7 +24,9 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Handle Auth0 redirect — exchange code, set cookies, redirect to app' })
   async callbackGet(@Query('code') code: string, @Res() res: Response) {
-    const appUrl = this.configService.get<string>('NEXT_PUBLIC_APP_URL') || 'http://localhost:3000';
+    const appUrl =
+      this.configService.get<string>('NEXT_PUBLIC_APP_URL') ||
+      this.configService.get<string>('CORS_ORIGIN');
     const defaultLocale = 'ro';
 
     if (!code) {
@@ -48,7 +50,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env['NODE_ENV'] === 'production',
         sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
         path: '/',
       });
 
@@ -83,7 +85,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 30 days
       path: '/',
     });
 
@@ -132,6 +134,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiOperation({ summary: 'Refresh JWT access token using refresh token' })
   async refresh(
     @Body() body: { refresh_token: string },
@@ -151,7 +154,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
 

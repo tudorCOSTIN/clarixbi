@@ -13,7 +13,7 @@ export class BruteForceService {
   private readonly redis: Redis;
 
   constructor() {
-    const redisUrl = process.env['REDIS_URL'] || 'redis://localhost:6379';
+    const redisUrl = process.env['REDIS_URL']!;
     this.redis = new Redis(redisUrl, {
       retryStrategy(times) {
         return Math.min(times * 100, 3000);
