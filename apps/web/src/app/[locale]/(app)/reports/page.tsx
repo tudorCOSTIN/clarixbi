@@ -146,6 +146,7 @@ export default function ReportsPage() {
                     <button
                       onClick={() => handleDelete(report.id)}
                       className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-100 rounded transition-opacity"
+                      aria-label={t('deleteConfirm')}
                     >
                       <Trash2 className="h-4 w-4 text-gray-400" />
                     </button>
@@ -327,11 +328,16 @@ function CreateReportModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('createTitle')}
+    >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">{t('createTitle')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -447,11 +453,16 @@ function ScheduleModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('title')}
+    >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">{t('title')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>

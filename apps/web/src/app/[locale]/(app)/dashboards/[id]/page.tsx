@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Responsive, WidthProvider, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -33,6 +34,7 @@ interface DashboardData {
 export default function DashboardViewPage() {
   const params = useParams();
   const router = useRouter();
+  const t = useTranslations('dashboard.view');
   const dashboardId = params.id as string;
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
@@ -69,7 +71,7 @@ export default function DashboardViewPage() {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" onClick={() => router.push('/dashboards')}>
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back
+            <ArrowLeft className="h-4 w-4 mr-1" /> {t('back')}
           </Button>
           <div>
             <h1 className="text-xl font-bold text-gray-900">{dashboard.name}</h1>
@@ -80,7 +82,7 @@ export default function DashboardViewPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-            <Share2 className="h-4 w-4 mr-1" /> Partajeaza
+            <Share2 className="h-4 w-4 mr-1" /> {t('share')}
           </Button>
           <Button
             variant="outline"
@@ -109,7 +111,7 @@ export default function DashboardViewPage() {
               }
             }}
           >
-            <Download className="h-4 w-4 mr-1" /> Exporta PDF
+            <Download className="h-4 w-4 mr-1" /> {t('exportPdf')}
           </Button>
           <Button
             variant="outline"
@@ -126,21 +128,21 @@ export default function DashboardViewPage() {
               }
             }}
           >
-            <Copy className="h-4 w-4 mr-1" /> Cloneaza
+            <Copy className="h-4 w-4 mr-1" /> {t('clone')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => router.push(`/dashboards/${dashboardId}/edit`)}
           >
-            <Pencil className="h-4 w-4 mr-1" /> Edit
+            <Pencil className="h-4 w-4 mr-1" /> {t('edit')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             className="text-red-500 hover:text-red-700"
             onClick={async () => {
-              if (!confirm('Sterge dashboard-ul?')) return;
+              if (!confirm(t('deleteConfirm'))) return;
               try {
                 await apiClient(`/organizations/current/dashboards/${dashboardId}`, {
                   method: 'DELETE',
@@ -151,7 +153,7 @@ export default function DashboardViewPage() {
               }
             }}
           >
-            <Trash2 className="h-4 w-4 mr-1" /> Sterge
+            <Trash2 className="h-4 w-4 mr-1" /> {t('delete')}
           </Button>
         </div>
       </div>
@@ -161,13 +163,13 @@ export default function DashboardViewPage() {
       <div className="mt-4">
         {dashboard.widgets.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
-            <p>This dashboard has no widgets yet.</p>
+            <p>{t('noWidgets')}</p>
             <Button
               variant="outline"
               className="mt-4"
               onClick={() => router.push(`/dashboards/${dashboardId}/edit`)}
             >
-              <Pencil className="h-4 w-4 mr-1" /> Add widgets
+              <Pencil className="h-4 w-4 mr-1" /> {t('addWidgets')}
             </Button>
           </div>
         ) : (

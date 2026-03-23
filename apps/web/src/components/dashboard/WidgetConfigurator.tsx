@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, TrendingUp, BarChart3, PieChart, Table, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,6 +70,8 @@ export function WidgetConfigurator({
   onApply,
   onCancel,
 }: WidgetConfiguratorProps) {
+  const t = useTranslations('widget');
+  const tA11y = useTranslations('a11y');
   const [config, setConfig] = useState<WidgetConfig>(initialConfig);
   const [dataSources, setDataSources] = useState<DataSource[]>([]);
   const [columns, setColumns] = useState<ColumnInfo[]>([]);
@@ -112,8 +115,14 @@ export function WidgetConfigurator({
     <div className="fixed inset-y-0 right-0 w-[350px] bg-white border-l border-gray-200 shadow-xl z-50 flex flex-col animate-in slide-in-from-right duration-200">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900">Configure Widget</h3>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onCancel}>
+        <h3 className="font-semibold text-gray-900">{t('configure')}</h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={onCancel}
+          aria-label={tA11y('close')}
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -122,7 +131,7 @@ export function WidgetConfigurator({
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
         {/* Title */}
         <div className="space-y-1.5">
-          <Label>Widget Title</Label>
+          <Label>{t('widgetTitle')}</Label>
           <Input
             value={config.title}
             onChange={(e) => update({ title: e.target.value })}
@@ -132,7 +141,7 @@ export function WidgetConfigurator({
 
         {/* Chart type */}
         <div className="space-y-1.5">
-          <Label>Chart Type</Label>
+          <Label>{t('chartType')}</Label>
           <div className="grid grid-cols-5 gap-1.5">
             {CHART_TYPES.map(({ type, label, icon: Icon }) => (
               <button
@@ -154,7 +163,7 @@ export function WidgetConfigurator({
 
         {/* Data Source */}
         <div className="space-y-1.5">
-          <Label>Data Source</Label>
+          <Label>{t('dataSource')}</Label>
           <select
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.dataSourceId || ''}
@@ -162,7 +171,7 @@ export function WidgetConfigurator({
               update({ dataSourceId: e.target.value || null, metric: '', groupBy: '' })
             }
           >
-            <option value="">Select source...</option>
+            <option value="">{t('selectSource')}</option>
             {dataSources.map((ds) => (
               <option key={ds.id} value={ds.id}>
                 {ds.name} ({ds.type})
@@ -173,14 +182,14 @@ export function WidgetConfigurator({
 
         {/* Metric / Column */}
         <div className="space-y-1.5">
-          <Label>Metric / Column</Label>
+          <Label>{t('metric')}</Label>
           <select
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.metric}
             onChange={(e) => update({ metric: e.target.value })}
             disabled={loading || columns.length === 0}
           >
-            <option value="">{loading ? 'Loading...' : 'Select column...'}</option>
+            <option value="">{loading ? t('loadingColumns') : t('selectColumn')}</option>
             {columns.map((col) => (
               <option key={col.name} value={col.name}>
                 {col.name} ({col.type})
@@ -191,7 +200,7 @@ export function WidgetConfigurator({
 
         {/* Aggregation */}
         <div className="space-y-1.5">
-          <Label>Aggregation</Label>
+          <Label>{t('aggregation')}</Label>
           <select
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.aggregation}
@@ -207,14 +216,14 @@ export function WidgetConfigurator({
 
         {/* Group By */}
         <div className="space-y-1.5">
-          <Label>Group By</Label>
+          <Label>{t('groupBy')}</Label>
           <select
             className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
             value={config.groupBy}
             onChange={(e) => update({ groupBy: e.target.value })}
             disabled={loading || columns.length === 0}
           >
-            <option value="">None</option>
+            <option value="">{t('groupByNone')}</option>
             {columns.map((col) => (
               <option key={col.name} value={col.name}>
                 {col.name}
@@ -226,7 +235,7 @@ export function WidgetConfigurator({
         {/* Sort + Limit */}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <Label>Sort</Label>
+            <Label>{t('sort')}</Label>
             <select
               className="flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:ring-offset-2"
               value={config.sort}
@@ -237,7 +246,7 @@ export function WidgetConfigurator({
             </select>
           </div>
           <div className="space-y-1.5">
-            <Label>Limit</Label>
+            <Label>{t('limit')}</Label>
             <Input
               type="number"
               min={1}
@@ -252,7 +261,7 @@ export function WidgetConfigurator({
 
         {/* Date Range */}
         <div className="space-y-1.5">
-          <Label>Date Range</Label>
+          <Label>{t('dateRange')}</Label>
           <div className="flex flex-wrap gap-1.5">
             {DATE_PRESETS.map(({ label, value }) => (
               <button
@@ -273,7 +282,7 @@ export function WidgetConfigurator({
 
         {/* Color Scheme */}
         <div className="space-y-1.5">
-          <Label>Color Scheme</Label>
+          <Label>{t('colorScheme')}</Label>
           <div className="flex gap-2">
             {COLOR_SCHEMES.map(({ id, label, colors }) => (
               <button
@@ -301,10 +310,10 @@ export function WidgetConfigurator({
       {/* Footer */}
       <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-200">
         <Button variant="outline" className="flex-1" onClick={onCancel}>
-          Anuleaza
+          {t('cancel')}
         </Button>
         <Button className="flex-1" onClick={() => onApply(config)}>
-          Aplica
+          {t('apply')}
         </Button>
       </div>
     </div>

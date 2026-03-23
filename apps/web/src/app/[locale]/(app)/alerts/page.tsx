@@ -232,6 +232,7 @@ export default function AlertsPage() {
                         onClick={() => handleToggle(alert.id, !alert.is_active)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
                         title={alert.is_active ? t('pause') : t('activate')}
+                        aria-label={alert.is_active ? t('pause') : t('activate')}
                       >
                         {alert.is_active ? (
                           <Pause className="h-4 w-4 text-amber-500" />
@@ -243,6 +244,7 @@ export default function AlertsPage() {
                         onClick={() => handleTest(alert.id)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
                         title={t('testDryRun')}
+                        aria-label={t('testDryRun')}
                         disabled={testingId === alert.id}
                       >
                         {testingId === alert.id ? (
@@ -255,6 +257,7 @@ export default function AlertsPage() {
                         onClick={() => setShowHistory(alert.id)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
                         title={t('triggerHistory')}
+                        aria-label={t('triggerHistory')}
                       >
                         <History className="h-4 w-4 text-gray-500" />
                       </button>
@@ -262,6 +265,7 @@ export default function AlertsPage() {
                         onClick={() => handleDelete(alert.id)}
                         className="p-1.5 hover:bg-gray-100 rounded transition-colors"
                         title={t('delete')}
+                        aria-label={t('delete')}
                       >
                         <Trash2 className="h-4 w-4 text-red-400" />
                       </button>
@@ -300,6 +304,7 @@ export default function AlertsPage() {
             <button
               onClick={() => setTestResult(null)}
               className="p-1 hover:bg-gray-100 rounded ml-2"
+              aria-label="Dismiss"
             >
               <X className="h-4 w-4" />
             </button>
@@ -383,7 +388,12 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('title')}
+    >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
@@ -397,7 +407,7 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
               ))}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -561,11 +571,16 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
   }, [alertId, getTriggers]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('title')}
+    >
       <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-lg font-semibold">{t('title')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded">
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>

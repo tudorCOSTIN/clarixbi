@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
 import { WidgetConfigurator, WidgetConfig } from '@/components/dashboard/WidgetConfigurator';
 
 // Mock apiClient
@@ -11,6 +12,44 @@ jest.mock('@/lib/api-client', () => ({
 jest.mock('nuqs', () => ({
   useQueryState: jest.fn(() => ['30d', jest.fn()]),
 }));
+
+const messages = {
+  widget: {
+    configure: 'Configure Widget',
+    widgetTitle: 'Widget Title',
+    chartType: 'Chart Type',
+    dataSource: 'Data Source',
+    selectSource: 'Select source...',
+    metric: 'Metric / Column',
+    loadingColumns: 'Loading...',
+    selectColumn: 'Select column...',
+    aggregation: 'Aggregation',
+    groupBy: 'Group By',
+    groupByNone: 'None',
+    sort: 'Sort',
+    limit: 'Limit',
+    dateRange: 'Date Range',
+    colorScheme: 'Color Scheme',
+    cancel: 'Cancel',
+    apply: 'Apply',
+  },
+  a11y: {
+    close: 'Close',
+    copyLink: 'Copy link',
+    deleteItem: 'Delete',
+    editItem: 'Edit',
+    cloneItem: 'Clone',
+    dismissNotification: 'Dismiss',
+  },
+};
+
+function Wrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <NextIntlClientProvider locale="en" messages={messages}>
+      {children}
+    </NextIntlClientProvider>
+  );
+}
 
 describe('WidgetConfigurator', () => {
   const defaultConfig: WidgetConfig = {
@@ -34,6 +73,7 @@ describe('WidgetConfigurator', () => {
         onApply={jest.fn()}
         onCancel={jest.fn()}
       />,
+      { wrapper: Wrapper },
     );
     expect(container.innerHTML).toBe('');
   });
@@ -46,10 +86,11 @@ describe('WidgetConfigurator', () => {
         onApply={jest.fn()}
         onCancel={jest.fn()}
       />,
+      { wrapper: Wrapper },
     );
     expect(getByText('Configure Widget')).toBeTruthy();
-    expect(getByText('Aplica')).toBeTruthy();
-    expect(getByText('Anuleaza')).toBeTruthy();
+    expect(getByText('Apply')).toBeTruthy();
+    expect(getByText('Cancel')).toBeTruthy();
   });
 
   it('should show chart type options', () => {
@@ -60,6 +101,7 @@ describe('WidgetConfigurator', () => {
         onApply={jest.fn()}
         onCancel={jest.fn()}
       />,
+      { wrapper: Wrapper },
     );
     expect(getByText('Line')).toBeTruthy();
     expect(getByText('Bar')).toBeTruthy();
@@ -77,8 +119,9 @@ describe('WidgetConfigurator', () => {
         onApply={jest.fn()}
         onCancel={onCancel}
       />,
+      { wrapper: Wrapper },
     );
-    fireEvent.click(getByText('Anuleaza'));
+    fireEvent.click(getByText('Cancel'));
     expect(onCancel).toHaveBeenCalled();
   });
 
@@ -91,8 +134,9 @@ describe('WidgetConfigurator', () => {
         onApply={onApply}
         onCancel={jest.fn()}
       />,
+      { wrapper: Wrapper },
     );
-    fireEvent.click(getByText('Aplica'));
+    fireEvent.click(getByText('Apply'));
     expect(onApply).toHaveBeenCalledWith(
       expect.objectContaining({
         title: 'Test Widget',

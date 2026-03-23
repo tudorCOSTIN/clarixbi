@@ -1,5 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Legal',
+  description: 'ClarixBI legal information — terms of service, privacy policy, and cookie policy.',
+  robots: { index: true, follow: true },
+};
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (

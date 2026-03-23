@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { X, Copy, Trash2, Link, Loader2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -21,6 +22,8 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalProps) {
+  const t = useTranslations('dashboard.shareModal');
+  const tA11y = useTranslations('a11y');
   const [shares, setShares] = useState<ShareLink[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -104,11 +107,16 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('title')}
+    >
       <Card className="w-full max-w-lg mx-4">
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Partajeaza dashboard</h2>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+          <h2 className="text-lg font-semibold">{t('title')}</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={tA11y('close')}>
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -119,7 +127,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
             ) : (
               <Link className="h-4 w-4 mr-2" />
             )}
-            Genereaza link nou
+            {t('generateLink')}
           </Button>
 
           {loading ? (
@@ -127,7 +135,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
               <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
             </div>
           ) : shares.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-4">Nu exista linkuri active</p>
+            <p className="text-sm text-gray-500 text-center py-4">{t('noLinks')}</p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {shares.map((share) => (
@@ -141,7 +149,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {new Date(share.created_at).toLocaleDateString()} &middot; {share.view_count}{' '}
-                      vizualizari
+                      {t('views')}
                     </p>
                   </div>
                   <Button
@@ -149,6 +157,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
                     size="icon"
                     className="h-7 w-7 flex-shrink-0"
                     onClick={() => handleCopy(share.share_token, share.id)}
+                    aria-label={tA11y('copyLink')}
                   >
                     <Copy
                       className={`h-3.5 w-3.5 ${copiedId === share.id ? 'text-green-500' : ''}`}
@@ -159,6 +168,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
                     size="icon"
                     className="h-7 w-7 flex-shrink-0 text-red-500"
                     onClick={() => handleRevoke(share.id)}
+                    aria-label={t('revokeLink')}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -172,14 +182,12 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
               {showRevokeAll ? (
                 <div className="flex items-center gap-2 p-3 bg-red-50 rounded-lg">
                   <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
-                  <p className="text-sm text-red-700 flex-1">
-                    Sigur vrei sa revoci toate linkurile?
-                  </p>
+                  <p className="text-sm text-red-700 flex-1">{t('revokeAllConfirm')}</p>
                   <Button variant="destructive" size="sm" onClick={handleRevokeAll}>
-                    Da, revoca
+                    {t('revokeAllYes')}
                   </Button>
                   <Button variant="ghost" size="sm" onClick={() => setShowRevokeAll(false)}>
-                    Anuleaza
+                    {t('revokeAllCancel')}
                   </Button>
                 </div>
               ) : (
@@ -189,7 +197,7 @@ export function ShareModal({ dashboardId, orgId, isOpen, onClose }: ShareModalPr
                   className="w-full text-red-500"
                   onClick={() => setShowRevokeAll(true)}
                 >
-                  Revoca toate linkurile
+                  {t('revokeAll')}
                 </Button>
               )}
             </div>

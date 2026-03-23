@@ -19,8 +19,25 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'ClarixBI',
-  description: 'Business Intelligence for Romanian SMBs',
+  title: {
+    default: 'ClarixBI — Business Intelligence for Romanian SMBs',
+    template: '%s — ClarixBI',
+  },
+  description:
+    'ClarixBI helps Romanian SMBs connect data sources, build dashboards, and gain AI-powered insights from their business data.',
+  metadataBase: new URL(process.env['NEXT_PUBLIC_APP_URL'] || 'https://app.clarixbi.com'),
+  openGraph: {
+    title: 'ClarixBI — Business Intelligence for Romanian SMBs',
+    description:
+      'Connect SmartBill, WooCommerce, CSV and more. Build dashboards, generate reports, and get AI-powered insights.',
+    siteName: 'ClarixBI',
+    type: 'website',
+    locale: 'en_US',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 interface RootLayoutProps {

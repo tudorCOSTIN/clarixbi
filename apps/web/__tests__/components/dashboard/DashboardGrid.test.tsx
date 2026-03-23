@@ -61,6 +61,11 @@ jest.mock('react-countup', () => ({
   default: ({ end }: any) => <span>{end}</span>,
 }));
 
+// Mock next-intl
+jest.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+}));
+
 const mockDashboard = {
   id: '00000000-0000-0000-0000-000000000001',
   name: 'Test Dashboard',

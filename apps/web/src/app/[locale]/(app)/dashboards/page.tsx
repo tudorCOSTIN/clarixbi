@@ -82,6 +82,7 @@ export default function DashboardsPage() {
                         e.preventDefault();
                         handleClone(d.id);
                       }}
+                      aria-label="Clone"
                     >
                       <Copy className="h-3.5 w-3.5" />
                     </Button>
@@ -90,6 +91,7 @@ export default function DashboardsPage() {
                       size="icon"
                       className="h-7 w-7"
                       onClick={() => router.push(`/dashboards/${d.id}/edit`)}
+                      aria-label="Edit"
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -98,6 +100,7 @@ export default function DashboardsPage() {
                       size="icon"
                       className="h-7 w-7 text-red-500"
                       onClick={() => handleDelete(d.id)}
+                      aria-label="Delete"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>

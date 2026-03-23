@@ -48,7 +48,11 @@
     "andText": "si",
     "privacyLink": "Politica de Confidentialitate",
     "email": "Email",
-    "emailPlaceholder": "nume@companie.ro"
+    "emailPlaceholder": "nume@companie.ro",
+    "noAuthCode": "Nu s-a primit codul de autorizare",
+    "authFailed": "Autentificarea a esuat",
+    "backToLogin": "Inapoi la autentificare",
+    "authenticating": "Se autentifica..."
   },
   "cookies": {
     "message": "Folosim cookie-uri pentru a imbunatati experienta ta pe ClarixBI. Unele cookie-uri sunt necesare pentru functionarea platformei, iar altele ne ajuta sa intelegem cum folosesti serviciul.",
@@ -189,7 +193,36 @@
     "description": "Descriere",
     "descriptionPlaceholder": "Descriere optionala...",
     "nameRequired": "Numele dashboard-ului este obligatoriu",
-    "createFailed": "Nu s-a putut crea dashboard-ul"
+    "createFailed": "Nu s-a putut crea dashboard-ul",
+    "share": "Partajeaza",
+    "exportPdf": "Exporta PDF",
+    "clone": "Cloneaza",
+    "deleteDashboard": "Sterge",
+    "noWidgets": "Acest dashboard nu are widgeturi.",
+    "addWidgets": "Adauga widgeturi",
+    "view": {
+      "share": "Partajeaza",
+      "exportPdf": "Exporta PDF",
+      "clone": "Cloneaza",
+      "edit": "Editeaza",
+      "delete": "Sterge",
+      "deleteConfirm": "Sterge dashboard-ul?",
+      "noWidgets": "Acest dashboard nu are widgeturi.",
+      "addWidgets": "Adauga widgeturi",
+      "back": "Inapoi"
+    },
+    "shareModal": {
+      "title": "Partajeaza dashboard",
+      "generateLink": "Genereaza link nou",
+      "noLinks": "Nu exista linkuri active",
+      "views": "vizualizari",
+      "revokeAllConfirm": "Sigur vrei sa revoci toate linkurile?",
+      "revokeAllYes": "Da, revoca",
+      "revokeAllCancel": "Anuleaza",
+      "revokeAll": "Revoca toate linkurile",
+      "copyLink": "Copiaza link",
+      "revokeLink": "Revoca link"
+    }
   },
   "dataSources": {
     "title": "Surse de date",
@@ -567,5 +600,38 @@
     "analyzing": "Analizez datele tale...",
     "inputPlaceholder": "Intreaba orice despre datele tale...",
     "errorGeneric": "A aparut o eroare. Te rugam sa incerci din nou."
+  },
+  "shared": {
+    "unavailable": "Acest dashboard nu mai este disponibil",
+    "unavailableHint": "Linkul poate fi expirat sau revocat.",
+    "noWidgets": "Acest dashboard nu are widgeturi.",
+    "poweredBy": "Powered by"
+  },
+  "widget": {
+    "configure": "Configureaza Widget",
+    "widgetTitle": "Titlu Widget",
+    "chartType": "Tip Grafic",
+    "dataSource": "Sursa de date",
+    "selectSource": "Selecteaza sursa...",
+    "metric": "Metric / Coloana",
+    "loadingColumns": "Se incarca...",
+    "selectColumn": "Selecteaza coloana...",
+    "aggregation": "Agregare",
+    "groupBy": "Grupeaza dupa",
+    "groupByNone": "Nimic",
+    "sort": "Sortare",
+    "limit": "Limita",
+    "dateRange": "Interval date",
+    "colorScheme": "Schema culori",
+    "cancel": "Anuleaza",
+    "apply": "Aplica"
+  },
+  "a11y": {
+    "close": "Inchide",
+    "copyLink": "Copiaza link",
+    "deleteItem": "Sterge",
+    "editItem": "Editeaza",
+    "cloneItem": "Cloneaza",
+    "dismissNotification": "Inchide notificarea"
   }
 }

@@ -60,9 +60,9 @@ export default function SharedDashboardPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
         <AlertCircle className="h-12 w-12 text-gray-400 mb-4" />
         <h1 className="text-xl font-semibold text-gray-700 mb-2">
-          Acest dashboard nu mai este disponibil
+          This dashboard is no longer available
         </h1>
-        <p className="text-sm text-gray-500">Linkul poate fi expirat sau revocat.</p>
+        <p className="text-sm text-gray-500">The link may have expired or been revoked.</p>
       </div>
     );
   }
@@ -81,7 +81,7 @@ export default function SharedDashboardPage() {
 
         {dashboard.widgets.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
-            <p>Acest dashboard nu are widgeturi.</p>
+            <p>This dashboard has no widgets.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

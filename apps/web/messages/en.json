@@ -48,7 +48,11 @@
     "andText": "and",
     "privacyLink": "Privacy Policy",
     "email": "Email",
-    "emailPlaceholder": "name@company.com"
+    "emailPlaceholder": "name@company.com",
+    "noAuthCode": "No authorization code received",
+    "authFailed": "Authentication failed",
+    "backToLogin": "Back to login",
+    "authenticating": "Authenticating..."
   },
   "cookies": {
     "message": "We use cookies to improve your experience on ClarixBI. Some cookies are necessary for the platform to work, while others help us understand how you use the service.",
@@ -189,7 +193,36 @@
     "description": "Description",
     "descriptionPlaceholder": "Optional description...",
     "nameRequired": "Dashboard name is required",
-    "createFailed": "Failed to create dashboard"
+    "createFailed": "Failed to create dashboard",
+    "share": "Share",
+    "exportPdf": "Export PDF",
+    "clone": "Clone",
+    "deleteDashboard": "Delete",
+    "noWidgets": "This dashboard has no widgets yet.",
+    "addWidgets": "Add widgets",
+    "view": {
+      "share": "Share",
+      "exportPdf": "Export PDF",
+      "clone": "Clone",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this dashboard?",
+      "noWidgets": "This dashboard has no widgets yet.",
+      "addWidgets": "Add widgets",
+      "back": "Back"
+    },
+    "shareModal": {
+      "title": "Share dashboard",
+      "generateLink": "Generate new link",
+      "noLinks": "No active links",
+      "views": "views",
+      "revokeAllConfirm": "Are you sure you want to revoke all links?",
+      "revokeAllYes": "Yes, revoke",
+      "revokeAllCancel": "Cancel",
+      "revokeAll": "Revoke all links",
+      "copyLink": "Copy link",
+      "revokeLink": "Revoke link"
+    }
   },
   "dataSources": {
     "title": "Data Sources",
@@ -567,5 +600,38 @@
     "analyzing": "Analyzing your data...",
     "inputPlaceholder": "Ask anything about your data...",
     "errorGeneric": "An error occurred. Please try again."
+  },
+  "shared": {
+    "unavailable": "This dashboard is no longer available",
+    "unavailableHint": "The link may have expired or been revoked.",
+    "noWidgets": "This dashboard has no widgets.",
+    "poweredBy": "Powered by"
+  },
+  "widget": {
+    "configure": "Configure Widget",
+    "widgetTitle": "Widget Title",
+    "chartType": "Chart Type",
+    "dataSource": "Data Source",
+    "selectSource": "Select source...",
+    "metric": "Metric / Column",
+    "loadingColumns": "Loading...",
+    "selectColumn": "Select column...",
+    "aggregation": "Aggregation",
+    "groupBy": "Group By",
+    "groupByNone": "None",
+    "sort": "Sort",
+    "limit": "Limit",
+    "dateRange": "Date Range",
+    "colorScheme": "Color Scheme",
+    "cancel": "Cancel",
+    "apply": "Apply"
+  },
+  "a11y": {
+    "close": "Close",
+    "copyLink": "Copy link",
+    "deleteItem": "Delete",
+    "editItem": "Edit",
+    "cloneItem": "Clone",
+    "dismissNotification": "Dismiss"
   }
 }
