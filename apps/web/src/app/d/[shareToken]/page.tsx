@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { WidgetCard } from '@/components/dashboard/WidgetCard';
-
-const API_URL = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000/api/v1';
+import { API_URL } from '@/lib/api-client';
 
 interface SharedWidget {
   title: string;

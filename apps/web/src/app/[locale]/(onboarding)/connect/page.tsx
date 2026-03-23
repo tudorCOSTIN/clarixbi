@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, API_URL } from '@/lib/api-client';
 import {
   FileSpreadsheet,
   ShoppingCart,
@@ -206,19 +206,16 @@ export default function ConnectPage() {
       formData.append('file', csvFile);
       formData.append('name', csvFile.name);
 
-      const res = await fetch(
-        `${process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000/api/v1'}/organizations/current/data-sources/upload`,
-        {
-          method: 'POST',
-          body: formData,
-          credentials: 'include',
-          headers: {
-            'X-Org-Id':
-              JSON.parse(localStorage.getItem('clarixbi-org-store') || '{}')?.state?.currentOrgId ||
-              '',
-          },
+      const res = await fetch(`${API_URL}/organizations/current/data-sources/upload`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: {
+          'X-Org-Id':
+            JSON.parse(localStorage.getItem('clarixbi-org-store') || '{}')?.state?.currentOrgId ||
+            '',
         },
-      );
+      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: 'Upload failed' }));

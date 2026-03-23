@@ -10,7 +10,7 @@ import { ArrowLeft, Pencil, Loader2, Share2, Download, Copy, Trash2 } from 'luci
 import { Button } from '@/components/ui/button';
 import { WidgetCard } from '@/components/dashboard/WidgetCard';
 import { FilterBar } from '@/components/dashboard/FilterBar';
-import { apiClient } from '@/lib/api-client';
+import { apiClient, API_URL } from '@/lib/api-client';
 import { ShareModal } from '@/components/dashboard/ShareModal';
 
 const ResponsiveGrid = WidthProvider(Responsive);
@@ -90,7 +90,7 @@ export default function DashboardViewPage() {
             onClick={async () => {
               try {
                 const res = await fetch(
-                  `${process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:4000/api/v1'}/organizations/current/dashboards/${dashboardId}/export`,
+                  `${API_URL}/organizations/current/dashboards/${dashboardId}/export`,
                   {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

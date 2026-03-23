@@ -280,14 +280,15 @@ Most columns use `snake_case` (correct), but a few config/JSON columns store `ca
 
 ## Fixes Applied
 
-| #   | Category        | Fix                                                 | Files Changed                          |
-| --- | --------------- | --------------------------------------------------- | -------------------------------------- |
-| 1   | Error Handling  | Removed `console.error` → state-based error display | `dashboards/page.tsx`                  |
-| 2   | Error Handling  | Removed `console.error` → state-based error display | `dashboards/[id]/edit/page.tsx`        |
-| 3   | Maintainability | Removed `/* eslint-disable no-console */`           | `dashboards/page.tsx`, `edit/page.tsx` |
-| 4   | Maintainability | Added i18n for hardcoded strings in edit page       | `edit/page.tsx`                        |
-| 5   | Maintainability | Added `dashboardEdit` i18n namespace                | `messages/en.json`                     |
-| 6   | Maintainability | Added `dashboardEdit` i18n namespace                | `messages/ro.json`                     |
+| #   | Category        | Fix                                                   | Files Changed                                                                          |
+| --- | --------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 1   | Error Handling  | Removed `console.error` → state-based error display   | `dashboards/page.tsx`                                                                  |
+| 2   | Error Handling  | Removed `console.error` → state-based error display   | `dashboards/[id]/edit/page.tsx`                                                        |
+| 3   | Maintainability | Removed `/* eslint-disable no-console */`             | `dashboards/page.tsx`, `edit/page.tsx`                                                 |
+| 4   | Maintainability | Added i18n for hardcoded strings in edit page         | `edit/page.tsx`                                                                        |
+| 5   | Maintainability | Added `dashboardEdit` i18n namespace                  | `messages/en.json`                                                                     |
+| 6   | Maintainability | Added `dashboardEdit` i18n namespace                  | `messages/ro.json`                                                                     |
+| 7   | DRY             | Exported `API_URL` from `api-client.ts`, deduplicated | `api-client.ts`, `shareToken/page.tsx`, `connect/page.tsx`, `dashboards/[id]/page.tsx` |
 
 ---
 
@@ -302,6 +303,42 @@ Most columns use `snake_case` (correct), but a few config/JSON columns store `ca
 
 ---
 
+## Additional Agent Findings (Late-arriving)
+
+Two review agents completed after the initial commit and surfaced these additional items:
+
+### `@clarixbi/shared` Package — Dead Code
+
+The `packages/shared` package exports 10 enums, 3 interfaces, and `PlanLimits`. It is listed as a dependency in both `apps/api` and `apps/web`, but **zero imports** of `@clarixbi/shared` exist anywhere in the codebase. All shared types are duplicated locally in entity files.
+
+**Status: SUGGESTION** — remove the package or migrate local duplicates to use it.
+
+### Frontend Test Coverage — Critically Low
+
+- **Web:** 2 test suites, 7 tests. Coverage: Statements 49.86%, Branches 32.03%, Functions 24.34%, Lines 52.67%.
+- **API:** 43 test suites, 727 tests. All thresholds pass.
+- **19 backend services/controllers** have no test files (including `auth.controller`, `gdpr.service`, `brute-force.service`).
+
+**Status: SUGGESTION** — significant effort required. Should be addressed incrementally in dedicated test-writing sprints.
+
+### API_URL Constant Duplicated in 5 Files
+
+**Status: FIXED** — Exported `API_URL` from `api-client.ts` and replaced inline definitions in `shareToken/page.tsx`, `connect/page.tsx`, `dashboards/[id]/page.tsx`. Remaining: `useWebSocket.ts` uses `WS_URL` (different suffix).
+
+### Entity Naming Inconsistency
+
+`DataSourceEntity` class includes "Entity" suffix while all other entities use bare names (`User`, `Dashboard`, `Widget`, etc.).
+
+**Status: SUGGESTION** — rename to `DataSource` in a dedicated refactoring pass (requires updating all imports).
+
+### Magic Numbers in Auth Controller
+
+`7 * 24 * 60 * 60 * 1000` repeated 3x for refresh cookie maxAge. `60000` repeated 5+ times for throttle TTL.
+
+**Status: SUGGESTION** — extract named constants `REFRESH_TOKEN_MAX_AGE_MS`, `THROTTLE_TTL_MS`.
+
+---
+
 ## Remaining Suggestions (Non-blocking)
 
 1. **router.push `as any`** — 12 instances in frontend. next-intl typing limitation. Consider adding pathnames to routing config.
@@ -309,3 +346,8 @@ Most columns use `snake_case` (correct), but a few config/JSON columns store `ca
 3. **BaseSyncProcessor abstraction** — extract common BullMQ worker setup if more connectors are added.
 4. **jest.useFakeTimers()** — for retry-heavy tests to avoid force-exit warnings.
 5. **`as any` in tests** — 45+ instances. Standard practice but could use `jest.Mocked<T>` types for cleaner typing.
+6. **`@clarixbi/shared` dead code** — remove package or migrate local type duplicates to use it.
+7. **Frontend test coverage** — add tests for pages, hooks, and components.
+8. **19 untested backend modules** — prioritize security-critical: auth.controller, gdpr.service, brute-force.service.
+9. **`DataSourceEntity` naming** — rename to `DataSource` for consistency.
+10. **Magic numbers** — extract time constants in auth.controller.ts.
