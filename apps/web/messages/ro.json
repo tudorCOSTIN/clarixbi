@@ -31,7 +31,9 @@
     "settings": "Setari",
     "terms": "Termeni",
     "privacy": "Confidentialitate",
-    "cookies": "Cookie-uri"
+    "cookies": "Cookie-uri",
+    "menu": "Meniu",
+    "close": "Inchide meniu"
   },
   "auth": {
     "signInTitle": "Conecteaza-te la ClarixBI",

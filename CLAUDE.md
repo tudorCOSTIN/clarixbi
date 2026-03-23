@@ -443,3 +443,45 @@ Dupa ce rezolvi ORICE eroare, adauga o intrare cu formatul:
 **Fix:** Cum a fost rezolvata
 **Regula:** Ce regula previne repetarea
 ```
+
+### [2026-03-23] CR03 — Missing error.tsx boundaries in all (app) routes
+
+**Cauza:** Niciun error.tsx in route groups critice. Erori nehandle puteau cauza white screen of death fara recovery UI.
+**Fix:** Creat error.tsx in: `(app)/`, `(app)/dashboards/`, `(app)/alerts/`, `(app)/reports/`, `(app)/data-sources/`. Fiecare afiseaza mesaj + buton "Try Again" cu `reset()`.
+**Regula:** FIECARE route group critica TREBUIE sa aiba error.tsx cu buton retry. Verifica la fiecare route noua.
+
+### [2026-03-23] CR03 — Dashboard export PDF bypass apiClient (lipsa X-Org-Id)
+
+**Cauza:** `dashboards/[id]/page.tsx` folosea `fetch()` direct pentru PDF export, fara headerul `X-Org-Id`. Exportul putea esua din cauza lipsei org isolation.
+**Fix:** Adaugat `X-Org-Id` header citit din localStorage (acelasi pattern ca apiClient). `fetch()` direct ramane necesar pentru blob response.
+**Regula:** Cand `apiClient` nu suporta formatul raspunsului (blob, FormData), foloseste `fetch()` direct DAR include INTOTDEAUNA headerul `X-Org-Id`.
+
+### [2026-03-23] CR03 — `<a>` tag in callback/page.tsx in loc de Link
+
+**Cauza:** Pagina de eroare din callback avea `<a href="/login">` in loc de `<Link>` din next/link. Cauza full page reload in loc de client-side navigation.
+**Fix:** Inlocuit cu `<Link>` si adaugat import `next/link`.
+**Regula:** NICIODATA `<a>` tags cu href in componente React. Foloseste `Link` din `next/link` pentru navigare interna.
+
+### [2026-03-23] CR03 — No mobile navigation (navbar overflow on small screens)
+
+**Cauza:** Navbar-ul din `(app)/layout.tsx` avea `flex items-center gap-1` fara breakpoints responsive. Pe mobile, elementele de navigatie se suprapuneau sau dispareau.
+**Fix:** Adaugat hamburger menu (`Menu`/`X` icons) vizibil pe `< md`. Desktop nav ascuns cu `hidden md:flex`. Mobile nav dropdown cu `space-y-1`.
+**Regula:** FIECARE layout cu navigatie trebuie sa aiba mobile menu. Desktop: `hidden md:flex`. Mobile: hamburger + dropdown vizibil pe `md:hidden`.
+
+### [2026-03-23] CR03 — No favicon/icon assets
+
+**Cauza:** Directorul `public/` avea doar `robots.txt`. Niciun favicon, logo sau OG image. Tab-ul browserului arata icon default.
+**Fix:** Creat `public/favicon.svg` cu brand colors (dark-navy bg, primary-blue C, primary-cyan B). Adaugat `icons: { icon: '/favicon.svg' }` in metadata din `[locale]/layout.tsx`.
+**Regula:** FIECARE aplicatie web TREBUIE sa aiba favicon. Adauga-l in `public/` si referentiaza-l in metadata layout.
+
+### [2026-03-23] CR03 — No copyright notice in footer
+
+**Cauza:** Footer-ul din `(app)/layout.tsx` avea doar linkuri (Terms, Privacy, Cookies). Nicio mentiune de copyright sau brand.
+**Fix:** Adaugat `© {year} ClarixBI SRL` in footer. Layout responsive cu `flex-col sm:flex-row sm:justify-between`.
+**Regula:** Footer-ul aplicatiei TREBUIE sa includa copyright notice cu anul curent si numele companiei.
+
+### [2026-03-23] CR03 — 404 page nebranded (culori generice, fara identitate)
+
+**Cauza:** `app/not-found.tsx` folosea `bg-blue-600` generic in loc de culorile brand-ului. Nu avea numele ClarixBI si nu importa `globals.css`.
+**Fix:** Adaugat import `globals.css`, brand name "ClarixBI", culori din tema (`bg-primary-blue`, `text-dark-navy`), mesaj descriptiv.
+**Regula:** Paginile de eroare (404, 500) TREBUIE sa fie branded: logo/nume, culori din tema, mesaj helpful, link de navigare.

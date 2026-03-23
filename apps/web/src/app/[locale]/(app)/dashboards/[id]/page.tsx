@@ -89,11 +89,21 @@ export default function DashboardViewPage() {
             size="sm"
             onClick={async () => {
               try {
+                const headers: Record<string, string> = {
+                  'Content-Type': 'application/json',
+                };
+                try {
+                  const stored = localStorage.getItem('clarixbi-org-store');
+                  const orgId = stored ? JSON.parse(stored)?.state?.currentOrgId : null;
+                  if (orgId) headers['X-Org-Id'] = orgId;
+                } catch {
+                  // ignore parse errors
+                }
                 const res = await fetch(
                   `${API_URL}/organizations/current/dashboards/${dashboardId}/export`,
                   {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify({ format: 'pdf' }),
                     credentials: 'include',
                   },
@@ -101,10 +111,10 @@ export default function DashboardViewPage() {
                 if (!res.ok) throw new Error('Export failed');
                 const blob = await res.blob();
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${dashboard?.name || 'dashboard'}.pdf`;
-                a.click();
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${dashboard?.name || 'dashboard'}.pdf`;
+                link.click();
                 URL.revokeObjectURL(url);
               } catch {
                 // ignore

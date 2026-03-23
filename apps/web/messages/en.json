@@ -31,7 +31,9 @@
     "settings": "Settings",
     "terms": "Terms",
     "privacy": "Privacy",
-    "cookies": "Cookies"
+    "cookies": "Cookies",
+    "menu": "Menu",
+    "close": "Close menu"
   },
   "auth": {
     "signInTitle": "Sign in to ClarixBI",

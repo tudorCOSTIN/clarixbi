@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { apiClient } from '@/lib/api-client';
@@ -45,9 +46,9 @@ export default function CallbackPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="rounded-lg bg-red-50 p-6 text-center">
           <p className="text-sm text-red-700">{error}</p>
-          <a href="/login" className="mt-3 inline-block text-sm text-red-600 underline">
+          <Link href="/login" className="mt-3 inline-block text-sm text-red-600 underline">
             {t('backToLogin')}
-          </a>
+          </Link>
         </div>
       </div>
     );
