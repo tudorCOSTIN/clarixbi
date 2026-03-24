@@ -3,6 +3,14 @@ const { withSentryConfig } = require('@sentry/nextjs');
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
+const isDev = process.env.NODE_ENV !== 'production';
+const scriptSrc = isDev
+  ? "'self' 'unsafe-inline' 'unsafe-eval' https://eu.i.posthog.com"
+  : "'self' 'unsafe-inline' https://eu.i.posthog.com";
+const connectSrc = isDev
+  ? "'self' http://localhost:4000 https://eu.i.posthog.com https://*.auth0.com wss:"
+  : "'self' https://eu.i.posthog.com https://*.auth0.com wss:";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@clarixbi/shared'],
@@ -20,8 +28,7 @@ const nextConfig = {
           { key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' },
           {
             key: 'Content-Security-Policy',
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' https://eu.i.posthog.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://eu.i.posthog.com https://*.auth0.com wss:; frame-src 'none'; object-src 'none'",
+            value: `default-src 'self'; script-src ${scriptSrc}; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src ${connectSrc}; frame-src 'none'; object-src 'none'`,
           },
         ],
       },
