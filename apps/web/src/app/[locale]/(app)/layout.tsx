@@ -97,6 +97,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main id="main-content" className="mx-auto max-w-7xl px-4 py-8">
         {children}
       </main>
+      <div aria-live="polite" aria-atomic="true" className="sr-only" id="notification-live" />
       <footer className="border-t border-gray-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-2 px-4 py-4 sm:flex-row sm:justify-between">
           <span className="text-xs text-gray-500">

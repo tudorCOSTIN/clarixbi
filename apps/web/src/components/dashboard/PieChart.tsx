@@ -2,16 +2,11 @@
 
 import { useState } from 'react';
 import { ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Tooltip, Legend } from 'recharts';
-
-const COLOR_SCHEMES = {
-  primary: ['#2196F3', '#42A5F5', '#90CAF9', '#1976D2', '#0D47A1', '#64B5F6', '#BBDEFB'],
-  warm: ['#FF6B35', '#F7931E', '#FFC107', '#FF8A65', '#FFAB40', '#FFD54F', '#FFE082'],
-  cool: ['#00BCD4', '#009688', '#4CAF50', '#26A69A', '#66BB6A', '#80CBC4', '#A5D6A7'],
-};
+import { CHART_COLORS, type ChartColorScheme } from '@/lib/chart-colors';
 
 interface PieChartProps {
   data: { name: string; value: number }[];
-  colorScheme?: keyof typeof COLOR_SCHEMES;
+  colorScheme?: ChartColorScheme;
   donut?: boolean;
   height?: number;
 }
@@ -22,7 +17,7 @@ export function PieChartWidget({
   donut = false,
   height = 300,
 }: PieChartProps) {
-  const colors = COLOR_SCHEMES[colorScheme];
+  const colors = CHART_COLORS[colorScheme];
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   if (!data || data.length === 0) {

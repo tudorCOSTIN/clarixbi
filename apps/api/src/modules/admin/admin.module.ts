@@ -9,7 +9,7 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { Organization } from '../organizations/entities/organization.entity';
 import { TeamMember } from '../teams/entities/team-member.entity';
-import { DataSourceEntity } from '../data-sources/entities/data-source.entity';
+import { DataSource } from '../data-sources/entities/data-source.entity';
 import { Dashboard } from '../dashboards/entities/dashboard.entity';
 import { Subscription } from '../billing/entities/subscription.entity';
 
@@ -19,7 +19,7 @@ import { Subscription } from '../billing/entities/subscription.entity';
       AuditLog,
       Organization,
       TeamMember,
-      DataSourceEntity,
+      DataSource,
       Dashboard,
       Subscription,
     ]),

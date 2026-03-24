@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { User } from '../../users/entities/user.entity';
-import { DataSourceEntity } from '../../data-sources/entities/data-source.entity';
+import { DataSource } from '../../data-sources/entities/data-source.entity';
 import { AlertTrigger } from './alert-trigger.entity';
 
 export enum ConditionOperator {
@@ -83,9 +83,9 @@ export class Alert {
   @JoinColumn({ name: 'created_by' })
   creator: User;
 
-  @ManyToOne(() => DataSourceEntity, { onDelete: 'CASCADE' })
+  @ManyToOne(() => DataSource, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'data_source_id' })
-  data_source: DataSourceEntity;
+  data_source: DataSource;
 
   @OneToMany(() => AlertTrigger, (at) => at.alert)
   triggers: AlertTrigger[];

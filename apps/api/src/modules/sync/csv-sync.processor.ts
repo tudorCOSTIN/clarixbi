@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Worker, Job } from 'bullmq';
 import { v4 as uuid } from 'uuid';
-import { DataSourceEntity, DataSourceStatus } from '../data-sources/entities/data-source.entity';
+import { DataSource, DataSourceStatus } from '../data-sources/entities/data-source.entity';
 import { SyncJob, SyncJobStatus, SyncJobType } from './entities/sync-job.entity';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
@@ -25,8 +25,8 @@ export class CsvSyncProcessor implements OnModuleInit {
   private worker!: Worker;
 
   constructor(
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
     @InjectRepository(SyncJob)
     private readonly syncJobRepo: Repository<SyncJob>,
     private readonly clickhouse: ClickHouseService,

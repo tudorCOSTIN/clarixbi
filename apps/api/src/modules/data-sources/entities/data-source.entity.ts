@@ -18,7 +18,7 @@ export { DataSourceType, DataSourceStatus };
 
 @Entity('data_sources')
 @Index(['org_id', 'type'])
-export class DataSourceEntity {
+export class DataSource {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -67,3 +67,5 @@ export class DataSourceEntity {
   @OneToMany(() => SyncJob, (sj) => sj.data_source)
   sync_jobs: SyncJob[];
 }
+
+export { DataSource as DataSourceEntity };

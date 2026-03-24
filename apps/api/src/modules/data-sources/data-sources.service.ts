@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DataSourceEntity, DataSourceType, DataSourceStatus } from './entities/data-source.entity';
+import { DataSource, DataSourceType, DataSourceStatus } from './entities/data-source.entity';
 import { SmartBillConnector } from './connectors/smartbill.connector';
 import { WooCommerceConnector } from './connectors/woocommerce.connector';
 import { CsvConnector, DetectedColumn } from './connectors/csv.connector';
@@ -22,12 +22,12 @@ export class DataSourcesService {
   private readonly logger = new Logger(DataSourcesService.name);
 
   constructor(
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
     private readonly clickhouse: ClickHouseService,
   ) {}
 
-  async addDataSource(orgId: string, dto: CreateDataSourceDto): Promise<DataSourceEntity> {
+  async addDataSource(orgId: string, dto: CreateDataSourceDto): Promise<DataSource> {
     // Test connection before saving (skip for CSV and demo)
     if (dto.type !== DataSourceType.CSV) {
       const connectionOk = await this.testCredentials(dto.type, dto.credentials);
@@ -77,7 +77,7 @@ export class DataSourcesService {
     name: string,
     fileBuffer: Buffer,
     fileName: string,
-  ): Promise<DataSourceEntity> {
+  ): Promise<DataSource> {
     const csvConnector = new CsvConnector();
     const isExcel = /\.xlsx?$/i.test(fileName);
 
@@ -145,7 +145,7 @@ export class DataSourcesService {
     this.logger.log(`Updated schema for data source ${id}`);
   }
 
-  async findAll(orgId: string, page = 1, limit = 20): Promise<PaginatedResult<DataSourceEntity>> {
+  async findAll(orgId: string, page = 1, limit = 20): Promise<PaginatedResult<DataSource>> {
     try {
       const [items, total] = await this.dataSourceRepo.findAndCount({
         where: { org_id: orgId },
@@ -160,7 +160,7 @@ export class DataSourcesService {
     }
   }
 
-  async findOne(orgId: string, id: string): Promise<DataSourceEntity> {
+  async findOne(orgId: string, id: string): Promise<DataSource> {
     const ds = await this.dataSourceRepo.findOne({
       where: { id, org_id: orgId },
     });
@@ -237,7 +237,7 @@ export class DataSourcesService {
     }
   }
 
-  getDecryptedCredentials(ds: DataSourceEntity): Record<string, string> {
+  getDecryptedCredentials(ds: DataSource): Record<string, string> {
     if (!ds.credentials_encrypted) {
       throw new BadRequestException('No credentials stored');
     }
@@ -248,7 +248,7 @@ export class DataSourcesService {
     orgId: string,
     id: string,
     dto: { name?: string; sync_interval_minutes?: number },
-  ): Promise<DataSourceEntity> {
+  ): Promise<DataSource> {
     const ds = await this.findOne(orgId, id);
     if (dto.name !== undefined) ds.name = dto.name;
     if (dto.sync_interval_minutes !== undefined)

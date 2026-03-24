@@ -6,13 +6,13 @@ import { v4 as uuid } from 'uuid';
 import { AutoGenerateService } from './auto-generate.service';
 import { Dashboard, DashboardSourceType } from './entities/dashboard.entity';
 import { Widget, WidgetType } from '../widgets/entities/widget.entity';
-import { DataSourceEntity, DataSourceType } from '../data-sources/entities/data-source.entity';
+import { DataSource, DataSourceType } from '../data-sources/entities/data-source.entity';
 
 describe('AutoGenerateService', () => {
   let service: AutoGenerateService;
   let dashboardRepo: jest.Mocked<Repository<Dashboard>>;
   let widgetRepo: jest.Mocked<Repository<Widget>>;
-  let dataSourceRepo: jest.Mocked<Repository<DataSourceEntity>>;
+  let dataSourceRepo: jest.Mocked<Repository<DataSource>>;
 
   const orgId = uuid();
   const userId = uuid();
@@ -44,7 +44,7 @@ describe('AutoGenerateService', () => {
           },
         },
         {
-          provide: getRepositoryToken(DataSourceEntity),
+          provide: getRepositoryToken(DataSource),
           useValue: {
             findOne: jest.fn(),
           },
@@ -55,13 +55,10 @@ describe('AutoGenerateService', () => {
     service = module.get<AutoGenerateService>(AutoGenerateService);
     dashboardRepo = module.get(getRepositoryToken(Dashboard));
     widgetRepo = module.get(getRepositoryToken(Widget));
-    dataSourceRepo = module.get(getRepositoryToken(DataSourceEntity));
+    dataSourceRepo = module.get(getRepositoryToken(DataSource));
   });
 
-  function mockDataSource(
-    type: DataSourceType,
-    config: Record<string, unknown> = {},
-  ): DataSourceEntity {
+  function mockDataSource(type: DataSourceType, config: Record<string, unknown> = {}): DataSource {
     return {
       id: dataSourceId,
       org_id: orgId,

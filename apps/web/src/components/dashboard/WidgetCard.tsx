@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { X, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,7 +36,7 @@ interface WidgetCardProps {
   height?: number;
 }
 
-export function WidgetCard({
+export const WidgetCard = React.memo(function WidgetCard({
   widget,
   isEditing = false,
   onRemove,
@@ -147,4 +148,4 @@ export function WidgetCard({
       <CardContent className="flex-1 p-2 pt-0">{renderChart()}</CardContent>
     </Card>
   );
-}
+});

@@ -6,6 +6,7 @@ import { FileText, Plus, Download, Clock, Calendar, Loader2, Trash2, Play, X } f
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { FocusTrapDialog } from '@/components/ui/focus-trap-dialog';
 import { useReports } from '@/hooks/useReports';
 import { apiClient } from '@/lib/api-client';
 import { useOrgStore } from '@/stores/org-store';
@@ -328,108 +329,112 @@ function CreateReportModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('createTitle')}
-    >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{t('createTitle')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="p-4 space-y-4">
-          <div>
-            <label htmlFor="report-name" className="block text-sm font-medium text-gray-700 mb-1">
-              {t('reportName')}
-            </label>
-            <input
-              id="report-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t('reportNamePlaceholder')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            />
+    <FocusTrapDialog isOpen onDeactivate={onClose}>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('createTitle')}
+      >
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">{t('createTitle')}</h2>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div>
-            <label
-              htmlFor="report-description"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t('description')}
-            </label>
-            <input
-              id="report-description"
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t('descriptionPlaceholder')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="report-dashboard"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t('dashboard')}
-            </label>
-            <select
-              id="report-dashboard"
-              value={selectedDashboard}
-              onChange={(e) => handleDashboardChange(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            >
-              <option value="">{t('selectDashboard')}</option>
-              {dashboards.map((d) => (
-                <option key={d.id} value={d.id}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          {widgets.length > 0 && (
+          <div className="p-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                {t('widgets', { selected: selectedWidgets.length, total: widgets.length })}
+              <label htmlFor="report-name" className="block text-sm font-medium text-gray-700 mb-1">
+                {t('reportName')}
               </label>
-              <div className="space-y-1 max-h-40 overflow-y-auto border rounded-lg p-2">
-                {widgets.map((w) => (
-                  <label
-                    key={w.id}
-                    className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedWidgets.includes(w.id)}
-                      onChange={() => toggleWidget(w.id)}
-                      className="rounded border-gray-300 text-primary-blue focus:ring-primary-blue"
-                    />
-                    <span className="text-sm">{w.title}</span>
-                  </label>
-                ))}
-              </div>
+              <input
+                id="report-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t('reportNamePlaceholder')}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
             </div>
-          )}
-        </div>
-        <div className="flex justify-end gap-2 p-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            {t('cancel')}
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!name.trim() || !selectedDashboard || selectedWidgets.length === 0 || saving}
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {t('create')}
-          </Button>
+            <div>
+              <label
+                htmlFor="report-description"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {t('description')}
+              </label>
+              <input
+                id="report-description"
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder={t('descriptionPlaceholder')}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="report-dashboard"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {t('dashboard')}
+              </label>
+              <select
+                id="report-dashboard"
+                value={selectedDashboard}
+                onChange={(e) => handleDashboardChange(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              >
+                <option value="">{t('selectDashboard')}</option>
+                {dashboards.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {widgets.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('widgets', { selected: selectedWidgets.length, total: widgets.length })}
+                </label>
+                <div className="space-y-1 max-h-40 overflow-y-auto border rounded-lg p-2">
+                  {widgets.map((w) => (
+                    <label
+                      key={w.id}
+                      className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedWidgets.includes(w.id)}
+                        onChange={() => toggleWidget(w.id)}
+                        className="rounded border-gray-300 text-primary-blue focus:ring-primary-blue"
+                      />
+                      <span className="text-sm">{w.title}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2 p-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              {t('cancel')}
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={
+                !name.trim() || !selectedDashboard || selectedWidgets.length === 0 || saving
+              }
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {t('create')}
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </FocusTrapDialog>
   );
 }
 
@@ -464,84 +469,87 @@ function ScheduleModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('title')}
-    >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{t('title')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="p-4 space-y-4">
-          <div>
-            <label
-              htmlFor="schedule-frequency"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t('frequency')}
-            </label>
-            <select
-              id="schedule-frequency"
-              value={frequency}
-              onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            >
-              <option value="daily">{t('frequencyOptions.daily')}</option>
-              <option value="weekly">{t('frequencyOptions.weekly')}</option>
-              <option value="monthly">{t('frequencyOptions.monthly')}</option>
-            </select>
+    <FocusTrapDialog isOpen onDeactivate={onClose}>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('title')}
+      >
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">{t('title')}</h2>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <div>
-            <label
-              htmlFor="schedule-recipients"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t('recipients')}
-            </label>
-            <textarea
-              id="schedule-recipients"
-              value={recipientsText}
-              onChange={(e) => setRecipientsText(e.target.value)}
-              placeholder="john@company.com, maria@company.com"
-              rows={3}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
-            />
+          <div className="p-4 space-y-4">
+            <div>
+              <label
+                htmlFor="schedule-frequency"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {t('frequency')}
+              </label>
+              <select
+                id="schedule-frequency"
+                value={frequency}
+                onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              >
+                <option value="daily">{t('frequencyOptions.daily')}</option>
+                <option value="weekly">{t('frequencyOptions.weekly')}</option>
+                <option value="monthly">{t('frequencyOptions.monthly')}</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="schedule-recipients"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {t('recipients')}
+              </label>
+              <textarea
+                id="schedule-recipients"
+                autoComplete="email"
+                value={recipientsText}
+                onChange={(e) => setRecipientsText(e.target.value)}
+                placeholder="john@company.com, maria@company.com"
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="schedule-timezone"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
+                {t('timezone')}
+              </label>
+              <select
+                id="schedule-timezone"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+              >
+                <option value="Europe/Bucharest">Europe/Bucharest</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="America/New_York">America/New_York</option>
+                <option value="UTC">UTC</option>
+              </select>
+            </div>
           </div>
-          <div>
-            <label
-              htmlFor="schedule-timezone"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              {t('timezone')}
-            </label>
-            <select
-              id="schedule-timezone"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-            >
-              <option value="Europe/Bucharest">Europe/Bucharest</option>
-              <option value="Europe/London">Europe/London</option>
-              <option value="America/New_York">America/New_York</option>
-              <option value="UTC">UTC</option>
-            </select>
+          <div className="flex justify-end gap-2 p-4 border-t">
+            <Button variant="outline" onClick={onClose}>
+              {t('cancel')}
+            </Button>
+            <Button onClick={handleSave} disabled={!recipientsText.trim() || saving}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {t('save')}
+            </Button>
           </div>
-        </div>
-        <div className="flex justify-end gap-2 p-4 border-t">
-          <Button variant="outline" onClick={onClose}>
-            {t('cancel')}
-          </Button>
-          <Button onClick={handleSave} disabled={!recipientsText.trim() || saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            {t('save')}
-          </Button>
         </div>
       </div>
-    </div>
+    </FocusTrapDialog>
   );
 }

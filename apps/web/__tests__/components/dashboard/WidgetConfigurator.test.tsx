@@ -3,6 +3,11 @@ import { render, fireEvent } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { WidgetConfigurator, WidgetConfig } from '@/components/dashboard/WidgetConfigurator';
 
+// Mock focus-trap-react to avoid jsdom tabbable node issues
+jest.mock('focus-trap-react', () => {
+  return ({ children }: { children: React.ReactNode }) => <>{children}</>;
+});
+
 // Mock apiClient
 jest.mock('@/lib/api-client', () => ({
   apiClient: jest.fn().mockResolvedValue({ data: [] }),

@@ -11,7 +11,7 @@ import {
 } from 'typeorm';
 import { Dashboard } from '../../dashboards/entities/dashboard.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
-import { DataSourceEntity } from '../../data-sources/entities/data-source.entity';
+import { DataSource } from '../../data-sources/entities/data-source.entity';
 
 import { WidgetType } from '@clarixbi/shared';
 export { WidgetType };
@@ -65,7 +65,7 @@ export class Widget {
   @JoinColumn({ name: 'org_id' })
   organization: Organization;
 
-  @ManyToOne(() => DataSourceEntity, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => DataSource, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'data_source_id' })
-  data_source: DataSourceEntity | null;
+  data_source: DataSource | null;
 }

@@ -9,7 +9,7 @@ import {
   OneToOne,
 } from 'typeorm';
 import { TeamMember } from '../../teams/entities/team-member.entity';
-import { DataSourceEntity } from '../../data-sources/entities/data-source.entity';
+import { DataSource } from '../../data-sources/entities/data-source.entity';
 import { Dashboard } from '../../dashboards/entities/dashboard.entity';
 import { Subscription } from '../../billing/entities/subscription.entity';
 
@@ -50,8 +50,8 @@ export class Organization {
   @OneToMany(() => TeamMember, (tm) => tm.organization)
   team_members: TeamMember[];
 
-  @OneToMany(() => DataSourceEntity, (ds) => ds.organization)
-  data_sources: DataSourceEntity[];
+  @OneToMany(() => DataSource, (ds) => ds.organization)
+  data_sources: DataSource[];
 
   @OneToMany(() => Dashboard, (d) => d.organization)
   dashboards: Dashboard[];

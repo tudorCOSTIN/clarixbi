@@ -1,6 +1,6 @@
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource as TypeOrmDataSource, Repository } from 'typeorm';
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
@@ -11,7 +11,7 @@ import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
 import { GdprRequest, GdprRequestType, GdprRequestStatus } from './entities/gdpr-request.entity';
 import { AuditLog } from '../admin/entities/audit-log.entity';
 import { Subscription, SubscriptionStatus } from '../billing/entities/subscription.entity';
-import { DataSourceEntity } from '../data-sources/entities/data-source.entity';
+import { DataSource } from '../data-sources/entities/data-source.entity';
 import { Dashboard } from '../dashboards/entities/dashboard.entity';
 import { DashboardShare } from '../dashboards/entities/dashboard-share.entity';
 import { Widget } from '../widgets/entities/widget.entity';
@@ -57,8 +57,8 @@ export class GdprService {
     private readonly auditLogRepo: Repository<AuditLog>,
     @InjectRepository(Subscription)
     private readonly subscriptionRepo: Repository<Subscription>,
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
     @InjectRepository(Dashboard)
     private readonly dashboardRepo: Repository<Dashboard>,
     @InjectRepository(DashboardShare)
@@ -82,7 +82,7 @@ export class GdprService {
     @InjectRepository(SyncJob)
     private readonly syncJobRepo: Repository<SyncJob>,
     private readonly clickhouse: ClickHouseService,
-    private readonly dataSource: DataSource,
+    private readonly dataSource: TypeOrmDataSource,
   ) {}
 
   async requestDeletion(userId: string): Promise<GdprRequest> {
@@ -288,7 +288,7 @@ export class GdprService {
         await manager
           .createQueryBuilder()
           .delete()
-          .from(DataSourceEntity)
+          .from(DataSource)
           .where('org_id IN (:...orgIds)', { orgIds: soleOwnerOrgIds })
           .execute();
 

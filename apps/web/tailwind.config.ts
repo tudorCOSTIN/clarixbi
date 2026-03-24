@@ -1,7 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  darkMode: ['class'],
+  // Dark mode: post-launch enhancement
   content: ['./src/**/*.{ts,tsx}'],
   theme: {
     extend: {

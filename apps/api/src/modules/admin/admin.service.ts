@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { TeamMember } from '../teams/entities/team-member.entity';
-import { DataSourceEntity } from '../data-sources/entities/data-source.entity';
+import { DataSource } from '../data-sources/entities/data-source.entity';
 import { Dashboard } from '../dashboards/entities/dashboard.entity';
 import { Subscription } from '../billing/entities/subscription.entity';
 import { QueryAuditLogsDto } from './dto/query-audit-logs.dto';
@@ -18,8 +18,8 @@ export class AdminService {
     private readonly orgRepo: Repository<Organization>,
     @InjectRepository(TeamMember)
     private readonly teamMemberRepo: Repository<TeamMember>,
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
     @InjectRepository(Dashboard)
     private readonly dashboardRepo: Repository<Dashboard>,
     @InjectRepository(Subscription)

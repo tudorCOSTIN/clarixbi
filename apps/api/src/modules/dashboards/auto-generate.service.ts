@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Dashboard, DashboardSourceType } from './entities/dashboard.entity';
 import { Widget, WidgetType } from '../widgets/entities/widget.entity';
-import { DataSourceEntity, DataSourceType } from '../data-sources/entities/data-source.entity';
+import { DataSource, DataSourceType } from '../data-sources/entities/data-source.entity';
 
 interface WidgetTemplate {
   type: WidgetType;
@@ -21,8 +21,8 @@ export class AutoGenerateService {
     private readonly dashboardRepo: Repository<Dashboard>,
     @InjectRepository(Widget)
     private readonly widgetRepo: Repository<Widget>,
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
   ) {}
 
   async autoGenerate(

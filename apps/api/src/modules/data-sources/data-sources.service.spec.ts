@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DataSourcesService } from './data-sources.service';
-import { DataSourceEntity, DataSourceType, DataSourceStatus } from './entities/data-source.entity';
+import { DataSource, DataSourceType, DataSourceStatus } from './entities/data-source.entity';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
 
 // ---------- mocks ----------
@@ -63,7 +63,7 @@ const { syncSmartbillQueue, syncWoocommerceQueue, syncCsvQueue } =
 
 // ---------- helpers ----------
 
-function makeDataSource(overrides: Partial<DataSourceEntity> = {}): DataSourceEntity {
+function makeDataSource(overrides: Partial<DataSource> = {}): DataSource {
   return {
     id: 'ds-1',
     org_id: 'org-123',
@@ -81,7 +81,7 @@ function makeDataSource(overrides: Partial<DataSourceEntity> = {}): DataSourceEn
     organization: {} as any,
     sync_jobs: [],
     ...overrides,
-  } as DataSourceEntity;
+  } as DataSource;
 }
 
 // ---------- suite ----------
@@ -113,7 +113,7 @@ describe('DataSourcesService', () => {
       providers: [
         DataSourcesService,
         {
-          provide: getRepositoryToken(DataSourceEntity),
+          provide: getRepositoryToken(DataSource),
           useValue: {
             create: mockCreate,
             save: mockSave,
@@ -321,7 +321,7 @@ describe('DataSourcesService', () => {
         providers: [
           DataSourcesService,
           {
-            provide: getRepositoryToken(DataSourceEntity),
+            provide: getRepositoryToken(DataSource),
             useValue: {
               create: mockCreate,
               save: mockSave,

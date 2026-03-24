@@ -302,7 +302,11 @@ export default function DashboardEditPage() {
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Error banner */}
       {editError && (
-        <div className="px-4 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700 flex items-center justify-between shrink-0">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="px-4 py-2 bg-red-50 border-b border-red-200 text-sm text-red-700 flex items-center justify-between shrink-0"
+        >
           <span>{editError}</span>
           <button className="ml-2 underline text-red-600" onClick={() => setEditError(null)}>
             {t('dismiss')}
@@ -322,16 +326,18 @@ export default function DashboardEditPage() {
           className="max-w-xs h-8 text-sm font-semibold border-transparent hover:border-gray-200 focus:border-primary-blue"
         />
         <div className="flex items-center gap-2 ml-auto">
-          {saving && (
-            <span className="text-xs text-gray-500 flex items-center gap-1">
-              <Loader2 className="h-3 w-3 animate-spin" /> {t('saving')}
-            </span>
-          )}
-          {saved && (
-            <span className="text-xs text-green-600 flex items-center gap-1">
-              <Check className="h-3 w-3" /> {t('saved')}
-            </span>
-          )}
+          <span aria-live="polite" className="text-xs flex items-center gap-1">
+            {saving && (
+              <span className="text-gray-500 flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" /> {t('saving')}
+              </span>
+            )}
+            {saved && (
+              <span className="text-green-600 flex items-center gap-1">
+                <Check className="h-3 w-3" /> {t('saved')}
+              </span>
+            )}
+          </span>
           <Button variant="outline" size="sm" onClick={() => setPreview(!preview)}>
             {preview ? <EyeOff className="h-4 w-4 mr-1" /> : <Eye className="h-4 w-4 mr-1" />}
             {preview ? t('edit') : t('preview')}

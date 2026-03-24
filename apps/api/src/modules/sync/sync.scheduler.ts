@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
-  DataSourceEntity,
+  DataSource,
   DataSourceStatus,
   DataSourceType,
 } from '../data-sources/entities/data-source.entity';
@@ -14,8 +14,8 @@ export class SyncScheduler implements OnModuleInit, OnModuleDestroy {
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
   ) {}
 
   onModuleInit() {

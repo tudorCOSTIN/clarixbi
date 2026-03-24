@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { DataSourceEntity } from './entities/data-source.entity';
+import { DataSource } from './entities/data-source.entity';
 import { DataSourcesController } from './data-sources.controller';
 import { DataSourcesService } from './data-sources.service';
 import { SyncJob } from '../sync/entities/sync-job.entity';
@@ -10,7 +10,7 @@ import { BillingModule } from '../billing/billing.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DataSourceEntity, SyncJob]),
+    TypeOrmModule.forFeature([DataSource, SyncJob]),
     ClickHouseModule,
     AuthModule,
     BillingModule,

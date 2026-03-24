@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { FocusTrapDialog } from '@/components/ui/focus-trap-dialog';
 import { apiClient } from '@/lib/api-client';
 import { useOrgStore } from '@/stores/org-store';
 
@@ -105,6 +106,7 @@ export default function OrganizationPage() {
             <input
               id="org-name"
               type="text"
+              autoComplete="organization"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -182,51 +184,59 @@ export default function OrganizationPage() {
 
       {/* Delete Confirmation Dialog */}
       {showDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('deleteConfirmTitle')}
+        <FocusTrapDialog
+          isOpen={showDelete}
+          onDeactivate={() => {
+            setShowDelete(false);
+            setDeleteConfirm('');
+          }}
         >
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
-            <p className="mt-2 text-sm text-gray-600">{t('deleteConfirmMessage')}</p>
-            <div className="mt-4">
-              <label
-                htmlFor="delete-confirm-org"
-                className="block text-sm font-medium text-gray-700"
-              >
-                {t('deleteConfirmLabel', { name: org?.name })}
-              </label>
-              <input
-                id="delete-confirm-org"
-                type="text"
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                placeholder={org?.name}
-              />
-            </div>
-            <div className="mt-6 flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowDelete(false);
-                  setDeleteConfirm('');
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteConfirm !== org?.name || deleteLoading}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {deleteLoading ? '...' : t('deleteConfirmButton')}
-              </button>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('deleteConfirmTitle')}
+          >
+            <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
+              <p className="mt-2 text-sm text-gray-600">{t('deleteConfirmMessage')}</p>
+              <div className="mt-4">
+                <label
+                  htmlFor="delete-confirm-org"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  {t('deleteConfirmLabel', { name: org?.name })}
+                </label>
+                <input
+                  id="delete-confirm-org"
+                  type="text"
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  placeholder={org?.name}
+                />
+              </div>
+              <div className="mt-6 flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowDelete(false);
+                    setDeleteConfirm('');
+                  }}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteConfirm !== org?.name || deleteLoading}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleteLoading ? '...' : t('deleteConfirmButton')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </FocusTrapDialog>
       )}
     </div>
   );

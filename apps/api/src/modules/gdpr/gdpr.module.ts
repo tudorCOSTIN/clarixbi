@@ -10,7 +10,7 @@ import { Organization } from '../organizations/entities/organization.entity';
 import { TeamMember } from '../teams/entities/team-member.entity';
 import { AuditLog } from '../admin/entities/audit-log.entity';
 import { Subscription } from '../billing/entities/subscription.entity';
-import { DataSourceEntity } from '../data-sources/entities/data-source.entity';
+import { DataSource } from '../data-sources/entities/data-source.entity';
 import { Dashboard } from '../dashboards/entities/dashboard.entity';
 import { DashboardShare } from '../dashboards/entities/dashboard-share.entity';
 import { Widget } from '../widgets/entities/widget.entity';
@@ -35,7 +35,7 @@ import '../sync/queues.config';
       TeamMember,
       AuditLog,
       Subscription,
-      DataSourceEntity,
+      DataSource,
       Dashboard,
       DashboardShare,
       Widget,

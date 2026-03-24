@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { FocusTrapDialog } from '@/components/ui/focus-trap-dialog';
 import { apiClient } from '@/lib/api-client';
 
 interface UserProfile {
@@ -150,6 +151,7 @@ export default function SettingsPage() {
               <input
                 id="profile-name"
                 type="text"
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
@@ -165,6 +167,7 @@ export default function SettingsPage() {
               <input
                 id="profile-email"
                 type="email"
+                autoComplete="email"
                 value={user?.email || ''}
                 disabled
                 className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
@@ -217,7 +220,11 @@ export default function SettingsPage() {
             >
               {saving ? '...' : t('save')}
             </button>
-            {saved && <span className="text-sm text-green-600">{t('savedSuccess')}</span>}
+            {saved && (
+              <span aria-live="polite" className="text-sm text-green-600">
+                {t('savedSuccess')}
+              </span>
+            )}
           </div>
         </div>
       </section>
@@ -258,50 +265,65 @@ export default function SettingsPage() {
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('deleteConfirmTitle')}
+        <FocusTrapDialog
+          isOpen={showDeleteDialog}
+          onDeactivate={() => {
+            setShowDeleteDialog(false);
+            setDeleteConfirmText('');
+            setDeleteError('');
+          }}
         >
-          <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
-            <p className="mt-2 text-sm text-gray-600">{t('deleteConfirmMessage')}</p>
-            <div className="mt-4">
-              <label htmlFor="delete-confirm" className="block text-sm font-medium text-gray-700">
-                {t('deleteConfirmLabel')}
-              </label>
-              <input
-                id="delete-confirm"
-                type="text"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
-                placeholder="DELETE"
-              />
-            </div>
-            {deleteError && <p className="mt-2 text-xs text-red-600">{deleteError}</p>}
-            <div className="mt-6 flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowDeleteDialog(false);
-                  setDeleteConfirmText('');
-                  setDeleteError('');
-                }}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {t('cancel')}
-              </button>
-              <button
-                onClick={handleDelete}
-                disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {deleteLoading ? '...' : t('deleteConfirmButton')}
-              </button>
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('deleteConfirmTitle')}
+          >
+            <div className="mx-4 w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+              <h3 className="text-lg font-semibold text-gray-900">{t('deleteConfirmTitle')}</h3>
+              <p className="mt-2 text-sm text-gray-600">{t('deleteConfirmMessage')}</p>
+              <div className="mt-4">
+                <label htmlFor="delete-confirm" className="block text-sm font-medium text-gray-700">
+                  {t('deleteConfirmLabel')}
+                </label>
+                <input
+                  id="delete-confirm"
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  aria-describedby={deleteError ? 'delete-error' : undefined}
+                  aria-invalid={!!deleteError}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                  placeholder="DELETE"
+                />
+              </div>
+              {deleteError && (
+                <p id="delete-error" role="alert" className="mt-2 text-xs text-red-600">
+                  {deleteError}
+                </p>
+              )}
+              <div className="mt-6 flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowDeleteDialog(false);
+                    setDeleteConfirmText('');
+                    setDeleteError('');
+                  }}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteConfirmText !== 'DELETE' || deleteLoading}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {deleteLoading ? '...' : t('deleteConfirmButton')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </FocusTrapDialog>
       )}
     </div>
   );

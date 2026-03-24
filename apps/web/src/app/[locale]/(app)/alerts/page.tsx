@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { FocusTrapDialog } from '@/components/ui/focus-trap-dialog';
 import { useAlerts } from '@/hooks/useAlerts';
 import { apiClient } from '@/lib/api-client';
 import { useOrgStore } from '@/stores/org-store';
@@ -280,7 +281,11 @@ export default function AlertsPage() {
 
       {/* Test Result Toast */}
       {testResult && (
-        <div className="fixed bottom-4 right-4 bg-white border rounded-xl shadow-lg p-4 max-w-sm z-50">
+        <div
+          className="fixed bottom-4 right-4 bg-white border rounded-xl shadow-lg p-4 max-w-sm z-50"
+          role="alert"
+          aria-live="assertive"
+        >
           <div className="flex items-start gap-3">
             {testResult.wouldTrigger ? (
               <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
@@ -388,189 +393,198 @@ function CreateAlertWizard({ onClose, onCreated }: { onClose: () => void; onCrea
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('title')}
-    >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold">{t('title')}</h2>
-            <div className="flex items-center gap-1">
-              {[1, 2, 3].map((s) => (
-                <div
-                  key={s}
-                  className={`w-2 h-2 rounded-full ${s <= step ? 'bg-primary-blue' : 'bg-gray-200'}`}
-                />
-              ))}
+    <FocusTrapDialog isOpen onDeactivate={onClose}>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('title')}
+      >
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg">
+          <div className="flex items-center justify-between p-4 border-b">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-semibold">{t('title')}</h2>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3].map((s) => (
+                  <div
+                    key={s}
+                    className={`w-2 h-2 rounded-full ${s <= step ? 'bg-primary-blue' : 'bg-gray-200'}`}
+                  />
+                ))}
+              </div>
             </div>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
+              <X className="h-5 w-5" />
+            </button>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
 
-        <div className="p-4 space-y-4 min-h-[200px]">
-          {step === 1 && (
-            <>
-              <div>
-                <label
-                  htmlFor="alert-data-source"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('dataSource')}
-                </label>
-                <select
-                  id="alert-data-source"
-                  value={selectedSource}
-                  onChange={(e) => setSelectedSource(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                >
-                  <option value="">{t('selectSource')}</option>
-                  {dataSources.map((ds) => (
-                    <option key={ds.id} value={ds.id}>
-                      {ds.name} ({ds.type})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="alert-metric-query"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('metricQuery')}
-                </label>
-                <textarea
-                  id="alert-metric-query"
-                  value={metricQuery}
-                  onChange={(e) => setMetricQuery(e.target.value)}
-                  placeholder="SELECT SUM(total_amount) FROM invoices WHERE org_id = '{orgId}' AND status = 'unpaid'"
-                  rows={4}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
-                />
-              </div>
-            </>
-          )}
-
-          {step === 2 && (
-            <>
-              <div>
-                <label
-                  htmlFor="alert-operator"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('operator')}
-                </label>
-                <select
-                  id="alert-operator"
-                  value={operator}
-                  onChange={(e) => setOperator(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                >
-                  <option value="gt">{t('operators.gt')}</option>
-                  <option value="lt">{t('operators.lt')}</option>
-                  <option value="eq">{t('operators.eq')}</option>
-                  <option value="gte">{t('operators.gte')}</option>
-                  <option value="lte">{t('operators.lte')}</option>
-                  <option value="change_pct">{t('operators.change_pct')}</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="alert-threshold"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('thresholdValue')}
-                </label>
-                <input
-                  id="alert-threshold"
-                  type="number"
-                  value={threshold}
-                  onChange={(e) => setThreshold(e.target.value)}
-                  placeholder="10000"
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                />
-              </div>
-            </>
-          )}
-
-          {step === 3 && (
-            <>
-              <div>
-                <label
-                  htmlFor="alert-frequency"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('checkFrequency')}
-                </label>
-                <select
-                  id="alert-frequency"
-                  value={frequency}
-                  onChange={(e) => setFrequency(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                >
-                  <option value="realtime">{t('frequencyOptions.realtime')}</option>
-                  <option value="hourly">{t('frequencyOptions.hourly')}</option>
-                  <option value="daily">{t('frequencyOptions.daily')}</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="alert-name"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  {t('alertName')}
-                </label>
-                <input
-                  id="alert-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t('alertNamePlaceholder')}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
-                />
-              </div>
-              {error && (
-                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                  <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-                  <span>{error}</span>
-                  {error.includes('Upgrade') && (
-                    <Link href="/settings/billing" className="text-primary-blue underline ml-1">
-                      <ArrowUpRight className="h-3.5 w-3.5 inline" /> Upgrade
-                    </Link>
-                  )}
+          <div className="p-4 space-y-4 min-h-[200px]">
+            {step === 1 && (
+              <>
+                <div>
+                  <label
+                    htmlFor="alert-data-source"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('dataSource')}
+                  </label>
+                  <select
+                    id="alert-data-source"
+                    value={selectedSource}
+                    onChange={(e) => setSelectedSource(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  >
+                    <option value="">{t('selectSource')}</option>
+                    {dataSources.map((ds) => (
+                      <option key={ds.id} value={ds.id}>
+                        {ds.name} ({ds.type})
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              )}
-            </>
-          )}
-        </div>
+                <div>
+                  <label
+                    htmlFor="alert-metric-query"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('metricQuery')}
+                  </label>
+                  <textarea
+                    id="alert-metric-query"
+                    value={metricQuery}
+                    onChange={(e) => setMetricQuery(e.target.value)}
+                    placeholder="SELECT SUM(total_amount) FROM invoices WHERE org_id = '{orgId}' AND status = 'unpaid'"
+                    rows={4}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary-blue resize-none"
+                  />
+                </div>
+              </>
+            )}
 
-        <div className="flex justify-between p-4 border-t">
-          <Button variant="outline" onClick={step > 1 ? () => setStep(step - 1) : onClose}>
-            {step > 1 ? t('back') : t('cancel')}
-          </Button>
-          {step < 3 ? (
-            <Button
-              onClick={() => setStep(step + 1)}
-              disabled={
-                (step === 1 && (!selectedSource || !metricQuery.trim())) ||
-                (step === 2 && !threshold)
-              }
-            >
-              {t('next')}
+            {step === 2 && (
+              <>
+                <div>
+                  <label
+                    htmlFor="alert-operator"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('operator')}
+                  </label>
+                  <select
+                    id="alert-operator"
+                    value={operator}
+                    onChange={(e) => setOperator(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  >
+                    <option value="gt">{t('operators.gt')}</option>
+                    <option value="lt">{t('operators.lt')}</option>
+                    <option value="eq">{t('operators.eq')}</option>
+                    <option value="gte">{t('operators.gte')}</option>
+                    <option value="lte">{t('operators.lte')}</option>
+                    <option value="change_pct">{t('operators.change_pct')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="alert-threshold"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('thresholdValue')}
+                  </label>
+                  <input
+                    id="alert-threshold"
+                    type="number"
+                    value={threshold}
+                    onChange={(e) => setThreshold(e.target.value)}
+                    placeholder="10000"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  />
+                </div>
+              </>
+            )}
+
+            {step === 3 && (
+              <>
+                <div>
+                  <label
+                    htmlFor="alert-frequency"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('checkFrequency')}
+                  </label>
+                  <select
+                    id="alert-frequency"
+                    value={frequency}
+                    onChange={(e) => setFrequency(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  >
+                    <option value="realtime">{t('frequencyOptions.realtime')}</option>
+                    <option value="hourly">{t('frequencyOptions.hourly')}</option>
+                    <option value="daily">{t('frequencyOptions.daily')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="alert-name"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    {t('alertName')}
+                  </label>
+                  <input
+                    id="alert-name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t('alertNamePlaceholder')}
+                    aria-describedby={error ? 'wizard-error' : undefined}
+                    aria-invalid={!!error}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue"
+                  />
+                </div>
+                {error && (
+                  <div
+                    id="wizard-error"
+                    role="alert"
+                    aria-live="assertive"
+                    className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg"
+                  >
+                    <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <span>{error}</span>
+                    {error.includes('Upgrade') && (
+                      <Link href="/settings/billing" className="text-primary-blue underline ml-1">
+                        <ArrowUpRight className="h-3.5 w-3.5 inline" /> Upgrade
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="flex justify-between p-4 border-t">
+            <Button variant="outline" onClick={step > 1 ? () => setStep(step - 1) : onClose}>
+              {step > 1 ? t('back') : t('cancel')}
             </Button>
-          ) : (
-            <Button onClick={handleSave} disabled={!name.trim() || saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              {t('save')}
-            </Button>
-          )}
+            {step < 3 ? (
+              <Button
+                onClick={() => setStep(step + 1)}
+                disabled={
+                  (step === 1 && (!selectedSource || !metricQuery.trim())) ||
+                  (step === 2 && !threshold)
+                }
+              >
+                {t('next')}
+              </Button>
+            ) : (
+              <Button onClick={handleSave} disabled={!name.trim() || saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {t('save')}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </FocusTrapDialog>
   );
 }
 
@@ -595,53 +609,55 @@ function AlertHistoryModal({ alertId, onClose }: { alertId: string; onClose: () 
   }, [alertId, getTriggers]);
 
   return (
-    <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-label={t('title')}
-    >
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">{t('title')}</h2>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-4">
-          {loading ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-500 mx-auto" />
-            </div>
-          ) : triggers.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500">{t('empty')}</div>
-          ) : (
-            <div className="space-y-2">
-              {triggers.map((trigger) => (
-                <div key={trigger.id} className="border rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      {new Date(trigger.triggered_at).toLocaleString('ro-RO')}
-                    </span>
-                    <div className="flex gap-1">
-                      {trigger.notified_via.map((via) => (
-                        <Badge key={via} variant="secondary" className="text-[10px]">
-                          {via}
-                        </Badge>
-                      ))}
+    <FocusTrapDialog isOpen onDeactivate={onClose}>
+      <div
+        className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('title')}
+      >
+        <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[70vh] flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold">{t('title')}</h2>
+            <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded" aria-label="Close">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {loading ? (
+              <div className="text-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-500 mx-auto" />
+              </div>
+            ) : triggers.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-500">{t('empty')}</div>
+            ) : (
+              <div className="space-y-2">
+                {triggers.map((trigger) => (
+                  <div key={trigger.id} className="border rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {new Date(trigger.triggered_at).toLocaleString('ro-RO')}
+                      </span>
+                      <div className="flex gap-1">
+                        {trigger.notified_via.map((via) => (
+                          <Badge key={via} variant="secondary" className="text-[10px]">
+                            {via}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {t('value')}: <span className="font-mono">{trigger.metric_value}</span>
+                      {' / '}
+                      {t('threshold')}: <span className="font-mono">{trigger.threshold_value}</span>
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {t('value')}: <span className="font-mono">{trigger.metric_value}</span>
-                    {' / '}
-                    {t('threshold')}: <span className="font-mono">{trigger.threshold_value}</span>
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </FocusTrapDialog>
   );
 }

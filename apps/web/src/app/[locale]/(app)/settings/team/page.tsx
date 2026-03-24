@@ -143,10 +143,13 @@ export default function TeamPage() {
             <input
               id="invite-email"
               type="email"
+              autoComplete="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
               placeholder="colleague@company.com"
               required
+              aria-describedby={inviteError ? 'invite-error' : undefined}
+              aria-invalid={!!inviteError}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -175,7 +178,16 @@ export default function TeamPage() {
             {inviteLoading ? '...' : t('sendInvite')}
           </button>
         </form>
-        {inviteError && <p className="mt-2 text-sm text-red-600">{inviteError}</p>}
+        {inviteError && (
+          <p
+            id="invite-error"
+            role="alert"
+            aria-live="assertive"
+            className="mt-2 text-sm text-red-600"
+          >
+            {inviteError}
+          </p>
+        )}
       </section>
 
       {/* Members Table */}

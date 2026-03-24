@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import { SyncProcessor } from './sync.processor';
-import { DataSourceEntity, DataSourceStatus } from '../data-sources/entities/data-source.entity';
+import { DataSource, DataSourceStatus } from '../data-sources/entities/data-source.entity';
 import { SyncJob, SyncJobStatus, SyncJobType } from './entities/sync-job.entity';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
 import { NotificationsGateway } from '../notifications/notifications.gateway';
@@ -42,7 +42,7 @@ jest.mock('bullmq', () => ({
 
 describe('SyncProcessor', () => {
   let processor: SyncProcessor;
-  let dataSourceRepo: jest.Mocked<Repository<DataSourceEntity>>;
+  let dataSourceRepo: jest.Mocked<Repository<DataSource>>;
   let syncJobRepo: jest.Mocked<Repository<SyncJob>>;
   let clickhouse: jest.Mocked<ClickHouseService>;
   let gateway: jest.Mocked<NotificationsGateway>;
@@ -55,7 +55,7 @@ describe('SyncProcessor', () => {
       providers: [
         SyncProcessor,
         {
-          provide: getRepositoryToken(DataSourceEntity),
+          provide: getRepositoryToken(DataSource),
           useValue: {
             findOneOrFail: jest.fn(),
             update: jest.fn(),
@@ -87,7 +87,7 @@ describe('SyncProcessor', () => {
     }).compile();
 
     processor = module.get<SyncProcessor>(SyncProcessor);
-    dataSourceRepo = module.get(getRepositoryToken(DataSourceEntity));
+    dataSourceRepo = module.get(getRepositoryToken(DataSource));
     syncJobRepo = module.get(getRepositoryToken(SyncJob));
     clickhouse = module.get(ClickHouseService);
     gateway = module.get(NotificationsGateway);

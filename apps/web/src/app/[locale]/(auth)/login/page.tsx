@@ -138,13 +138,20 @@ export default function LoginPage() {
           <input
             id="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t('emailPlaceholder')}
             required
+            aria-describedby={error ? 'login-error' : undefined}
+            aria-invalid={!!error}
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-primary-blue focus:outline-none focus:ring-1 focus:ring-primary-blue"
           />
-          {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+          {error && (
+            <p id="login-error" role="alert" className="mt-2 text-xs text-red-600">
+              {error}
+            </p>
+          )}
           <button
             type="submit"
             disabled={isLoading || !email || !gdprConsent}

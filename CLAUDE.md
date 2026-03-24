@@ -605,3 +605,57 @@ Dupa ce rezolvi ORICE eroare, adauga o intrare cu formatul:
 **Cauza:** `auth.controller.ts` avea 4 magic numbers: `7 * 24 * 60 * 60 * 1000` (refresh cookie maxAge), `60000` (throttle TTL), `10` (auth throttle limit), `5` (refresh throttle limit).
 **Fix:** Extras ca constante numite: `REFRESH_TOKEN_MAX_AGE_MS`, `THROTTLE_TTL_MS`, `AUTH_THROTTLE_LIMIT`, `REFRESH_THROTTLE_LIMIT`.
 **Regula:** NICIODATA magic numbers in cod. Extrage constante numite cu sens clar.
+
+### [2026-03-24] CR08 — Modale fara focus trap (WCAG 2.4.3)
+
+**Cauza:** 9 modale/dialoguri (ShareModal, WidgetConfigurator, CreateAlertWizard, AlertHistoryModal, CreateReportModal, ScheduleModal, settings delete, org delete) nu aveau focus trap. Keyboard users puteau tab-ui in afara modalului.
+**Fix:** Instalat `focus-trap-react`. Creat `FocusTrapDialog` component reutilizabil. Wrapat fiecare modal cu `<FocusTrapDialog isOpen onDeactivate={onClose}>`. Mockat `focus-trap-react` in teste (jsdom nu suporta tabbable nodes).
+**Regula:** FIECARE modal/dialog TREBUIE wrapat cu `FocusTrapDialog`. In teste, mock `focus-trap-react` cu `({ children }) => <>{children}</>`.
+
+### [2026-03-24] CR08 — aria-live lipsa pe dynamic content
+
+**Cauza:** Continut dinamic (notificatii, loading states, auto-save, erori) nu avea `aria-live` regions. Screen readers nu anuntau schimbarile.
+**Fix:** Adaugat `aria-live="polite"` pe save indicators, `aria-live="assertive"` + `role="alert"` pe error banners. Adaugat `#notification-live` region in app layout.
+**Regula:** Continut dinamic: erori → `role="alert" aria-live="assertive"`. Status updates → `aria-live="polite"`.
+
+### [2026-03-24] CR08 — aria-describedby lipsa pe form error messages
+
+**Cauza:** Campuri de form (login email, team invite, settings delete, alert wizard) afisau erori dar fara `aria-describedby` care sa le conecteze la input. Screen readers nu citeau mesajul de eroare.
+**Fix:** Adaugat `aria-describedby={error ? 'error-id' : undefined}` + `aria-invalid={!!error}` pe fiecare input cu error state. Adaugat `id` pe fiecare `<p>` de eroare.
+**Regula:** FIECARE input cu error state TREBUIE sa aiba `aria-describedby` pointing la error message `id`, plus `aria-invalid={!!error}`.
+
+### [2026-03-24] CR08 — autoComplete lipsa pe identity fields
+
+**Cauza:** Campuri de email, name, organization nu aveau `autoComplete` attribute. Browsere nu puteau auto-fill, impactand UX.
+**Fix:** Adaugat `autoComplete="email"` pe login, team invite, schedule recipients. `autoComplete="name"` pe profile. `autoComplete="organization"` pe org name.
+**Regula:** FIECARE input de identitate: `autoComplete` attribute corespunzator (email, name, organization, tel, etc.).
+
+### [2026-03-24] CR08 — Chart COLOR_SCHEMES duplicate in 4 fisiere
+
+**Cauza:** BarChart, LineChart, PieChart, KPICard aveau fiecare propriile constante `COLOR_SCHEMES` identice. Modificari necesitau update in 4 locuri.
+**Fix:** Creat `@/lib/chart-colors.ts` cu `CHART_COLORS`, `ChartColorScheme` type, `getSparklineColor()`. Inlocuit importurile in toate 4 fisierele.
+**Regula:** Constante partajate intre componente → modul shared. O singura sursa de adevar.
+
+### [2026-03-24] CR08 — router.push('...' as any) in data-sources page
+
+**Cauza:** `data-sources/page.tsx` avea 3 instante de `router.push('/connect' as any)` cu `eslint-disable` comments. next-intl `createNavigation` fara `pathnames` accepta orice string, deci cast-ul era inutil.
+**Fix:** Eliminat `as any` si `eslint-disable` comments.
+**Regula:** Verifica tipul real inainte de a adauga `as any`. next-intl router fara `pathnames` config accepta string-uri arbitrare.
+
+### [2026-03-24] CR08 — loading.tsx lipsa in route groups (no streaming)
+
+**Cauza:** Niciun route group nu avea `loading.tsx`. Next.js nu putea face streaming/suspense — pagina intreaga se bloca pana la data fetch.
+**Fix:** Creat `loading.tsx` in 6 route groups: dashboards, alerts, reports, data-sources, ai, settings. Fiecare returneaza spinner centered.
+**Regula:** FIECARE route group TREBUIE sa aiba `loading.tsx` pentru Next.js streaming support.
+
+### [2026-03-24] CR08 — focus-trap-react crash in jest/jsdom
+
+**Cauza:** `focus-trap-react` arunca "must have at least one tabbable node" in jsdom deoarece jsdom nu suporta tabbability check corect.
+**Fix:** Adaugat `jest.mock('focus-trap-react', () => ({ children }) => <>{children}</>)` in `WidgetConfigurator.test.tsx`.
+**Regula:** Cand adaugi `focus-trap-react` intr-o componenta, ACTUALIZEAZA testele cu mock. jsdom nu suporta focus-trap nativ.
+
+### [2026-03-24] CR08 — DataSourceEntity naming inconsistent cu alte entitati
+
+**Cauza:** `DataSourceEntity` era singura entitate cu suffix "Entity" in numele clasei. Toate celelalte foloseau numele simplu (Alert, Dashboard, Widget, etc.).
+**Fix:** Redenumit `DataSourceEntity` → `DataSource` in entity, si actualizat toate 24 fisierele backend care o importau. Re-export `DataSourceEntity` pentru backward compatibility.
+**Regula:** Entitati TypeORM: foloseste numele simplu (DataSource, nu DataSourceEntity). Exceptie: daca exista conflict de naming cu alt tip.

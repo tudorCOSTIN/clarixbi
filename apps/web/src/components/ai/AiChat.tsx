@@ -208,8 +208,7 @@ export function AiChat({ conversationId, onConversationUpdate }: AiChatProps) {
             aria-label={t('inputPlaceholder')}
             disabled={sending}
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ maxHeight: 120 }}
+            className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed max-h-[120px]"
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;
               target.style.height = 'auto';

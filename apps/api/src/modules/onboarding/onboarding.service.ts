@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import {
-  DataSourceEntity,
+  DataSource,
   DataSourceType,
   DataSourceStatus,
 } from '../data-sources/entities/data-source.entity';
@@ -27,8 +27,8 @@ export class OnboardingService {
   private readonly logger = new Logger(OnboardingService.name);
 
   constructor(
-    @InjectRepository(DataSourceEntity)
-    private readonly dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private readonly dataSourceRepo: Repository<DataSource>,
     @InjectRepository(SyncJob)
     private readonly syncJobRepo: Repository<SyncJob>,
     private readonly clickhouse: ClickHouseService,

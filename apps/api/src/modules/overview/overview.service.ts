@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { DataSourceEntity } from '../data-sources/entities/data-source.entity';
+import { DataSource } from '../data-sources/entities/data-source.entity';
 import { Dashboard } from '../dashboards/entities/dashboard.entity';
 import { Alert } from '../alerts/entities/alert.entity';
 import { AlertTrigger } from '../alerts/entities/alert-trigger.entity';
@@ -38,8 +38,8 @@ export class OverviewService {
   private readonly logger = new Logger(OverviewService.name);
 
   constructor(
-    @InjectRepository(DataSourceEntity)
-    private dataSourceRepo: Repository<DataSourceEntity>,
+    @InjectRepository(DataSource)
+    private dataSourceRepo: Repository<DataSource>,
     @InjectRepository(Dashboard)
     private dashboardRepo: Repository<Dashboard>,
     @InjectRepository(Alert)

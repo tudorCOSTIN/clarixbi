@@ -7,7 +7,7 @@ import {
   JoinColumn,
   Index,
 } from 'typeorm';
-import { DataSourceEntity } from '../../data-sources/entities/data-source.entity';
+import { DataSource } from '../../data-sources/entities/data-source.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
 
 export enum SyncJobStatus {
@@ -65,9 +65,9 @@ export class SyncJob {
   @CreateDateColumn()
   created_at: Date;
 
-  @ManyToOne(() => DataSourceEntity, (ds) => ds.sync_jobs, { onDelete: 'CASCADE' })
+  @ManyToOne(() => DataSource, (ds) => ds.sync_jobs, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'data_source_id' })
-  data_source: DataSourceEntity;
+  data_source: DataSource;
 
   @ManyToOne(() => Organization, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'org_id' })

@@ -10,18 +10,13 @@ import {
   Tooltip,
   Cell,
 } from 'recharts';
-
-const COLOR_SCHEMES = {
-  primary: ['#2196F3', '#42A5F5', '#90CAF9', '#1976D2', '#0D47A1'],
-  warm: ['#FF6B35', '#F7931E', '#FFC107', '#FF8A65', '#FFAB40'],
-  cool: ['#00BCD4', '#009688', '#4CAF50', '#26A69A', '#66BB6A'],
-};
+import { CHART_COLORS, type ChartColorScheme } from '@/lib/chart-colors';
 
 interface BarChartProps {
   data: Record<string, unknown>[];
   xKey: string;
   yKeys: string[];
-  colorScheme?: keyof typeof COLOR_SCHEMES;
+  colorScheme?: ChartColorScheme;
   horizontal?: boolean;
   gradient?: boolean;
   height?: number;
@@ -36,7 +31,7 @@ export function BarChartWidget({
   gradient = true,
   height = 300,
 }: BarChartProps) {
-  const colors = COLOR_SCHEMES[colorScheme];
+  const colors = CHART_COLORS[colorScheme];
 
   if (!data || data.length === 0) {
     return (

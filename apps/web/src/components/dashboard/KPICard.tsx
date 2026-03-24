@@ -3,6 +3,7 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import CountUp from 'react-countup';
 import { ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { getSparklineColor, type ChartColorScheme } from '@/lib/chart-colors';
 
 interface KPICardProps {
   value: number;
@@ -11,7 +12,7 @@ interface KPICardProps {
   prefix?: string;
   suffix?: string;
   sparklineData?: { value: number }[];
-  colorScheme?: 'primary' | 'warm' | 'cool';
+  colorScheme?: ChartColorScheme;
 }
 
 export function KPICard({
@@ -37,8 +38,7 @@ export function KPICard({
   const TrendIcon =
     change === null || change === 0 ? Minus : change > 0 ? TrendingUp : TrendingDown;
 
-  const sparklineColor =
-    colorScheme === 'warm' ? '#FF6B35' : colorScheme === 'cool' ? '#00BCD4' : '#2196F3';
+  const sparklineColor = getSparklineColor(colorScheme);
 
   return (
     <div className="flex flex-col justify-between h-full p-1">

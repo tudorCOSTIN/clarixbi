@@ -55,7 +55,11 @@ export default function DashboardsPage() {
       </div>
 
       {actionError && (
-        <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700"
+        >
           {actionError}
           <button className="ml-2 underline" onClick={() => setActionError(null)}>
             {t('dismiss')}

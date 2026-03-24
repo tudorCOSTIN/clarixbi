@@ -10,18 +10,13 @@ import {
   Tooltip,
   Brush,
 } from 'recharts';
-
-const COLOR_SCHEMES = {
-  primary: ['#2196F3', '#1976D2', '#0D47A1'],
-  warm: ['#FF6B35', '#F7931E', '#FFC107'],
-  cool: ['#00BCD4', '#009688', '#4CAF50'],
-};
+import { CHART_COLORS, type ChartColorScheme } from '@/lib/chart-colors';
 
 interface LineChartProps {
   data: Record<string, unknown>[];
   xKey: string;
   yKeys: string[];
-  colorScheme?: keyof typeof COLOR_SCHEMES;
+  colorScheme?: ChartColorScheme;
   smooth?: boolean;
   showArea?: boolean;
   height?: number;
@@ -36,7 +31,7 @@ export function LineChartWidget({
   showArea = false,
   height = 300,
 }: LineChartProps) {
-  const colors = COLOR_SCHEMES[colorScheme];
+  const colors = CHART_COLORS[colorScheme];
 
   if (!data || data.length === 0) {
     return (
