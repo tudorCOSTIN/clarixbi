@@ -659,3 +659,15 @@ Dupa ce rezolvi ORICE eroare, adauga o intrare cu formatul:
 **Cauza:** `DataSourceEntity` era singura entitate cu suffix "Entity" in numele clasei. Toate celelalte foloseau numele simplu (Alert, Dashboard, Widget, etc.).
 **Fix:** Redenumit `DataSourceEntity` → `DataSource` in entity, si actualizat toate 24 fisierele backend care o importau. Re-export `DataSourceEntity` pentru backward compatibility.
 **Regula:** Entitati TypeORM: foloseste numele simplu (DataSource, nu DataSourceEntity). Exceptie: daca exista conflict de naming cu alt tip.
+
+### [2026-03-24] CR09 — Test coverage sprint: 0% → 65%+ pe module critice
+
+**Cauza:** Module critice (GDPR, BruteForce, Onboarding, Overview, ClickHouse, Notifications) aveau 0-16% coverage. Frontend hooks si page components nu aveau teste.
+**Fix:** Creat 19 test files (9 backend, 10 frontend) cu ~166 teste noi. Backend: GDPR service+controller (21 tests), ClickHouse (7), Overview (8), Onboarding (18), BruteForce (6), NotificationsGateway (10). Frontend: hooks (26 tests), pages (44 tests), components (26 tests). Coverage: API 75% stmts / 70% functions, Web 76% stmts / 64% functions.
+**Regula:** La fiecare modul nou, creeaza spec.ts SIMULTAN. Coverage thresholds: API ≥65% lines, Web ≥60% lines.
+
+### [2026-03-24] CR09 — Record<string, jest.Mock> cauzeaza TS18048 in teste
+
+**Cauza:** Tipul `Record<string, jest.Mock>` permite valori `undefined` (index signature). Accesarea `repo.count` fara check triggereaza `Object is possibly undefined`.
+**Fix:** Foloseste intersection type: `{ [k: string]: jest.Mock } & { count: jest.Mock; find: jest.Mock }` si `as typeof varName` la initializare.
+**Regula:** In teste, declara mock repos cu intersection type care include metodele folosite explicit. Evita `Record<string, jest.Mock>` simplu.
