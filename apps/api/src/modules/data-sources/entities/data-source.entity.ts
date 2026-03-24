@@ -13,19 +13,8 @@ import {
 import { Organization } from '../../organizations/entities/organization.entity';
 import { SyncJob } from '../../sync/entities/sync-job.entity';
 
-export enum DataSourceType {
-  SMARTBILL = 'smartbill',
-  EFACTURA = 'efactura',
-  WOOCOMMERCE = 'woocommerce',
-  CSV = 'csv',
-}
-
-export enum DataSourceStatus {
-  ACTIVE = 'active',
-  SYNCING = 'syncing',
-  ERROR = 'error',
-  DISCONNECTED = 'disconnected',
-}
+import { DataSourceType, DataSourceStatus } from '@clarixbi/shared';
+export { DataSourceType, DataSourceStatus };
 
 @Entity('data_sources')
 @Index(['org_id', 'type'])

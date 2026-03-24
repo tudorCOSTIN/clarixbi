@@ -50,7 +50,9 @@ describe('DashboardsService', () => {
             save: jest.fn((entity) => Promise.resolve({ ...mockDashboard, ...entity })),
             find: jest.fn(),
             findOne: jest.fn(),
+            findAndCount: jest.fn(),
             softRemove: jest.fn(),
+            recover: jest.fn(),
           },
         },
         {
@@ -120,26 +122,32 @@ describe('DashboardsService', () => {
   });
 
   describe('findAll', () => {
-    it('should return dashboards with widgets relation ordered by created_at DESC', async () => {
+    it('should return paginated dashboards with widgets relation ordered by created_at DESC', async () => {
       const dashboards = [mockDashboard, { ...mockDashboard, id: uuid(), name: 'Second' }];
-      repo.find.mockResolvedValue(dashboards as Dashboard[]);
+      repo.findAndCount.mockResolvedValue([dashboards, 2]);
 
       const result = await service.findAll(orgId);
 
-      expect(repo.find).toHaveBeenCalledWith({
+      expect(repo.findAndCount).toHaveBeenCalledWith({
         where: { org_id: orgId },
         order: { created_at: 'DESC' },
         relations: ['widgets'],
+        take: 20,
+        skip: 0,
       });
-      expect(result).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
     });
 
-    it('should return empty array when no dashboards exist', async () => {
-      repo.find.mockResolvedValue([]);
+    it('should return empty items when no dashboards exist', async () => {
+      repo.findAndCount.mockResolvedValue([[], 0]);
 
       const result = await service.findAll(orgId);
 
-      expect(result).toEqual([]);
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 

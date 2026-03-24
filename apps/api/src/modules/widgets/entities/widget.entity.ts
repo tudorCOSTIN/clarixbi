@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
   Index,
@@ -12,16 +13,8 @@ import { Dashboard } from '../../dashboards/entities/dashboard.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
 import { DataSourceEntity } from '../../data-sources/entities/data-source.entity';
 
-export enum WidgetType {
-  LINE = 'line',
-  BAR = 'bar',
-  PIE = 'pie',
-  AREA = 'area',
-  TABLE = 'table',
-  KPI = 'kpi',
-  GAUGE = 'gauge',
-  HEATMAP = 'heatmap',
-}
+import { WidgetType } from '@clarixbi/shared';
+export { WidgetType };
 
 @Entity('widgets')
 export class Widget {
@@ -60,6 +53,9 @@ export class Widget {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 
   @ManyToOne(() => Dashboard, (d) => d.widgets, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'dashboard_id' })

@@ -12,6 +12,11 @@ import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { JwtUser } from './interfaces/jwt-user.interface';
 
+const REFRESH_TOKEN_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const THROTTLE_TTL_MS = 60_000; // 1 minute
+const AUTH_THROTTLE_LIMIT = 10;
+const REFRESH_THROTTLE_LIMIT = 5;
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -22,7 +27,7 @@ export class AuthController {
 
   @Public()
   @Get('callback')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: AUTH_THROTTLE_LIMIT, ttl: THROTTLE_TTL_MS } })
   @ApiOperation({ summary: 'Handle Auth0 redirect — exchange code, set cookies, redirect to app' })
   @ApiResponse({ status: 302, description: 'Redirect to app' })
   async callbackGet(@Query('code') code: string, @Res() res: Response) {
@@ -52,7 +57,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env['NODE_ENV'] === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: REFRESH_TOKEN_MAX_AGE_MS,
         path: '/',
       });
 
@@ -66,7 +71,7 @@ export class AuthController {
 
   @Public()
   @Post('callback')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: AUTH_THROTTLE_LIMIT, ttl: THROTTLE_TTL_MS } })
   @ApiOperation({ summary: 'Exchange Auth0 authorization code for JWT tokens (API)' })
   @ApiResponse({ status: 201, description: 'Tokens issued' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -89,7 +94,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: REFRESH_TOKEN_MAX_AGE_MS, // 7 days
       path: '/',
     });
 
@@ -105,7 +110,7 @@ export class AuthController {
 
   @Public()
   @Post('magic-link')
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: AUTH_THROTTLE_LIMIT, ttl: THROTTLE_TTL_MS } })
   @ApiOperation({ summary: 'Send magic link email via Auth0 Passwordless' })
   @ApiResponse({ status: 201, description: 'Magic link sent' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -144,7 +149,7 @@ export class AuthController {
 
   @Public()
   @Post('refresh')
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ default: { limit: REFRESH_THROTTLE_LIMIT, ttl: THROTTLE_TTL_MS } })
   @ApiOperation({ summary: 'Refresh JWT access token using refresh token' })
   @ApiResponse({ status: 201, description: 'Tokens refreshed' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -163,7 +168,7 @@ export class AuthController {
       httpOnly: true,
       secure: process.env['NODE_ENV'] === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      maxAge: REFRESH_TOKEN_MAX_AGE_MS,
       path: '/',
     });
 

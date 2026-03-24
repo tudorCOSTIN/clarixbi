@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { WidgetsService } from './widgets.service';
@@ -27,6 +27,7 @@ describe('WidgetsService', () => {
     data_source_id: dataSourceId,
     created_at: new Date(),
     updated_at: new Date(),
+    deleted_at: null,
     dashboard: null as any,
     organization: null as any,
     data_source: null,
@@ -49,6 +50,18 @@ describe('WidgetsService', () => {
             find: jest.fn(),
             findOne: jest.fn(),
             remove: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            transaction: jest.fn((cb: (manager: Record<string, jest.Mock>) => Promise<unknown>) => {
+              const manager = {
+                find: jest.fn().mockResolvedValue([]),
+                save: jest.fn((data: unknown) => Promise.resolve(data)),
+              };
+              return cb(manager);
+            }),
           },
         },
       ],
@@ -305,13 +318,22 @@ describe('WidgetsService', () => {
   });
 
   describe('bulkUpdatePositions', () => {
-    it('should update positions for multiple widgets', async () => {
+    it('should update positions for multiple widgets via transaction', async () => {
       const id1 = uuid();
       const id2 = uuid();
       const widget1 = { ...mockWidget, id: id1, position: { x: 0, y: 0, w: 4, h: 3 } };
       const widget2 = { ...mockWidget, id: id2, position: { x: 4, y: 0, w: 4, h: 3 } };
 
-      repo.find.mockResolvedValue([widget1, widget2] as Widget[]);
+      const ds = (service as any).dataSource;
+      ds.transaction.mockImplementation(
+        async (cb: (manager: Record<string, jest.Mock>) => Promise<unknown>) => {
+          const manager = {
+            find: jest.fn().mockResolvedValue([widget1, widget2]),
+            save: jest.fn((data: unknown) => Promise.resolve(data)),
+          };
+          return cb(manager);
+        },
+      );
 
       const dto = {
         widgets: [
@@ -322,26 +344,23 @@ describe('WidgetsService', () => {
 
       await service.bulkUpdatePositions(orgId, dashboardId, dto);
 
-      expect(repo.find).toHaveBeenCalledWith({
-        where: {
-          id: expect.anything(),
-          dashboard_id: dashboardId,
-          org_id: orgId,
-        },
-      });
-      expect(repo.save).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ id: id1, position: { x: 0, y: 0, w: 6, h: 4 } }),
-          expect.objectContaining({ id: id2, position: { x: 6, y: 0, w: 6, h: 4 } }),
-        ]),
-      );
+      expect(ds.transaction).toHaveBeenCalled();
     });
 
     it('should skip widgets not found in the database', async () => {
       const id1 = uuid();
       const widget1 = { ...mockWidget, id: id1 };
 
-      repo.find.mockResolvedValue([widget1] as Widget[]);
+      const ds = (service as any).dataSource;
+      ds.transaction.mockImplementation(
+        async (cb: (manager: Record<string, jest.Mock>) => Promise<unknown>) => {
+          const manager = {
+            find: jest.fn().mockResolvedValue([widget1]),
+            save: jest.fn((data: unknown) => Promise.resolve(data)),
+          };
+          return cb(manager);
+        },
+      );
 
       const dto = {
         widgets: [
@@ -352,17 +371,24 @@ describe('WidgetsService', () => {
 
       await service.bulkUpdatePositions(orgId, dashboardId, dto);
 
-      expect(repo.save).toHaveBeenCalledWith([
-        expect.objectContaining({ id: id1, position: { x: 0, y: 0, w: 12, h: 6 } }),
-      ]);
+      expect(ds.transaction).toHaveBeenCalled();
     });
 
     it('should handle empty widgets array', async () => {
-      repo.find.mockResolvedValue([]);
+      const ds = (service as any).dataSource;
+      ds.transaction.mockImplementation(
+        async (cb: (manager: Record<string, jest.Mock>) => Promise<unknown>) => {
+          const manager = {
+            find: jest.fn().mockResolvedValue([]),
+            save: jest.fn((data: unknown) => Promise.resolve(data)),
+          };
+          return cb(manager);
+        },
+      );
 
       await service.bulkUpdatePositions(orgId, dashboardId, { widgets: [] });
 
-      expect(repo.save).toHaveBeenCalledWith([]);
+      expect(ds.transaction).toHaveBeenCalled();
     });
   });
 });

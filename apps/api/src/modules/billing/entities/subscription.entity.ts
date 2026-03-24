@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   OneToOne,
   JoinColumn,
@@ -12,18 +13,8 @@ import {
 import { Organization } from '../../organizations/entities/organization.entity';
 import { Plan } from './plan.entity';
 
-export enum SubscriptionStatus {
-  TRIALING = 'trialing',
-  ACTIVE = 'active',
-  PAST_DUE = 'past_due',
-  CANCELED = 'canceled',
-  UNPAID = 'unpaid',
-}
-
-export enum BillingPeriod {
-  MONTHLY = 'monthly',
-  ANNUAL = 'annual',
-}
+import { SubscriptionStatus, BillingPeriod } from '@clarixbi/shared';
+export { SubscriptionStatus, BillingPeriod };
 
 @Entity('subscriptions')
 export class Subscription {
@@ -68,6 +59,9 @@ export class Subscription {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 
   @OneToOne(() => Organization, (o) => o.subscription, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'org_id' })

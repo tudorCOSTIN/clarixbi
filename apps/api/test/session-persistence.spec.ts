@@ -151,6 +151,7 @@ describe('Session Persistence — Token Refresh + Idle Timeout', () => {
         { provide: getRepositoryToken(Organization), useValue: {} },
         { provide: getRepositoryToken(TeamMember), useValue: {} },
         { provide: BillingService, useValue: { autoEnrollTrial: jest.fn() } },
+        { provide: 'BILLING_SERVICE', useValue: { autoEnrollTrial: jest.fn() } },
       ],
     }).compile();
 

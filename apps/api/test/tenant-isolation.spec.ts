@@ -7,6 +7,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 import { DashboardsService } from '../src/modules/dashboards/dashboards.service';
 import { Dashboard } from '../src/modules/dashboards/entities/dashboard.entity';
 import { DashboardShare } from '../src/modules/dashboards/entities/dashboard-share.entity';
@@ -36,6 +37,7 @@ describe('Tenant Isolation Tests', () => {
     const mockDashboardRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
+      findAndCount: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
       softRemove: jest.fn(),
@@ -57,11 +59,11 @@ describe('Tenant Isolation Tests', () => {
     });
 
     it('findAll should only return dashboards for the requested org', async () => {
-      mockDashboardRepo.find.mockResolvedValue([]);
+      mockDashboardRepo.findAndCount.mockResolvedValue([[], 0]);
 
       await service.findAll(ORG_A);
 
-      expect(mockDashboardRepo.find).toHaveBeenCalledWith(
+      expect(mockDashboardRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { org_id: ORG_A },
         }),
@@ -123,6 +125,10 @@ describe('Tenant Isolation Tests', () => {
         providers: [
           WidgetsService,
           { provide: getRepositoryToken(Widget), useValue: mockWidgetRepo },
+          {
+            provide: DataSource,
+            useValue: { transaction: jest.fn() },
+          },
         ],
       }).compile();
 

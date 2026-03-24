@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { DataSource } from 'typeorm';
 import { OrganizationsService } from './organizations.service';
 import { Organization } from './entities/organization.entity';
 import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
@@ -8,7 +9,10 @@ import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
 describe('OrganizationsService', () => {
   let service: OrganizationsService;
   let orgRepo: Record<string, jest.Mock>;
-  let teamMemberRepo: Record<string, jest.Mock>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockDataSource: any;
+  let managerCreateCalls: { entity: unknown; data: unknown }[];
+  let managerSaveCalls: unknown[];
 
   const mockOrg: Partial<Organization> = {
     id: 'org-uuid-1',
@@ -18,6 +22,25 @@ describe('OrganizationsService', () => {
   };
 
   beforeEach(async () => {
+    managerCreateCalls = [];
+    managerSaveCalls = [];
+
+    mockDataSource = {
+      transaction: jest.fn((cb: (manager: Record<string, jest.Mock>) => Promise<unknown>) => {
+        const manager = {
+          create: jest.fn((entity: unknown, data: unknown) => {
+            managerCreateCalls.push({ entity, data });
+            return data;
+          }),
+          save: jest.fn((data: unknown) => {
+            managerSaveCalls.push(data);
+            return Promise.resolve(data);
+          }),
+        };
+        return cb(manager);
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrganizationsService,
@@ -37,58 +60,52 @@ describe('OrganizationsService', () => {
             save: jest.fn(),
           },
         },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
+        },
       ],
     }).compile();
 
     service = module.get<OrganizationsService>(OrganizationsService);
     orgRepo = module.get(getRepositoryToken(Organization));
-    teamMemberRepo = module.get(getRepositoryToken(TeamMember));
   });
 
   // ---------------------------------------------------------------
   // create
   // ---------------------------------------------------------------
   describe('create', () => {
-    it('should create an organization with the provided slug and assign owner', async () => {
+    it('should create an organization with the provided slug and assign owner via transaction', async () => {
       orgRepo.findOne!.mockResolvedValue(null); // slug not taken
-      const savedOrg = { ...mockOrg, slug: 'my-slug' };
-      orgRepo.create!.mockReturnValue(savedOrg);
-      orgRepo.save!.mockResolvedValue(savedOrg);
-
-      const membership = { user_id: 'user-1', org_id: savedOrg.id, role: TeamRole.OWNER };
-      teamMemberRepo.create!.mockReturnValue(membership);
-      teamMemberRepo.save!.mockResolvedValue(membership);
 
       const result = await service.create({ name: 'Test Org', slug: 'my-slug' }, 'user-1');
 
-      expect(result).toEqual(savedOrg);
       expect(orgRepo.findOne).toHaveBeenCalledWith({ where: { slug: 'my-slug' } });
-      expect(orgRepo.create).toHaveBeenCalledWith({
-        name: 'Test Org',
-        slug: 'my-slug',
-        logo_url: null,
-      });
-      expect(teamMemberRepo.create).toHaveBeenCalledWith(
+      expect(mockDataSource.transaction).toHaveBeenCalled();
+      // manager.create called twice: once for Organization, once for TeamMember
+      expect(managerCreateCalls).toHaveLength(2);
+      expect(managerCreateCalls[0]!.data).toEqual(
+        expect.objectContaining({ name: 'Test Org', slug: 'my-slug', logo_url: null }),
+      );
+      expect(managerCreateCalls[1]!.data).toEqual(
         expect.objectContaining({
           user_id: 'user-1',
-          org_id: savedOrg.id,
           role: TeamRole.OWNER,
         }),
       );
-      expect(teamMemberRepo.save).toHaveBeenCalledWith(membership);
+      expect(result).toBeDefined();
     });
 
     it('should auto-generate slug from name when slug is not provided', async () => {
       orgRepo.findOne!.mockResolvedValue(null);
-      orgRepo.create!.mockImplementation((data) => data);
-      orgRepo.save!.mockImplementation((data) => Promise.resolve({ id: 'org-new', ...data }));
-      teamMemberRepo.create!.mockReturnValue({});
-      teamMemberRepo.save!.mockResolvedValue({});
 
       const result = await service.create({ name: 'My Cool Company' }, 'user-1');
 
       // Slug should be based on the name, lowercased with hyphens, plus a random suffix
-      expect(result.slug).toMatch(/^my-cool-company-[a-z0-9]+$/);
+      expect(managerCreateCalls[0]!.data).toHaveProperty('slug');
+      const slug = (managerCreateCalls[0]!.data as Record<string, string>).slug;
+      expect(slug).toMatch(/^my-cool-company-[a-z0-9]+$/);
+      expect(result).toBeDefined();
     });
 
     it('should throw ConflictException when slug already exists', async () => {
@@ -104,41 +121,28 @@ describe('OrganizationsService', () => {
 
     it('should pass logo_url when provided', async () => {
       orgRepo.findOne!.mockResolvedValue(null);
-      const orgWithLogo = { ...mockOrg, logo_url: 'https://logo.png' };
-      orgRepo.create!.mockReturnValue(orgWithLogo);
-      orgRepo.save!.mockResolvedValue(orgWithLogo);
-      teamMemberRepo.create!.mockReturnValue({});
-      teamMemberRepo.save!.mockResolvedValue({});
 
       await service.create({ name: 'Org', slug: 'org', logo_url: 'https://logo.png' }, 'user-1');
 
-      expect(orgRepo.create).toHaveBeenCalledWith(
+      expect(managerCreateCalls[0]!.data).toEqual(
         expect.objectContaining({ logo_url: 'https://logo.png' }),
       );
     });
 
     it('should set logo_url to null when not provided', async () => {
       orgRepo.findOne!.mockResolvedValue(null);
-      orgRepo.create!.mockReturnValue(mockOrg);
-      orgRepo.save!.mockResolvedValue(mockOrg);
-      teamMemberRepo.create!.mockReturnValue({});
-      teamMemberRepo.save!.mockResolvedValue({});
 
       await service.create({ name: 'Org', slug: 'org-slug' }, 'user-1');
 
-      expect(orgRepo.create).toHaveBeenCalledWith(expect.objectContaining({ logo_url: null }));
+      expect(managerCreateCalls[0]!.data).toEqual(expect.objectContaining({ logo_url: null }));
     });
 
     it('should set joined_at on the team membership', async () => {
       orgRepo.findOne!.mockResolvedValue(null);
-      orgRepo.create!.mockReturnValue(mockOrg);
-      orgRepo.save!.mockResolvedValue(mockOrg);
-      teamMemberRepo.create!.mockReturnValue({});
-      teamMemberRepo.save!.mockResolvedValue({});
 
       await service.create({ name: 'Org', slug: 'o' }, 'user-1');
 
-      expect(teamMemberRepo.create).toHaveBeenCalledWith(
+      expect(managerCreateCalls[1]!.data).toEqual(
         expect.objectContaining({ joined_at: expect.any(Date) }),
       );
     });

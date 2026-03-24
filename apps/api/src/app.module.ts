@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { CacheModule } from '@nestjs/cache-manager';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -41,6 +42,7 @@ import { OverviewModule } from './modules/overview/overview.module';
       },
     ]),
     ScheduleModule.forRoot(),
+    CacheModule.register({ ttl: 60, max: 100, isGlobal: true }),
     ClickHouseModule,
     HealthModule,
     AuthModule,

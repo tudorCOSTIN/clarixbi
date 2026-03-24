@@ -36,6 +36,7 @@ describe('ReportsService', () => {
   };
   const mockWidgetRepo = {
     findOne: jest.fn(),
+    find: jest.fn(),
   };
   const mockClickhouse = {
     query: jest.fn(),
@@ -393,11 +394,13 @@ describe('ReportsService', () => {
 
   describe('getWidgetData', () => {
     it('should fetch data for each widget', async () => {
-      mockWidgetRepo.findOne.mockResolvedValue({
-        id: 'w1',
-        title: 'Revenue',
-        query_sql: 'SELECT SUM(amount) FROM invoices',
-      });
+      mockWidgetRepo.find.mockResolvedValue([
+        {
+          id: 'w1',
+          title: 'Revenue',
+          query_sql: 'SELECT SUM(amount) FROM invoices',
+        },
+      ]);
       mockClickhouse.query.mockResolvedValue([{ sum: 50000 }]);
 
       const results = await service.getWidgetData(['w1'], 'org-1');
@@ -406,11 +409,13 @@ describe('ReportsService', () => {
     });
 
     it('should handle widget query failure gracefully with empty data', async () => {
-      mockWidgetRepo.findOne.mockResolvedValue({
-        id: 'w1',
-        title: 'Revenue',
-        query_sql: 'SELECT SUM(amount) FROM invoices',
-      });
+      mockWidgetRepo.find.mockResolvedValue([
+        {
+          id: 'w1',
+          title: 'Revenue',
+          query_sql: 'SELECT SUM(amount) FROM invoices',
+        },
+      ]);
       mockClickhouse.query.mockRejectedValue(new Error('ClickHouse timeout'));
 
       const results = await service.getWidgetData(['w1'], 'org-1');
@@ -419,27 +424,27 @@ describe('ReportsService', () => {
       expect(results[0]!.data).toEqual([]);
     });
 
-    it('should skip widgets that do not exist', async () => {
-      mockWidgetRepo.findOne.mockResolvedValue(null);
+    it('should skip widgets that do not exist (empty find result)', async () => {
+      mockWidgetRepo.find.mockResolvedValue([]);
 
       const results = await service.getWidgetData(['nonexistent'], 'org-1');
 
       expect(results).toHaveLength(0);
     });
 
-    it('should handle multiple widgets with mixed results', async () => {
-      mockWidgetRepo.findOne
-        .mockResolvedValueOnce({
+    it('should handle multiple widgets (only found ones)', async () => {
+      mockWidgetRepo.find.mockResolvedValue([
+        {
           id: 'w1',
           title: 'Revenue',
           query_sql: 'SELECT SUM(amount) FROM invoices',
-        })
-        .mockResolvedValueOnce(null) // w2 doesn't exist
-        .mockResolvedValueOnce({
+        },
+        {
           id: 'w3',
           title: 'Count',
           query_sql: 'SELECT COUNT(*) FROM orders',
-        });
+        },
+      ]);
 
       mockClickhouse.query
         .mockResolvedValueOnce([{ sum: 50000 }])

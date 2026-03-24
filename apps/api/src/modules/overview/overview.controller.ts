@@ -1,4 +1,5 @@
-import { Controller, Get, Param, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, ParseUUIDPipe, UseGuards, UseInterceptors } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { OrgMemberGuard } from '../auth/guards/org-member.guard';
@@ -16,6 +17,8 @@ export class OverviewController {
 
   @Get('overview')
   @Roles(TeamRole.VIEWER)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60)
   @ApiOperation({ summary: 'Get organization overview with KPIs and recent activity' })
   async getOverview(@Param('orgId', ParseUUIDPipe) orgId: string) {
     const data = await this.overviewService.getOverview(orgId);

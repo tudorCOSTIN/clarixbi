@@ -60,7 +60,13 @@ const mockDashboard = {
 
 const stubDashboardsService = {
   create: jest.fn().mockResolvedValue(mockDashboard),
-  findAll: jest.fn().mockResolvedValue([mockDashboard]),
+  findAll: jest.fn().mockResolvedValue({
+    items: [mockDashboard],
+    total: 1,
+    page: 1,
+    limit: 20,
+    totalPages: 1,
+  }),
   findOne: jest.fn().mockImplementation((_orgId: string, id: string) => {
     if (id === TEST_DASHBOARD_ID) return Promise.resolve(mockDashboard);
     const err = new NotFoundException('Dashboard not found');
@@ -114,7 +120,13 @@ const stubAlertsService = {
 const stubDataSourcesService = {
   addDataSource: jest.fn().mockResolvedValue({ id: 'ds1' }),
   addCsvDataSource: jest.fn().mockResolvedValue({ id: 'ds1' }),
-  findAll: jest.fn().mockResolvedValue([]),
+  findAll: jest.fn().mockResolvedValue({
+    items: [],
+    total: 0,
+    page: 1,
+    limit: 20,
+    totalPages: 0,
+  }),
   findOne: jest.fn().mockResolvedValue({ id: 'ds1' }),
   getPreview: jest.fn().mockResolvedValue({ rows: [] }),
   updateSchema: jest.fn().mockResolvedValue(undefined),
@@ -192,6 +204,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { Injectable } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { DataSource } from 'typeorm';
 import { ClickHouseService } from '../src/modules/clickhouse/clickhouse.service';
 import { SyncJob } from '../src/modules/sync/entities/sync-job.entity';
@@ -251,6 +264,10 @@ describe('ClarixBI API Contract Tests', () => {
           useValue: { query: jest.fn().mockResolvedValue([{ '?column?': 1 }]) },
         },
         {
+          provide: CACHE_MANAGER,
+          useValue: { get: jest.fn(), set: jest.fn(), del: jest.fn() },
+        },
+        {
           provide: ClickHouseService,
           useValue: { healthCheck: jest.fn().mockResolvedValue({ ok: true }) },
         },
@@ -264,6 +281,7 @@ describe('ClarixBI API Contract Tests', () => {
         { provide: UsersService, useValue: stubUsersService },
         { provide: OrganizationsService, useValue: stubOrganizationsService },
         { provide: BillingService, useValue: stubBillingService },
+        { provide: 'BILLING_SERVICE', useValue: stubBillingService },
         {
           provide: ConfigService,
           useValue: {

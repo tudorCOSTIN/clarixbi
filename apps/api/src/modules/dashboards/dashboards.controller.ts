@@ -6,12 +6,15 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   Res,
   Headers,
   ParseUUIDPipe,
   BadRequestException,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -26,6 +29,7 @@ import { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { DashboardsService } from './dashboards.service';
 import { CreateDashboardDto } from './dto/create-dashboard.dto';
 import { UpdateDashboardDto } from './dto/update-dashboard.dto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @ApiTags('Dashboards')
 @ApiBearerAuth()
@@ -53,16 +57,28 @@ export class DashboardsController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30)
   @ApiOperation({ summary: 'List all dashboards' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@Param('orgId', ParseUUIDPipe) orgId: string) {
-    const dashboards = await this.dashboardsService.findAll(orgId);
-    return { data: dashboards };
+  async findAll(@Param('orgId', ParseUUIDPipe) orgId: string, @Query() query: PaginationDto) {
+    const result = await this.dashboardsService.findAll(orgId, query.page, query.limit);
+    return {
+      data: result.items,
+      meta: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      },
+    };
   }
 
   @Get(':id')
   @Roles(TeamRole.VIEWER)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(10)
   @ApiOperation({ summary: 'Get dashboard by ID' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

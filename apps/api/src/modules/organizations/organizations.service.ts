@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
+import { randomBytes } from 'node:crypto';
 import { Organization } from './entities/organization.entity';
 import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -13,6 +14,7 @@ export class OrganizationsService {
   constructor(
     @InjectRepository(Organization) private orgRepo: Repository<Organization>,
     @InjectRepository(TeamMember) private teamMemberRepo: Repository<TeamMember>,
+    private dataSource: DataSource,
   ) {}
 
   async create(dto: CreateOrganizationDto, userId: string): Promise<Organization> {
@@ -24,23 +26,25 @@ export class OrganizationsService {
       throw new ConflictException('Organization slug already exists');
     }
 
-    const org = this.orgRepo.create({
-      name: dto.name,
-      slug,
-      logo_url: dto.logo_url || null,
-    });
-    const savedOrg = await this.orgRepo.save(org);
+    // Wrap in transaction: create org + owner membership atomically
+    return this.dataSource.transaction(async (manager) => {
+      const org = manager.create(Organization, {
+        name: dto.name,
+        slug,
+        logo_url: dto.logo_url || null,
+      });
+      const savedOrg = await manager.save(org);
 
-    // Make creator the owner
-    const membership = this.teamMemberRepo.create({
-      user_id: userId,
-      org_id: savedOrg.id,
-      role: TeamRole.OWNER,
-      joined_at: new Date(),
-    });
-    await this.teamMemberRepo.save(membership);
+      const membership = manager.create(TeamMember, {
+        user_id: userId,
+        org_id: savedOrg.id,
+        role: TeamRole.OWNER,
+        joined_at: new Date(),
+      });
+      await manager.save(membership);
 
-    return savedOrg;
+      return savedOrg;
+    });
   }
 
   async findById(id: string): Promise<Organization> {
@@ -75,7 +79,7 @@ export class OrganizationsService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
-    const suffix = Math.random().toString(36).substring(2, 8);
+    const suffix = randomBytes(4).toString('hex').substring(0, 8);
     return `${base}-${suffix}`;
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger, Inject } from '@nestjs/common';
 import { randomBytes } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -8,7 +8,6 @@ import Redis from 'ioredis';
 import { User } from '../users/entities/user.entity';
 import { Organization } from '../organizations/entities/organization.entity';
 import { TeamMember, TeamRole } from '../teams/entities/team-member.entity';
-import { BillingService } from '../billing/billing.service';
 
 interface Auth0UserInfo {
   sub: string;
@@ -34,7 +33,8 @@ export class AuthService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Organization) private orgRepo: Repository<Organization>,
     @InjectRepository(TeamMember) private teamMemberRepo: Repository<TeamMember>,
-    @Inject(forwardRef(() => BillingService)) private billingService: BillingService,
+    @Inject('BILLING_SERVICE')
+    private billingService: { autoEnrollTrial(orgId: string): Promise<void> },
   ) {
     this.redis = new Redis(this.configService.get<string>('auth.redisUrl')!);
   }
@@ -310,7 +310,7 @@ export class AuthService {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
-    const suffix = Math.random().toString(36).substring(2, 8);
+    const suffix = randomBytes(4).toString('hex').substring(0, 8);
     return `${base}-${suffix}`;
   }
 }

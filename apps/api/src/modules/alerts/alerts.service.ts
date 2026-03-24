@@ -186,35 +186,30 @@ export class AlertsService {
   async checkAlerts(): Promise<void> {
     const now = new Date();
 
-    // Fetch active alerts
+    // Fetch active alerts with triggers pre-loaded (avoids N+1)
     const alerts = await this.alertRepo.find({
       where: { is_active: true },
+      relations: ['triggers'],
     });
 
     for (const alert of alerts) {
       try {
+        // Get the most recent trigger from pre-loaded relation
+        const sortedTriggers = (alert.triggers || []).sort(
+          (a, b) => new Date(b.triggered_at).getTime() - new Date(a.triggered_at).getTime(),
+        );
+        const lastTrigger = sortedTriggers[0];
+
         // Hourly alerts: only check once per hour
-        if (alert.check_frequency === CheckFrequency.HOURLY) {
-          const lastTrigger = await this.triggerRepo.findOne({
-            where: { alert_id: alert.id },
-            order: { triggered_at: 'DESC' },
-          });
-          if (lastTrigger) {
-            const timeSince = now.getTime() - new Date(lastTrigger.triggered_at).getTime();
-            if (timeSince < 55 * 60 * 1000) continue; // Skip if checked less than 55 min ago
-          }
+        if (alert.check_frequency === CheckFrequency.HOURLY && lastTrigger) {
+          const timeSince = now.getTime() - new Date(lastTrigger.triggered_at).getTime();
+          if (timeSince < 55 * 60 * 1000) continue; // Skip if checked less than 55 min ago
         }
 
         // Daily alerts: only check once per day
-        if (alert.check_frequency === CheckFrequency.DAILY) {
-          const lastTrigger = await this.triggerRepo.findOne({
-            where: { alert_id: alert.id },
-            order: { triggered_at: 'DESC' },
-          });
-          if (lastTrigger) {
-            const timeSince = now.getTime() - new Date(lastTrigger.triggered_at).getTime();
-            if (timeSince < 23 * 60 * 60 * 1000) continue; // Skip if checked less than 23h ago
-          }
+        if (alert.check_frequency === CheckFrequency.DAILY && lastTrigger) {
+          const timeSince = now.getTime() - new Date(lastTrigger.triggered_at).getTime();
+          if (timeSince < 23 * 60 * 60 * 1000) continue; // Skip if checked less than 23h ago
         }
 
         const currentValue = await this.executeMetricQuery(alert.metric_query);
@@ -289,12 +284,15 @@ export class AlertsService {
     });
     await this.triggerRepo.save(trigger);
 
-    // Notify all org members
-    const members = await this.teamMemberRepo.find({ where: { org_id: alert.org_id } });
+    // Notify all org members (load with user relation to avoid N+1)
+    const members = await this.teamMemberRepo.find({
+      where: { org_id: alert.org_id },
+      relations: ['user'],
+    });
 
-    for (const member of members) {
-      // In-app notification
-      const notification = this.notificationRepo.create({
+    // Batch create in-app notifications
+    const notifications = members.map((member) =>
+      this.notificationRepo.create({
         user_id: member.user_id,
         org_id: alert.org_id,
         type: NotificationType.ALERT_TRIGGERED,
@@ -307,9 +305,9 @@ export class AlertsService {
           threshold: Number(alert.threshold_value),
           operator: alert.condition_operator,
         },
-      });
-      await this.notificationRepo.save(notification);
-    }
+      }),
+    );
+    await this.notificationRepo.save(notifications);
 
     // WebSocket notification
     this.notificationsGateway.emitAlertTriggered(alert.org_id, {
@@ -318,25 +316,22 @@ export class AlertsService {
       threshold: Number(alert.threshold_value),
     });
 
-    // Email notification to org members
-    for (const member of members) {
-      try {
-        const user = await this.teamMemberRepo
-          .createQueryBuilder('tm')
-          .innerJoinAndSelect('tm.user', 'user')
-          .where('tm.id = :id', { id: member.id })
-          .getOne();
-        if (user?.user?.email) {
-          await this.emailService.sendAlertTriggered(
-            user.user.email,
+    // Email notifications in parallel (user already loaded via relation)
+    const emailResults = await Promise.allSettled(
+      members
+        .filter((member) => member.user?.email)
+        .map((member) =>
+          this.emailService.sendAlertTriggered(
+            member.user.email,
             alert.name,
             currentValue,
             Number(alert.threshold_value),
-          );
-        }
-      } catch (emailError) {
-        this.logger.warn(`Failed to send alert email for member ${member.id}: ${emailError}`);
-      }
+          ),
+        ),
+    );
+    const failed = emailResults.filter((r) => r.status === 'rejected');
+    if (failed.length) {
+      this.logger.warn(`${failed.length} alert email(s) failed to send for alert ${alert.id}`);
     }
   }
 

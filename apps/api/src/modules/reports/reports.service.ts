@@ -1,6 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, IsNull } from 'typeorm';
+import { Repository, IsNull, In } from 'typeorm';
 import { Report, ReportFormat } from './entities/report.entity';
 import { ReportSchedule } from './entities/report-schedule.entity';
 import { Dashboard } from '../dashboards/entities/dashboard.entity';
@@ -35,17 +40,22 @@ export class ReportsService {
     });
     if (!dashboard) throw new NotFoundException('Dashboard not found');
 
-    const report = this.reportRepo.create({
-      org_id: orgId,
-      dashboard_id: data.dashboardId,
-      created_by: userId,
-      name: data.name,
-      description: data.description || null,
-      format: ReportFormat.PDF,
-      config: { widgetIds: data.widgetIds },
-    });
+    try {
+      const report = this.reportRepo.create({
+        org_id: orgId,
+        dashboard_id: data.dashboardId,
+        created_by: userId,
+        name: data.name,
+        description: data.description || null,
+        format: ReportFormat.PDF,
+        config: { widgetIds: data.widgetIds },
+      });
 
-    return this.reportRepo.save(report);
+      return await this.reportRepo.save(report);
+    } catch (error) {
+      this.logger.error(`Failed to create report for org ${orgId}`, (error as Error).stack);
+      throw new InternalServerErrorException('Failed to create report');
+    }
   }
 
   async list(orgId: string, page = 1, limit = 20): Promise<{ data: Report[]; total: number }> {
@@ -186,19 +196,21 @@ export class ReportsService {
     widgetIds: string[],
     orgId: string,
   ): Promise<{ widget: Widget; data: Record<string, unknown>[] }[]> {
+    if (widgetIds.length === 0) return [];
+
+    // Batch-load all widgets in a single query (avoids N+1)
+    const widgets = await this.widgetRepo.find({
+      where: { id: In(widgetIds), org_id: orgId },
+    });
+
     const results: { widget: Widget; data: Record<string, unknown>[] }[] = [];
 
-    for (const widgetId of widgetIds) {
-      const widget = await this.widgetRepo.findOne({
-        where: { id: widgetId, org_id: orgId },
-      });
-      if (!widget) continue;
-
+    for (const widget of widgets) {
       try {
         const data = await this.clickhouse.query(widget.query_sql);
         results.push({ widget, data });
       } catch (error) {
-        this.logger.warn(`Failed to fetch data for widget ${widgetId}: ${error}`);
+        this.logger.warn(`Failed to fetch data for widget ${widget.id}: ${error}`);
         results.push({ widget, data: [] });
       }
     }

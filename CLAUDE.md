@@ -545,3 +545,63 @@ Dupa ce rezolvi ORICE eroare, adauga o intrare cu formatul:
 **Cauza:** Commit type "review" nu e in lista commitlint: build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test.
 **Fix:** Inlocuit cu "chore" pentru review commits.
 **Regula:** Foloseste doar tipurile standard commitlint. Review/audit commits → `chore(scope): description`.
+
+### [2026-03-24] CR07 — N+1 queries in alerts, reports, dashboards
+
+**Cauza:** `checkAlerts()` facea query individual pentru fiecare trigger. `getWidgetData()` facea `findOne` per widget. `handleAlertTriggered()` facea `save` individual per notification.
+**Fix:** Adaugat `relations: ['triggers']` pe alerts find. Inlocuit `findOne` loop cu `widgetRepo.find({ where: { id: In(ids) } })`. Batch `notificationRepo.save(array)`. `Promise.allSettled()` pentru email-uri.
+**Regula:** NICIODATA query in loop. Foloseste `relations` pentru eager loading sau `In()` operator pentru batch queries.
+
+### [2026-03-24] CR07 — Lipsa paginare pe 6 endpoints (dashboards, data-sources)
+
+**Cauza:** `findAll()` in DashboardsService si DataSourcesService returna toate inregistrarile fara limit/offset. Cu date multe, cauza response-uri mari si slow queries.
+**Fix:** Inlocuit `find()` cu `findAndCount()` + `take`/`skip`. Creat `PaginationDto` si `PaginatedResult<T>` partajate. Adaugat `@Query() query: PaginationDto` pe controllers.
+**Regula:** FIECARE endpoint de listare TREBUIE sa aiba paginare. Foloseste `findAndCount()` + `PaginatedResult`. Default: page=1, limit=20.
+
+### [2026-03-24] CR07 — Lipsa tranzactii pe create org + bulk widget update
+
+**Cauza:** `organizations.create()` crea org + team member secvential fara tranzactie. `widgets.bulkUpdatePositions()` updatea pozitii individual. Failure la mijloc lasa date inconsistente.
+**Fix:** Wrapped in `dataSource.transaction()`. OrganizationsService: `manager.create/save` atomic. WidgetsService: `manager.find/save` in transaction.
+**Regula:** Operatii multi-step de CREATE/UPDATE TREBUIE wrappate in tranzactie.
+
+### [2026-03-24] CR07 — auth↔billing circular dependency (forwardRef)
+
+**Cauza:** `auth.service.ts` importa `BillingService` via `forwardRef(() => BillingService)`. Circular dependencies sunt fragile si cauza warnings NestJS.
+**Fix:** Inlocuit cu `@Inject('BILLING_SERVICE')` injection token. Adaugat `{ provide: 'BILLING_SERVICE', useExisting: BillingService }` in auth.module.
+**Regula:** NICIODATA `forwardRef` pentru service injection. Foloseste string tokens (`@Inject('TOKEN')`) pentru a sparge circular dependencies.
+
+### [2026-03-24] CR07 — Math.random() in slug generation (insecure)
+
+**Cauza:** `organizations.service.ts` si `auth.service.ts` foloseau `Math.random().toString(36)` pentru generarea slug-urilor. Math.random() nu e cryptographically secure.
+**Fix:** Inlocuit cu `randomBytes(4).toString('hex').substring(0, 8)` din `node:crypto`.
+**Regula:** NICIODATA `Math.random()` pentru generarea de identificatori. Foloseste `crypto.randomBytes()`.
+
+### [2026-03-24] CR07 — 7 entitati fara @DeleteDateColumn (soft delete)
+
+**Cauza:** AIConversation, Alert, Subscription, ReportSchedule, Report, TeamMember, Widget nu aveau `@DeleteDateColumn()`. Soft delete nu functiona corect.
+**Fix:** Adaugat `@DeleteDateColumn() deleted_at: Date | null` pe fiecare entitate. Creat migratie `1774416000000-AddSoftDeleteColumns.ts`.
+**Regula:** FIECARE entitate principala TREBUIE sa aiba `@DeleteDateColumn()` pentru soft delete support.
+
+### [2026-03-24] CR07 — Enum-uri duplicate intre shared si entity files
+
+**Cauza:** TeamRole, InviteStatus, SubscriptionStatus, BillingPeriod, DataSourceType, DataSourceStatus, WidgetType existau atat in `@clarixbi/shared` cat si in entity files. Risc de divergenta.
+**Fix:** Entity files importa din `@clarixbi/shared` si re-exporta pentru backward compatibility: `import { X } from '@clarixbi/shared'; export { X };`.
+**Regula:** Enum-urile partajate frontend/backend se definesc O SINGURA DATA in `@clarixbi/shared`. Entity files re-exporta.
+
+### [2026-03-24] CR07 — Inline DTOs in teams controller
+
+**Cauza:** `teams.controller.ts` avea DTOs inline (`@Body() body: { email: string; role: TeamRole }`) fara class-validator decorators.
+**Fix:** Extras `InviteDto` si `ChangeRoleDto` in `teams/dto/`. Extras `InviteAcceptController` in fisier separat.
+**Regula:** NICIODATA `@Body()` cu tip inline. Fiecare endpoint cu body trebuie sa aiba DTO dedicat cu class-validator.
+
+### [2026-03-24] CR07 — Response caching lipsa pe GET endpoints
+
+**Cauza:** GET endpoints (dashboards list/detail, data-sources list, overview) nu aveau caching. Fiecare request trigera query DB complet.
+**Fix:** Adaugat `CacheModule.register({ ttl: 60, max: 100, isGlobal: true })` in AppModule. Adaugat `@UseInterceptors(CacheInterceptor)` + `@CacheTTL()` pe GET endpoints.
+**Regula:** GET endpoints frecvent accesate TREBUIE sa aiba `@CacheInterceptor` + `@CacheTTL` appropriate (list: 30s, detail: 10s, overview: 60s).
+
+### [2026-03-24] CR07 — Magic numbers in auth.controller.ts
+
+**Cauza:** `auth.controller.ts` avea 4 magic numbers: `7 * 24 * 60 * 60 * 1000` (refresh cookie maxAge), `60000` (throttle TTL), `10` (auth throttle limit), `5` (refresh throttle limit).
+**Fix:** Extras ca constante numite: `REFRESH_TOKEN_MAX_AGE_MS`, `THROTTLE_TTL_MS`, `AUTH_THROTTLE_LIMIT`, `REFRESH_THROTTLE_LIMIT`.
+**Regula:** NICIODATA magic numbers in cod. Extrage constante numite cu sens clar.

@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
   Index,
@@ -12,18 +13,9 @@ import {
 import { User } from '../../users/entities/user.entity';
 import { Organization } from '../../organizations/entities/organization.entity';
 
-export enum TeamRole {
-  OWNER = 'owner',
-  ADMIN = 'admin',
-  EDITOR = 'editor',
-  VIEWER = 'viewer',
-}
-
-export enum InviteStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  EXPIRED = 'expired',
-}
+import { TeamRole, InviteStatus } from '@clarixbi/shared';
+// Re-export from shared package (single source of truth)
+export { TeamRole, InviteStatus };
 
 @Entity('team_members')
 @Unique(['user_id', 'org_id'])
@@ -66,6 +58,9 @@ export class TeamMember {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 
   @ManyToOne(() => User, (u) => u.team_memberships, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })

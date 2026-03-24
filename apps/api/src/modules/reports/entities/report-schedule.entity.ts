@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   ManyToOne,
   JoinColumn,
   Index,
@@ -42,6 +43,9 @@ export class ReportSchedule {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @DeleteDateColumn()
+  deleted_at: Date | null;
 
   @ManyToOne(() => Report, (r) => r.schedules, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'report_id' })

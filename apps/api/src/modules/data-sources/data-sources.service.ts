@@ -1,4 +1,10 @@
-import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DataSourceEntity, DataSourceType, DataSourceStatus } from './entities/data-source.entity';
@@ -9,6 +15,7 @@ import { encryptToString, decryptFromString } from '../../common/utils/encryptio
 import { syncSmartbillQueue, syncWoocommerceQueue, syncCsvQueue } from '../sync/queues.config';
 import { CreateDataSourceDto } from './dto/create-data-source.dto';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
+import { PaginatedResult } from '../../common/interfaces/paginated-result.interface';
 
 @Injectable()
 export class DataSourcesService {
@@ -138,11 +145,19 @@ export class DataSourcesService {
     this.logger.log(`Updated schema for data source ${id}`);
   }
 
-  async findAll(orgId: string): Promise<DataSourceEntity[]> {
-    return this.dataSourceRepo.find({
-      where: { org_id: orgId },
-      order: { created_at: 'DESC' },
-    });
+  async findAll(orgId: string, page = 1, limit = 20): Promise<PaginatedResult<DataSourceEntity>> {
+    try {
+      const [items, total] = await this.dataSourceRepo.findAndCount({
+        where: { org_id: orgId },
+        order: { created_at: 'DESC' },
+        take: limit,
+        skip: (page - 1) * limit,
+      });
+      return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    } catch (error) {
+      this.logger.error(`Failed to list data sources for org ${orgId}`, (error as Error).stack);
+      throw new InternalServerErrorException('Failed to retrieve data sources');
+    }
   }
 
   async findOne(orgId: string, id: string): Promise<DataSourceEntity> {

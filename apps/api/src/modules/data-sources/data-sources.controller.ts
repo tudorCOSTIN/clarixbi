@@ -13,6 +13,7 @@ import {
   BadRequestException,
   UseGuards,
 } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -28,6 +29,7 @@ import { DataSourcesService } from './data-sources.service';
 import { CreateDataSourceDto } from './dto/create-data-source.dto';
 import { UpdateDataSourceDto } from './dto/update-data-source.dto';
 import { SyncJob } from '../sync/entities/sync-job.entity';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_EXTENSIONS = ['.csv', '.xlsx', '.xls'];
@@ -97,12 +99,22 @@ export class DataSourcesController {
 
   @Get()
   @Roles(TeamRole.VIEWER)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30)
   @ApiOperation({ summary: 'List all data sources' })
   @ApiResponse({ status: 200, description: 'Success' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async findAll(@Param('orgId', ParseUUIDPipe) orgId: string) {
-    const dataSources = await this.dataSourcesService.findAll(orgId);
-    return { data: dataSources };
+  async findAll(@Param('orgId', ParseUUIDPipe) orgId: string, @Query() query: PaginationDto) {
+    const result = await this.dataSourcesService.findAll(orgId, query.page, query.limit);
+    return {
+      data: result.items,
+      meta: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+      },
+    };
   }
 
   @Get(':id')

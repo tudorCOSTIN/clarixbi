@@ -20,20 +20,8 @@ import { TeamRole } from './entities/team-member.entity';
 import { TeamsService } from './teams.service';
 import { CheckPlanLimit } from '../billing/decorators/requires-plan.decorator';
 import { PlanLimitGuard } from '../billing/guards/plan-limit.guard';
-import { IsEmail, IsEnum } from 'class-validator';
-
-class InviteDto {
-  @IsEmail()
-  email: string;
-
-  @IsEnum(TeamRole)
-  role: TeamRole;
-}
-
-class ChangeRoleDto {
-  @IsEnum(TeamRole)
-  role: TeamRole;
-}
+import { InviteDto } from './dto/invite.dto';
+import { ChangeRoleDto } from './dto/change-role.dto';
 
 @ApiTags('Teams')
 @ApiBearerAuth()
@@ -124,25 +112,5 @@ export class TeamsController {
   ) {
     await this.teamsService.revokeInvite(orgId, inviteId);
     return { data: { message: 'Invite revoked' } };
-  }
-}
-
-/**
- * Separate controller for public invite acceptance (requires auth but not org membership).
- */
-@ApiTags('Invites')
-@ApiBearerAuth()
-@Controller('invites')
-@UseGuards(JwtAuthGuard)
-export class InviteAcceptController {
-  constructor(private readonly teamsService: TeamsService) {}
-
-  @Post(':token/accept')
-  @ApiOperation({ summary: 'Accept an invite by token' })
-  @ApiResponse({ status: 201, description: 'Invite accepted' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async acceptInvite(@Param('token') token: string, @CurrentUser() user: JwtUser) {
-    const member = await this.teamsService.acceptInviteByToken(token, user.id);
-    return { data: member };
   }
 }

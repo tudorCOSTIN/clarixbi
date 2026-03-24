@@ -479,11 +479,13 @@ describe('AlertsService', () => {
           threshold_value: 10000,
           check_frequency: CheckFrequency.REALTIME,
           is_active: true,
+          triggers: [],
         },
       ]);
       mockClickhouse.query.mockResolvedValue([{ sum: 15000 }]);
-      mockTeamMemberRepo.find.mockResolvedValue([{ user_id: 'user-1', org_id: 'org-1' }]);
-      mockTriggerRepo.findOne.mockResolvedValue(null);
+      mockTeamMemberRepo.find.mockResolvedValue([
+        { user_id: 'user-1', org_id: 'org-1', user: { email: 'u1@test.com' } },
+      ]);
 
       await service.checkAlerts();
 
@@ -506,10 +508,10 @@ describe('AlertsService', () => {
           threshold_value: 10000,
           check_frequency: CheckFrequency.REALTIME,
           is_active: true,
+          triggers: [],
         },
       ]);
       mockClickhouse.query.mockResolvedValue([{ sum: 5000 }]);
-      mockTriggerRepo.findOne.mockResolvedValue(null);
 
       await service.checkAlerts();
 
@@ -571,10 +573,6 @@ describe('AlertsService', () => {
     });
 
     it('should skip hourly alert if checked less than 55 minutes ago', async () => {
-      const recentTrigger = {
-        triggered_at: new Date(Date.now() - 30 * 60 * 1000), // 30 min ago
-      };
-
       mockAlertRepo.find.mockResolvedValue([
         {
           id: 'alert-1',
@@ -584,9 +582,11 @@ describe('AlertsService', () => {
           threshold_value: 0,
           check_frequency: CheckFrequency.HOURLY,
           is_active: true,
+          triggers: [
+            { triggered_at: new Date(Date.now() - 30 * 60 * 1000) }, // 30 min ago
+          ],
         },
       ]);
-      mockTriggerRepo.findOne.mockResolvedValue(recentTrigger);
 
       await service.checkAlerts();
 
@@ -596,10 +596,6 @@ describe('AlertsService', () => {
     });
 
     it('should check hourly alert if more than 55 minutes have passed', async () => {
-      const oldTrigger = {
-        triggered_at: new Date(Date.now() - 60 * 60 * 1000), // 60 min ago
-      };
-
       mockAlertRepo.find.mockResolvedValue([
         {
           id: 'alert-1',
@@ -610,11 +606,15 @@ describe('AlertsService', () => {
           threshold_value: 0,
           check_frequency: CheckFrequency.HOURLY,
           is_active: true,
+          triggers: [
+            { triggered_at: new Date(Date.now() - 60 * 60 * 1000) }, // 60 min ago
+          ],
         },
       ]);
-      mockTriggerRepo.findOne.mockResolvedValue(oldTrigger);
       mockClickhouse.query.mockResolvedValue([{ value: 10 }]);
-      mockTeamMemberRepo.find.mockResolvedValue([{ user_id: 'user-1', org_id: 'org-1' }]);
+      mockTeamMemberRepo.find.mockResolvedValue([
+        { user_id: 'user-1', org_id: 'org-1', user: { email: 'u1@test.com' } },
+      ]);
 
       await service.checkAlerts();
 
@@ -622,10 +622,6 @@ describe('AlertsService', () => {
     });
 
     it('should skip daily alert if checked less than 23 hours ago', async () => {
-      const recentTrigger = {
-        triggered_at: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-      };
-
       mockAlertRepo.find.mockResolvedValue([
         {
           id: 'alert-1',
@@ -635,9 +631,11 @@ describe('AlertsService', () => {
           threshold_value: 0,
           check_frequency: CheckFrequency.DAILY,
           is_active: true,
+          triggers: [
+            { triggered_at: new Date(Date.now() - 12 * 60 * 60 * 1000) }, // 12h ago
+          ],
         },
       ]);
-      mockTriggerRepo.findOne.mockResolvedValue(recentTrigger);
 
       await service.checkAlerts();
 
@@ -654,9 +652,9 @@ describe('AlertsService', () => {
           threshold_value: 0,
           check_frequency: CheckFrequency.REALTIME,
           is_active: true,
+          triggers: [],
         },
       ]);
-      mockTriggerRepo.findOne.mockResolvedValue(null);
       mockClickhouse.query.mockRejectedValue(new Error('ClickHouse down'));
 
       // Should not throw
@@ -687,13 +685,13 @@ describe('AlertsService', () => {
           threshold_value: 10000,
           check_frequency: CheckFrequency.REALTIME,
           is_active: true,
+          triggers: [],
         },
       ]);
       mockClickhouse.query.mockResolvedValue([{ sum: 15000 }]);
-      mockTriggerRepo.findOne.mockResolvedValue(null);
       mockTeamMemberRepo.find.mockResolvedValue([
-        { user_id: 'user-1', org_id: 'org-1' },
-        { user_id: 'user-2', org_id: 'org-1' },
+        { user_id: 'user-1', org_id: 'org-1', user: { email: 'u1@test.com' } },
+        { user_id: 'user-2', org_id: 'org-1', user: { email: 'u2@test.com' } },
       ]);
 
       await service.checkAlerts();
@@ -709,8 +707,8 @@ describe('AlertsService', () => {
       );
       expect(mockTriggerRepo.save).toHaveBeenCalled();
 
-      // Notifications created for each member
-      expect(mockNotificationRepo.save).toHaveBeenCalledTimes(2);
+      // Notifications created for each member (batch save with array)
+      expect(mockNotificationRepo.save).toHaveBeenCalledTimes(1);
       expect(mockNotificationRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({
           type: NotificationType.ALERT_TRIGGERED,
@@ -738,16 +736,17 @@ describe('AlertsService', () => {
           threshold_value: 0,
           check_frequency: CheckFrequency.REALTIME,
           is_active: true,
+          triggers: [],
         },
       ]);
       mockClickhouse.query.mockResolvedValue([{ value: 10 }]);
-      mockTriggerRepo.findOne.mockResolvedValue(null);
       mockTeamMemberRepo.find.mockResolvedValue([]);
 
       await service.checkAlerts();
 
       expect(mockTriggerRepo.save).toHaveBeenCalled();
-      expect(mockNotificationRepo.save).not.toHaveBeenCalled();
+      // Batch save called with empty array
+      expect(mockNotificationRepo.save).toHaveBeenCalledWith([]);
       expect(mockGateway.emitAlertTriggered).toHaveBeenCalled();
     });
   });

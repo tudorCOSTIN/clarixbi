@@ -37,11 +37,20 @@ describe('DashboardsController', () => {
   describe('findAll', () => {
     it('should return all dashboards', async () => {
       const orgId = '00000000-0000-0000-0000-000000000001';
-      const dashboards = [{ id: '1', name: 'Dashboard 1' }];
-      mockService.findAll.mockResolvedValue(dashboards);
+      const paginatedResult = {
+        items: [{ id: '1', name: 'Dashboard 1' }],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      };
+      mockService.findAll.mockResolvedValue(paginatedResult);
 
-      const result = await controller.findAll(orgId);
-      expect(result).toEqual({ data: dashboards });
+      const result = await controller.findAll(orgId, { page: 1, limit: 20 });
+      expect(result).toEqual({
+        data: paginatedResult.items,
+        meta: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      });
     });
   });
 

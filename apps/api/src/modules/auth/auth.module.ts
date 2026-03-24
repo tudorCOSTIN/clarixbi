@@ -13,6 +13,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OrgContextMiddleware } from './middleware/org-context.middleware';
+import { BillingService } from '../billing/billing.service';
 
 @Module({
   imports: [
@@ -23,7 +24,6 @@ import { OrgContextMiddleware } from './middleware/org-context.middleware';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('auth.jwtSecret'),
         signOptions: {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           expiresIn: (configService.get<string>('auth.jwtExpiresIn') || '15m') as unknown as number,
         },
       }),
@@ -33,7 +33,15 @@ import { OrgContextMiddleware } from './middleware/org-context.middleware';
     forwardRef(() => BillingModule),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    JwtAuthGuard,
+    {
+      provide: 'BILLING_SERVICE',
+      useExisting: BillingService,
+    },
+  ],
   exports: [AuthService, JwtAuthGuard, JwtModule, TypeOrmModule],
 })
 export class AuthModule implements NestModule {

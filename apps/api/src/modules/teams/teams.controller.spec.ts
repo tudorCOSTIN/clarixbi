@@ -1,4 +1,5 @@
-import { TeamsController, InviteAcceptController } from './teams.controller';
+import { TeamsController } from './teams.controller';
+import { InviteAcceptController } from './invite-accept.controller';
 import { TeamsService } from './teams.service';
 import { TeamRole, InviteStatus } from './entities/team-member.entity';
 

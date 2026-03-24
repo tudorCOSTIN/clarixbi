@@ -40,17 +40,23 @@ export class ReportsEmailProcessor {
           reportName: '',
         });
 
-        // Send email via Resend (simplified - actual implementation would use Resend SDK)
-        for (const recipient of recipients) {
-          this.logger.log(`Email sent to ${recipient} for report ${reportId}`);
-          // In production:
-          // await resend.emails.send({
-          //   from: 'ClarixBI <reports@clarixbi.com>',
-          //   to: recipient,
-          //   subject: `Report: ${reportName}`,
-          //   html: `<p>Your scheduled report is attached.</p>`,
-          //   attachments: [{ filename: 'report.pdf', content: pdfBuffer }],
-          // });
+        // Send emails in parallel via Promise.allSettled
+        const emailResults = await Promise.allSettled(
+          recipients.map(async (recipient) => {
+            this.logger.log(`Email sent to ${recipient} for report ${reportId}`);
+            // In production:
+            // await resend.emails.send({
+            //   from: 'ClarixBI <reports@clarixbi.com>',
+            //   to: recipient,
+            //   subject: `Report: ${reportName}`,
+            //   html: `<p>Your scheduled report is attached.</p>`,
+            //   attachments: [{ filename: 'report.pdf', content: pdfBuffer }],
+            // });
+          }),
+        );
+        const failedEmails = emailResults.filter((r) => r.status === 'rejected');
+        if (failedEmails.length) {
+          this.logger.warn(`${failedEmails.length} report emails failed for report ${reportId}`);
         }
 
         // Update schedule after send

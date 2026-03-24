@@ -1,6 +1,11 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, DataSource } from 'typeorm';
 import { Widget } from './entities/widget.entity';
 import { CreateWidgetDto } from './dto/create-widget.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
@@ -21,29 +26,46 @@ export class WidgetsService {
   constructor(
     @InjectRepository(Widget)
     private readonly widgetRepo: Repository<Widget>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(orgId: string, dashboardId: string, dto: CreateWidgetDto): Promise<Widget> {
-    const defaultConfig = DEFAULT_CONFIGS[dto.type] || {};
-    const widget = this.widgetRepo.create({
-      dashboard_id: dashboardId,
-      org_id: orgId,
-      type: dto.type,
-      title: dto.title,
-      config: { ...defaultConfig, ...(dto.config || {}) },
-      query_sql: '',
-      position: dto.position || { x: 0, y: 0, w: 4, h: 3 },
-      data_source_id: dto.data_source_id || null,
-    });
-    return this.widgetRepo.save(widget);
+    try {
+      const defaultConfig = DEFAULT_CONFIGS[dto.type] || {};
+      const widget = this.widgetRepo.create({
+        dashboard_id: dashboardId,
+        org_id: orgId,
+        type: dto.type,
+        title: dto.title,
+        config: { ...defaultConfig, ...(dto.config || {}) },
+        query_sql: '',
+        position: dto.position || { x: 0, y: 0, w: 4, h: 3 },
+        data_source_id: dto.data_source_id || null,
+      });
+      return await this.widgetRepo.save(widget);
+    } catch (error) {
+      this.logger.error(
+        `Failed to create widget for dashboard ${dashboardId}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException('Failed to create widget');
+    }
   }
 
   async findByDashboard(orgId: string, dashboardId: string): Promise<Widget[]> {
-    return this.widgetRepo.find({
-      where: { dashboard_id: dashboardId, org_id: orgId },
-      relations: ['data_source'],
-      order: { created_at: 'ASC' },
-    });
+    try {
+      return await this.widgetRepo.find({
+        where: { dashboard_id: dashboardId, org_id: orgId },
+        relations: ['data_source'],
+        order: { created_at: 'ASC' },
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to list widgets for dashboard ${dashboardId}`,
+        (error as Error).stack,
+      );
+      throw new InternalServerErrorException('Failed to retrieve widgets');
+    }
   }
 
   async findOne(orgId: string, dashboardId: string, id: string): Promise<Widget> {
@@ -84,19 +106,22 @@ export class WidgetsService {
     dto: BulkUpdatePositionsDto,
   ): Promise<void> {
     const widgetIds = dto.widgets.map((w) => w.id);
-    const widgets = await this.widgetRepo.find({
-      where: { id: In(widgetIds), dashboard_id: dashboardId, org_id: orgId },
-    });
 
-    const widgetMap = new Map(widgets.map((w) => [w.id, w]));
-    const updates = dto.widgets
-      .filter((w) => widgetMap.has(w.id))
-      .map((w) => {
-        const widget = widgetMap.get(w.id)!;
-        widget.position = w.position;
-        return widget;
+    await this.dataSource.transaction(async (manager) => {
+      const widgets = await manager.find(Widget, {
+        where: { id: In(widgetIds), dashboard_id: dashboardId, org_id: orgId },
       });
 
-    await this.widgetRepo.save(updates);
+      const widgetMap = new Map(widgets.map((w) => [w.id, w]));
+      const updates = dto.widgets
+        .filter((w) => widgetMap.has(w.id))
+        .map((w) => {
+          const widget = widgetMap.get(w.id)!;
+          widget.position = w.position;
+          return widget;
+        });
+
+      await manager.save(Widget, updates);
+    });
   }
 }

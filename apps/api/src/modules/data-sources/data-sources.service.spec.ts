@@ -94,6 +94,7 @@ describe('DataSourcesService', () => {
   let mockFindOne: jest.Mock;
   let mockUpdate: jest.Mock;
   let mockSoftRemove: jest.Mock;
+  let mockFindAndCount: jest.Mock;
   let mockClickhouseQuery: jest.Mock;
 
   beforeEach(async () => {
@@ -105,6 +106,7 @@ describe('DataSourcesService', () => {
     mockFindOne = jest.fn();
     mockUpdate = jest.fn().mockResolvedValue({});
     mockSoftRemove = jest.fn().mockResolvedValue({});
+    mockFindAndCount = jest.fn().mockResolvedValue([[], 0]);
     mockClickhouseQuery = jest.fn().mockResolvedValue([]);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -117,6 +119,7 @@ describe('DataSourcesService', () => {
             save: mockSave,
             find: mockFind,
             findOne: mockFindOne,
+            findAndCount: mockFindAndCount,
             update: mockUpdate,
             softRemove: mockSoftRemove,
           },
@@ -402,28 +405,32 @@ describe('DataSourcesService', () => {
   // ===== findAll =====
 
   describe('findAll', () => {
-    it('should return all data sources for the organisation', async () => {
+    it('should return paginated data sources for the organisation', async () => {
       const sources = [
         makeDataSource({ id: '1', name: 'Source 1' }),
         makeDataSource({ id: '2', name: 'Source 2' }),
       ];
-      mockFind.mockResolvedValue(sources);
+      mockFindAndCount.mockResolvedValue([sources, 2]);
 
       const result = await service.findAll('org-123');
 
-      expect(result).toHaveLength(2);
-      expect(mockFind).toHaveBeenCalledWith(
+      expect(result.items).toHaveLength(2);
+      expect(result.total).toBe(2);
+      expect(mockFindAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { org_id: 'org-123' },
           order: { created_at: 'DESC' },
+          take: 20,
+          skip: 0,
         }),
       );
     });
 
-    it('should return empty array when no sources exist', async () => {
-      mockFind.mockResolvedValue([]);
+    it('should return empty items when no sources exist', async () => {
+      mockFindAndCount.mockResolvedValue([[], 0]);
       const result = await service.findAll('org-empty');
-      expect(result).toEqual([]);
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 

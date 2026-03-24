@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { TeamMember } from './entities/team-member.entity';
 import { TeamsService } from './teams.service';
-import { TeamsController, InviteAcceptController } from './teams.controller';
+import { TeamsController } from './teams.controller';
+import { InviteAcceptController } from './invite-accept.controller';
 import { BillingModule } from '../billing/billing.module';
 import { EmailModule } from '../email/email.module';
 

@@ -1,6 +1,12 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { PaginatedResult } from '../../common/interfaces/paginated-result.interface';
 import { v4 as uuid } from 'uuid';
 import PDFDocument from 'pdfkit';
 import { Dashboard } from './entities/dashboard.entity';
@@ -27,23 +33,36 @@ export class DashboardsService {
   // ─── EXISTING METHODS (unchanged) ─────────────────────────────
 
   async create(orgId: string, userId: string, dto: CreateDashboardDto): Promise<Dashboard> {
-    const dashboard = this.dashboardRepo.create({
-      org_id: orgId,
-      created_by: userId,
-      name: dto.name,
-      description: dto.description || null,
-      layout: [],
-      is_auto_generated: false,
-    });
-    return this.dashboardRepo.save(dashboard);
+    try {
+      const dashboard = this.dashboardRepo.create({
+        org_id: orgId,
+        created_by: userId,
+        name: dto.name,
+        description: dto.description || null,
+        layout: [],
+        is_auto_generated: false,
+      });
+      return await this.dashboardRepo.save(dashboard);
+    } catch (error) {
+      this.logger.error(`Failed to create dashboard for org ${orgId}`, (error as Error).stack);
+      throw new InternalServerErrorException('Failed to create dashboard');
+    }
   }
 
-  async findAll(orgId: string): Promise<Dashboard[]> {
-    return this.dashboardRepo.find({
-      where: { org_id: orgId },
-      order: { created_at: 'DESC' },
-      relations: ['widgets'],
-    });
+  async findAll(orgId: string, page = 1, limit = 20): Promise<PaginatedResult<Dashboard>> {
+    try {
+      const [items, total] = await this.dashboardRepo.findAndCount({
+        where: { org_id: orgId },
+        order: { created_at: 'DESC' },
+        relations: ['widgets'],
+        take: limit,
+        skip: (page - 1) * limit,
+      });
+      return { items, total, page, limit, totalPages: Math.ceil(total / limit) };
+    } catch (error) {
+      this.logger.error(`Failed to list dashboards for org ${orgId}`, (error as Error).stack);
+      throw new InternalServerErrorException('Failed to retrieve dashboards');
+    }
   }
 
   async findOne(orgId: string, id: string): Promise<Dashboard> {
