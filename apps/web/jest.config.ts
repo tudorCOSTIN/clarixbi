@@ -8,8 +8,17 @@ const createJestConfig = nextJest({
 const config: Config = {
   testMatch: ['**/*.test.tsx', '**/*.test.ts'],
   testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  coverageThreshold: {
+    global: {
+      lines: 60,
+      statements: 60,
+      functions: 55,
+      branches: 50,
+    },
   },
 };
 

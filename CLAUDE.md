@@ -671,3 +671,15 @@ Dupa ce rezolvi ORICE eroare, adauga o intrare cu formatul:
 **Cauza:** Tipul `Record<string, jest.Mock>` permite valori `undefined` (index signature). Accesarea `repo.count` fara check triggereaza `Object is possibly undefined`.
 **Fix:** Foloseste intersection type: `{ [k: string]: jest.Mock } & { count: jest.Mock; find: jest.Mock }` si `as typeof varName` la initializare.
 **Regula:** In teste, declara mock repos cu intersection type care include metodele folosite explicit. Evita `Record<string, jest.Mock>` simplu.
+
+### [2026-03-24] CR11 — toBeInTheDocument() nu functioneaza in teste noi
+
+**Cauza:** `@testing-library/jest-dom` era instalat dar nu era importat global. Testele noi care foloseau `toBeInTheDocument()` crashau cu `TypeError: expect(...).toBeInTheDocument is not a function`.
+**Fix:** Creat `apps/web/jest.setup.ts` cu `import '@testing-library/jest-dom'` si `Element.prototype.scrollIntoView = jest.fn()`. Adaugat `setupFilesAfterEnv: ['<rootDir>/jest.setup.ts']` in `jest.config.ts`.
+**Regula:** FIECARE proiect cu `@testing-library/jest-dom` TREBUIE sa aiba jest setup file cu import-ul global. Cheia jest config e `setupFilesAfterEnv` (NU `setupFilesAfterSetup`).
+
+### [2026-03-24] CR11 — scrollIntoView crash in jsdom (AiChat)
+
+**Cauza:** `AiChat.tsx` folosea `messagesEndRef.current?.scrollIntoView()` care nu exista in jsdom. Toate testele AiChat crashau.
+**Fix:** Adaugat `Element.prototype.scrollIntoView = jest.fn()` in `jest.setup.ts`.
+**Regula:** Mock browser APIs lipsa in jsdom (scrollIntoView, IntersectionObserver, matchMedia) in jest setup file global.
