@@ -54,6 +54,15 @@ async function setupDataSourceMocks(
     return route.continue();
   });
 
+  // Sync logs for detail page
+  await page.route(`${API_BASE}/organizations/*/data-sources/*/logs*`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ data: [] }),
+    }),
+  );
+
   // Trigger sync
   await page.route(`${API_BASE}/organizations/*/data-sources/*/sync`, (route) =>
     route.fulfill({

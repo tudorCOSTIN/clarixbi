@@ -247,6 +247,7 @@
     "addSource": "Add source",
     "addFirstSource": "Add your first data source",
     "empty": "No data sources connected",
+    "tryAgain": "Try again",
     "lastSync": "Last sync",
     "totalRows": "Total records",
     "syncNow": "Sync now",

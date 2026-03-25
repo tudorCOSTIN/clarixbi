@@ -48,7 +48,7 @@ export function CookieBanner() {
             <p className="text-sm text-gray-700">{t('message')}</p>
             <Link
               href="/legal/cookies"
-              className="mt-1 inline-block text-xs text-primary-blue hover:underline"
+              className="mt-1 inline-block text-xs text-primary-blue underline"
             >
               {t('cookiePolicy')}
             </Link>

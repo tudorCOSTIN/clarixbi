@@ -28,7 +28,7 @@ const DATE_PRESETS = [
 ] as const;
 
 const COLOR_SCHEMES = [
-  { id: 'primary', label: 'Blue', colors: ['#2196F3', '#42A5F5', '#90CAF9'] },
+  { id: 'primary', label: 'Blue', colors: ['#1565C0', '#42A5F5', '#90CAF9'] },
   { id: 'warm', label: 'Warm', colors: ['#FF6B35', '#F7931E', '#FFC107'] },
   { id: 'cool', label: 'Cool', colors: ['#00BCD4', '#009688', '#4CAF50'] },
 ] as const;

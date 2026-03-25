@@ -67,7 +67,7 @@ const statusColors: Record<string, string> = {
 export default function DataSourcesPage() {
   const t = useTranslations('dataSources');
   const router = useRouter();
-  const { data: dataSources, loading, triggerSync, remove, refetch } = useDataSources();
+  const { data: dataSources, loading, error, triggerSync, remove, refetch } = useDataSources();
   const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
 
   const onSyncProgress = useCallback(
@@ -130,6 +130,19 @@ export default function DataSourcesPage() {
             <Skeleton key={i} className="h-48" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16">
+        <p className="text-sm text-red-600" role="alert" aria-live="assertive">
+          {error}
+        </p>
+        <Button className="mt-4" variant="outline" onClick={() => refetch()}>
+          {t('tryAgain')}
+        </Button>
       </div>
     );
   }

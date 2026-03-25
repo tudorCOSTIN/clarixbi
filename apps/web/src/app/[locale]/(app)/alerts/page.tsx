@@ -150,7 +150,10 @@ export default function AlertsPage() {
                 limit: alertLimit.limit === -1 ? '∞' : alertLimit.limit,
               })}
               {alertLimit.limit !== -1 && (
-                <Link href="/settings/billing" className="text-primary-blue ml-1 hover:underline">
+                <Link
+                  href="/settings/billing"
+                  className="text-primary-blue ml-1 underline hover:no-underline"
+                >
                   {t('upgrade')}
                 </Link>
               )}

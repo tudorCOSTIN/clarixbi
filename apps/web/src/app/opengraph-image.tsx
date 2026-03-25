@@ -21,7 +21,7 @@ export default async function Image() {
       }}
     >
       <div style={{ fontSize: 72, fontWeight: 700, letterSpacing: -2, display: 'flex' }}>
-        <span style={{ color: '#2196F3' }}>Clarix</span>
+        <span style={{ color: '#1565C0' }}>Clarix</span>
         <span style={{ color: '#00BCD4' }}>BI</span>
       </div>
       <div style={{ fontSize: 28, marginTop: 16, color: '#94a3b8' }}>

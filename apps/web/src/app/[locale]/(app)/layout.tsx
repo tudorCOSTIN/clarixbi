@@ -15,6 +15,7 @@ import {
   Menu,
   X,
 } from 'lucide-react';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { AiUsageBadge } from '@/components/ai/AiUsageBadge';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 
@@ -95,7 +96,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         )}
       </header>
       <main id="main-content" className="mx-auto max-w-7xl px-4 py-8">
-        {children}
+        <NuqsAdapter>{children}</NuqsAdapter>
       </main>
       <div aria-live="polite" aria-atomic="true" className="sr-only" id="notification-live" />
       <footer className="border-t border-gray-200 bg-white">

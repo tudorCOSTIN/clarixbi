@@ -6,7 +6,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'primary-blue': '#2196F3',
+        'primary-blue': '#1565C0',
         'primary-cyan': '#00BCD4',
         'dark-navy': '#0a1628',
         'text-dark': '#0f172a',

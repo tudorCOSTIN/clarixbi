@@ -69,7 +69,7 @@ export default function LoginPage() {
             href="/legal/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary-blue hover:underline"
+            className="text-primary-blue underline"
           >
             {t('termsLink')}
           </a>{' '}
@@ -78,7 +78,7 @@ export default function LoginPage() {
             href="/legal/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-primary-blue hover:underline"
+            className="text-primary-blue underline"
           >
             {t('privacyLink')}
           </a>

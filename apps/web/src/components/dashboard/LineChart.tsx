@@ -66,7 +66,7 @@ export function LineChartWidget({
             fill={showArea ? colors[i % colors.length] : undefined}
           />
         ))}
-        {data.length > 20 && <Brush dataKey={xKey} height={20} stroke="#2196F3" />}
+        {data.length > 20 && <Brush dataKey={xKey} height={20} stroke="#1565C0" />}
       </RechartsLine>
     </ResponsiveContainer>
   );

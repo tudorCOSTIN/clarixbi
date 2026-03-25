@@ -247,6 +247,7 @@
     "addSource": "Adauga sursa",
     "addFirstSource": "Adauga prima sursa de date",
     "empty": "Nu ai nicio sursa de date conectata",
+    "tryAgain": "Incearca din nou",
     "lastSync": "Ultima sincronizare",
     "totalRows": "Total inregistrari",
     "syncNow": "Sincronizeaza acum",
