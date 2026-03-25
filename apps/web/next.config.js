@@ -1,5 +1,8 @@
 const createNextIntlPlugin = require('next-intl/plugin');
 const { withSentryConfig } = require('@sentry/nextjs');
+const withBundleAnalyzer = require('@next/bundle-analyzer')({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
@@ -41,6 +44,8 @@ const sentryConfig = {
   disableLogger: true,
 };
 
+const baseConfig = withBundleAnalyzer(withNextIntl(nextConfig));
+
 module.exports = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(withNextIntl(nextConfig), sentryConfig)
-  : withNextIntl(nextConfig);
+  ? withSentryConfig(baseConfig, sentryConfig)
+  : baseConfig;
