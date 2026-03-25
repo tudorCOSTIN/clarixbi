@@ -41,6 +41,8 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@next/bundle-analyzer": "^16.2.1",
     "@playwright/test": "^1.52.0",
     "@storybook/addon-a11y": "^10.3.0",
     "@storybook/addon-docs": "^10.3.0",
