@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsUrl } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AuthCallbackDto {
@@ -6,4 +6,13 @@ export class AuthCallbackDto {
   @IsString()
   @IsNotEmpty()
   code: string;
+
+  @ApiProperty({
+    description: 'Redirect URI used in the authorize request (must match)',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  redirect_uri?: string;
 }

@@ -40,11 +40,11 @@ export class AuthService {
     );
   }
 
-  async validateAuth0Token(code: string): Promise<Auth0UserInfo> {
+  async validateAuth0Token(code: string, redirectUri?: string): Promise<Auth0UserInfo> {
     const domain = this.configService.get<string>('auth.auth0Domain');
     const clientId = this.configService.get<string>('auth.auth0ClientId');
     const clientSecret = this.configService.get<string>('auth.auth0ClientSecret');
-    const callbackUrl = this.configService.get<string>('auth.auth0CallbackUrl');
+    const callbackUrl = redirectUri || this.configService.get<string>('auth.auth0CallbackUrl');
 
     // Exchange authorization code for tokens
     const tokenResponse = await fetch(`https://${domain}/oauth/token`, {

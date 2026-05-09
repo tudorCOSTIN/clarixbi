@@ -148,8 +148,9 @@ export class OverviewService {
           COALESCE(SUM(total), 0) as revenue,
           COUNT(*) as orders
         FROM invoices
-        WHERE org_id = '${orgId}'
+        WHERE org_id = {orgId:String}
           AND issue_date >= today() - 30`,
+        { orgId },
       );
 
       // Previous 30-day revenue and orders
@@ -161,9 +162,10 @@ export class OverviewService {
           COALESCE(SUM(total), 0) as revenue,
           COUNT(*) as orders
         FROM invoices
-        WHERE org_id = '${orgId}'
+        WHERE org_id = {orgId:String}
           AND issue_date >= today() - 60
           AND issue_date < today() - 30`,
+        { orgId },
       );
 
       // 7-day revenue trend
@@ -175,10 +177,11 @@ export class OverviewService {
           toDate(issue_date) as date,
           COALESCE(SUM(total), 0) as revenue
         FROM invoices
-        WHERE org_id = '${orgId}'
+        WHERE org_id = {orgId:String}
           AND issue_date >= today() - 7
         GROUP BY date
         ORDER BY date`,
+        { orgId },
       );
 
       // Top 5 products
@@ -190,11 +193,12 @@ export class OverviewService {
           product_name as name,
           COUNT(*) as sales
         FROM invoice_items
-        WHERE org_id = '${orgId}'
+        WHERE org_id = {orgId:String}
           AND issue_date >= today() - 30
         GROUP BY name
         ORDER BY sales DESC
         LIMIT 5`,
+        { orgId },
       );
 
       return {

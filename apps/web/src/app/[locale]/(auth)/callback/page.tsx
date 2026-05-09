@@ -19,14 +19,15 @@ export default function CallbackPage() {
 
     const exchangeCode = async () => {
       try {
+        const redirectUri = `${window.location.origin}${window.location.pathname}`;
         const response = await apiClient<{ data: { is_new_user: boolean } }>('/auth/callback', {
           method: 'POST',
-          body: JSON.stringify({ code }),
+          body: JSON.stringify({ code, redirect_uri: redirectUri }),
         });
 
         if (response.data.is_new_user) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          router.push('/onboarding' as any);
+          router.push('/connect' as any);
         } else {
           router.push('/');
         }

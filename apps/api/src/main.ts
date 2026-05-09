@@ -9,6 +9,7 @@ import cookieParser from 'cookie-parser';
 import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { validateEnvironment } from './config/env.validation';
+import { ResolveOrgIdInterceptor } from './common/interceptors/resolve-org-id.interceptor';
 
 async function bootstrap() {
   validateEnvironment();
@@ -58,6 +59,8 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api/v1');
+
+  app.useGlobalInterceptors(new ResolveOrgIdInterceptor());
 
   app.useGlobalPipes(
     new ValidationPipe({

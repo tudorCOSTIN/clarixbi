@@ -52,7 +52,7 @@ export class AuthController {
         path: '/',
       });
 
-      const locale = defaultLocale;
+      const locale = user.preferred_language || defaultLocale;
       const redirectPath = isNew ? `/${locale}/connect` : `/${locale}`;
       return res.redirect(`${appUrl}${redirectPath}`);
     } catch {
@@ -65,7 +65,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Exchange Auth0 authorization code for JWT tokens (API)' })
   async callback(@Body() dto: AuthCallbackDto, @Res({ passthrough: true }) res: Response) {
-    const auth0Profile = await this.authService.validateAuth0Token(dto.code);
+    const auth0Profile = await this.authService.validateAuth0Token(dto.code, dto.redirect_uri);
     const { user, isNew } = await this.authService.findOrCreateUser(auth0Profile);
     const tokens = await this.authService.generateTokenPair(user);
 
