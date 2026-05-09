@@ -38,6 +38,9 @@ export class Organization {
   @Column({ type: 'enum', enum: DefaultLanguage, default: DefaultLanguage.RO })
   default_language: DefaultLanguage;
 
+  @Column({ type: 'uuid', nullable: true })
+  home_dashboard_id: string | null;
+
   @CreateDateColumn()
   created_at: Date;
 
